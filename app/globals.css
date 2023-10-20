@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-color: white;
+}
+
+body {
+  background: var(--bg-color);
+  min-height: 100%;
+
+  margin: 0;
+  padding: 0;
+}

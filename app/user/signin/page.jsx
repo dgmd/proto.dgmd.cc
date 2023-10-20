@@ -1,0 +1,147 @@
+"use client"
+
+// import {
+//   Auth
+// } from '@supabase/auth-ui-react';
+
+// import {
+//   ThemeSupa
+// } from '@supabase/auth-ui-shared';
+
+import {
+  buttonClassNames
+} from 'components/look.js';
+
+import {
+  AUTH_STATE_SIGNED_IN,
+  AUTH_STATE_SIGNED_OUT,
+  useAuthentication
+} from 'hooks/AuthenticationHook.js';
+
+import {
+  useRouter
+} from "next/navigation";
+
+import {
+  useCallback,
+  useState,
+  useEffect
+} from 'react';
+
+const SignIn = () => {
+
+  console.log( '???', buttonClassNames );
+
+  const router = useRouter();
+
+  const [
+    authSessionState, 
+    authSession, 
+    authEvent,
+    supabase,
+    supaUiReady
+  ] = useAuthentication( );
+
+  useEffect(() => {
+    if (authSessionState === AUTH_STATE_SIGNED_IN) {
+      router.push("/user/");
+    }
+  }, [
+    authSessionState
+  ]);
+
+  const [email, setEmail] = useState( "" );
+  const [password, setPassword] = useState( "" );
+
+  const cbChangeEmail = ( event ) => {
+    setEmail( x => event.target.value );
+  };
+
+  const cbChangePassword = ( event ) => {
+    setPassword( x => event.target.value );
+  };
+
+  const cbSignIn = useCallback( event => {
+   const signInWithEmail = async () => {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      } );
+      console.log( 'data', data, 'error', error );
+    }
+    console.log( 'go do it' );
+    signInWithEmail();
+  }, [
+    email,
+    password
+  ] )
+  
+  return (
+    <div
+      className={
+        supaUiReady && authSessionState === AUTH_STATE_SIGNED_OUT ? "visible" : "invisible"
+      }
+    >
+    {
+      //todo -- replace with DIY signin
+      //https://supabase.com/docs/guides/auth/auth-email
+
+      // <Auth
+      //   supabaseClient={ supabase }
+      //   appearance={{ theme: ThemeSupa }}
+      //   //todo... no way, that i can figure out, to prevent new users from signing up
+      //   view="sign_in"
+      //   providers={
+      //     [] // ["google", "facebook", "github"]
+      //   }
+      //   redirectTo={ "http://localhost:3000/user/reset/" }
+      // />
+
+      <div className="bg-white p-8 rounded-lg shadow-md w-96">
+        <div
+          className="mb-4"
+        >
+          <label
+            htmlFor="username"
+            className="block text-gray-600 text-sm font-medium mb-2">
+              Username:
+          </label>
+          <input
+            type="text"
+            className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-400"
+            id="username"
+            onChange={ cbChangeEmail }
+          />
+        </div>
+
+        <div
+          className='mb-4'
+        >
+          <label
+            htmlFor="pass"
+            className="block text-gray-600 text-sm font-medium mb-2">
+              Password:
+            </label>
+          <input
+            type="password"
+            id="pass"
+            onChange={ cbChangePassword }
+            className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-400"
+          />
+        </div>
+
+        <input
+          className={ buttonClassNames }
+          type="button"
+          value="Sign In"
+          onClick={ cbSignIn }
+        />
+      </div>
+
+    }
+    </div>
+  );
+
+};
+
+export default SignIn;

@@ -1,17 +1,22 @@
 import {
   ClipboardIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
+
+import {
+  urlButtonClassNames,
+  urlButtonTextClassNames
+} from './look.js';
 
 export const ClipboardButton = props => {
   const text = props.text;
   return (
     <button
       type="button"
-      className="rounded-md bg-indigo-50 px-1.5 py-1.5 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100"
+      className={ urlButtonClassNames }
       onClick={ () => navigator.clipboard.writeText(text) }
     >
       <ClipboardIcon
-        className="h-4 w-auto text-indigo-400"
+        className={ urlButtonTextClassNames }
         alt="copy to clipboard"
       />
     </button>

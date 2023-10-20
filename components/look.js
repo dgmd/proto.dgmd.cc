@@ -3,3 +3,6 @@ export const buttonClassNames = buttonClassBase + ' bg-indigo-600 text-sm font-s
 export const buttonCancelClassNames = buttonClassBase + ' bg-white text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:ring-gray-400';
 
 export const cellClassNames = 'box-content border border-transparent inline-block relative w-full whitespace-nowrap overflow-hidden overflow-ellipsis align-top';
+
+export const urlButtonClassNames = 'rounded-md bg-indigo-50 px-1.5 py-1.5 text-sm font-semibold shadow-sm hover:bg-indigo-100';
+export const urlButtonTextClassNames = 'h-4 w-auto text-indigo-600';

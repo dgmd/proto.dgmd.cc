@@ -3,7 +3,6 @@
 import {
   Fragment,
   createRef,
-  use,
   useCallback,
   useEffect,
   useMemo,
@@ -12,7 +11,6 @@ import {
 } from 'react';
 
 import {
-  usePathname,
   useRouter
 } from "next/navigation";
 
@@ -60,7 +58,9 @@ import {
   ClipboardButton
 } from 'components/clipboard-button.jsx';
 
-import Link from 'next/link';
+import {
+  LinkButton
+} from 'components/link-button.jsx';
 
 import {
   Title
@@ -69,8 +69,6 @@ import {
 import {
   SidePanel
 } from '/components/side-panel.jsx';
-
-import { resolveHref } from 'next/dist/shared/lib/router/utils/resolve-href'
 
 const User = ( ) => {
 
@@ -318,15 +316,12 @@ const User = ( ) => {
           {/* existing rows */}
           {
             cells.map( (cell, cellIdx) => {
-              console.log( 'cell', cell );
-
-              const cellKey = `c${cellIdx}`;
               const colNum = cellIdx % headers.length;
               if (colNum === 4) {
                 return (
                   <div
-                    key={ cellKey }
-                    className="flex space-x-1">
+                    className={ `${cellClassNames} flex space-x-1` }
+                  >
                     <button
                       data-row={ cells[ cellIdx - 2 ] }
                       type="button"
@@ -350,32 +345,28 @@ const User = ( ) => {
                     </button>
                     */}
                   </div>
-    );
+                );
               }
               return (
+                cellIdx % headers.length === 2 ? (
+                  <div
+                    className={ `${cellClassNames} flex flex-row gap-2` }
+                  >
+                    <ClipboardButton
+                      text={ `${window.location.origin}/group/${cell}` }
+                    />
+                    <LinkButton
+                      link={ `/group/${cell}` }
+                    />
+                  </div>
+                )
+                :
                 <div
-                  key={ cellKey }
-                  className={ cellClassNames }
+                  className={ `${cellClassNames}` }
                 >
-                  {
-                    cellIdx % headers.length === 2 ? (
-                      <Fragment>
-                        <ClipboardButton
-                          text={ `${window.location.origin}/group/${cell}` }
-                        />
-                        <Link
-                          className={ 'underline' }
-                          href={ `/group/${cell}` }
-                        >
-                          { `/group/${cell}` }
-                        </Link>
-                      </Fragment>
-                    )
-                    :
-                    cell
-                  }
+                  { cell }
                 </div>
-              );
+              )
             } )
           }
         </Table>

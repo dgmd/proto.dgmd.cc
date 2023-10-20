@@ -49,6 +49,14 @@ import {
   ArrowPathIcon
 } from '@heroicons/react/20/solid';
 
+import {
+  ClipboardButton
+} from 'components/clipboard-button.jsx';
+
+import {
+  LinkButton
+} from 'components/link-button.jsx';
+
 const PROTO_TYPE = 'PROTO_TYPE';
 const PROTO_VAL = 'PROTO_VAL';
 const PROTO_DATE = 'PROTO_DATE';
@@ -171,13 +179,14 @@ export default function Page() {
               else if (row[PROTO_TYPE] === PROTO_LINK) {
                 elements.push(
                   <div
-                    className={ cellClassNames }
+                    className={ `${ cellClassNames } flex flex-row gap-2` }
                   >
-                    <Link
-                      href={ row[PROTO_VAL] }
-                    >
-                      { row[PROTO_VAL] }
-                    </Link>
+                    <ClipboardButton
+                      text={ `${ window.location.origin }${ row[PROTO_VAL] }` }
+                    />
+                    <LinkButton
+                      link={ row[PROTO_VAL] }
+                    />
                   </div>
                 );
               }

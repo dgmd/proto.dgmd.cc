@@ -1,7 +1,5 @@
 "use client"
 
-import Link from 'next/link';
-
 import 'app/globals.css';
 
 import {
@@ -42,6 +40,14 @@ import {
 
   EXPORT_DATA_VALUE
 } from 'app/api/query/route.ts';
+
+import {
+  ClipboardButton
+} from 'components/clipboard-button.jsx';
+
+import {
+  LinkButton
+} from 'components/link-button.jsx';
 
 const USER_ID = 'USER_ID';
 const USER_NAME = 'USER_NAME';
@@ -148,13 +154,14 @@ export default function List() {
                 if (key === USER_ID) {
                   elements.push(
                     <div
-                      className={ cellClassNames }
+                      className={ `${ cellClassNames } flex flex-row gap-2` }
                     >
-                      <Link
-                        href={ `/group/${ pGroupId }/${ value }`}
-                      >
-                        { value }
-                      </Link>
+                      <ClipboardButton
+                        text={ `${window.location.origin}/group/${ pGroupId }/${ value }` }
+                      />
+                      <LinkButton
+                        link={ `/group/${ pGroupId }/${ value }` }
+                      />
                     </div>
                   )
                 }

@@ -39,6 +39,14 @@ import {
   EXPORT_DATA_VALUE
 } from 'app/api/query/route.ts';
 
+import {
+  ClipboardButton
+} from 'components/clipboard-button.jsx';
+
+import {
+  LinkButton
+} from 'components/link-button.jsx';
+
 const PROJECT_TYPE = 'PROJECT_TYPE';
 const PROJECT_VAL = 'PROJECT_VAL';
 const PROJECT_NAME = 'PROJECT_NAME';
@@ -144,15 +152,18 @@ export default function Page() {
               }
               else if (row[PROJECT_TYPE] === PROJECT_ID) {
                 elements.push(
+
                   <div
-                    className={ cellClassNames }
+                    className={ `${ cellClassNames } flex flex-row gap-2` }
                   >
-                    <Link
-                      href={ `/group/${pGroupId}/${pStudentId}/${row[PROJECT_VAL]}` }
-                    >
-                      { row[PROJECT_VAL] }
-                    </Link>
+                    <ClipboardButton
+                      text={ `${window.location.origin}/group/${pGroupId}/${pStudentId}/${row[PROJECT_VAL]}` }
+                    />
+                    <LinkButton
+                      link={ `/group/${pGroupId}/${pStudentId}/${row[PROJECT_VAL]}` }
+                    />
                   </div>
+
                 );
               }
               return elements;

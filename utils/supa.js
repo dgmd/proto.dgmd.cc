@@ -9,9 +9,4 @@ import {
 export const supabase = createClient(
   process.env.NEXT_PUBLIC_REACT_APP_SUPABASE_URL, 
   process.env.NEXT_PUBLIC_REACT_APP_SUPABASE_KEY
-  );
-
-// export const supabase = createClient(
-//   `${ process.env.REACT_APP_SUPABASE_URL }`, 
-//   `${ process.env.REACT_APP_SUPABASE_KEY }`
-// );
+);

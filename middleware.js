@@ -2,12 +2,9 @@ import {
   NextResponse
 } from 'next/server';
 
-const allowedOrigins = [
-  `localhost:3000`, 
-  `framer.com`,
-  `framer.ai`,
-  `framer.website`
-];
+const allowedOrigins = process.env.CORS_ORIGINS.split(',').map(
+  origin => process.env[origin]
+);
 
 
 //

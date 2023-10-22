@@ -39,6 +39,8 @@ export async function GET( request, response ) {
 
   const proto = protoSupa.data[0];
 
-  const nextRes = middleware( request );
-  return nextRes.json( proto.snapshot );
+  //i guess this is how to handle CORS?!!?
+  const resHeaders = middleware( request );
+  const resJson = NextResponse.json( proto.snapshot, resHeaders.headers );
+  return resJson;
 };

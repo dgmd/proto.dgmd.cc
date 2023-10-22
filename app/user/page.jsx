@@ -1,7 +1,6 @@
 "use client"
 
 import {
-  Fragment,
   createRef,
   useCallback,
   useEffect,
@@ -21,6 +20,7 @@ import {
 } from 'hooks/AuthenticationHook.js';
 
 import {
+  ArrowPathIcon,
   MinusIcon
 } from '@heroicons/react/20/solid';
 
@@ -70,6 +70,11 @@ import {
   SidePanel
 } from '/components/side-panel.jsx';
 
+import {
+  addListItem,
+  removeListItem
+} from '/utils/lists.js';
+
 const User = ( ) => {
 
   const [
@@ -90,6 +95,10 @@ const User = ( ) => {
   const [open, setOpen] = useState( x => false );
   const [addRosterError, setAddRosterError] = useState( x => false );
 
+  const [refreshing, setRefreshing] = useState( x => [] );
+  const rRefreshing = useRef( refreshing );
+  const [deleting, setDeleting] = useState( x => [] );
+  const rDeleting = useRef( deleting );
   
   const cbCredentialsChange = useCallback( e => {
 
@@ -195,13 +204,19 @@ const User = ( ) => {
   ] );
 
   const cbDeleteNotionRoom = useCallback( async(e) => {
-    const dataRow = e.target.getAttribute( 'data-row' );
+    const dbId = e.target.getAttribute( 'data-row' );
+    if (rRefreshing.current.includes( dbId ) || rDeleting.current.includes( dbId )) {
+      return;
+    }
+
+    setDeleting( x => addListItem( x, dbId ) );
+    rDeleting.current = addListItem( rDeleting.current, dbId );
 
     try {
       const findRoomIdSupa = await supabase
       .from( 'notion_rooms' )
       .select( 'id' )
-      .eq( 'url_id', dataRow )
+      .eq( 'notion_db_id', dbId )
       .eq( 'auth_user_id', getUserId(authSession) );
 
       const deleteRoomDataSupa = await supabase
@@ -213,22 +228,48 @@ const User = ( ) => {
       const deleteRoomSupa = await supabase
       .from( 'notion_rooms' )
       .delete( )
-      .eq( 'url_id', dataRow )
+      .eq( 'notion_db_id', dbId )
       .eq( 'auth_user_id', getUserId(authSession) );
     }
     catch (e) {
       console.log( 'error deleting', e );
     }
-  
-    fetchData( authSession );
+    try {
+      fetchData( authSession );
+    }
+    catch (e) {
+    }
+
+    setDeleting( x => removeListItem(x, dbId) );
+    removeListItem( rDeleting.current, dbId );
   }, [
     authSession
   ] );
 
   const cbRefreshNotionRoom = useCallback( async(e) => {
-    const dataRow = e.target.getAttribute( 'data-row' );
-    console.log( 'dataRow', dataRow );
+    const dbId = e.target.getAttribute( 'data-row' );
+    if (rRefreshing.current.includes( dbId ) || rDeleting.current.includes( dbId )) {
+      return;
+    }
+
+    setRefreshing( x => addListItem( x, dbId ) );
+    rRefreshing.current = addListItem( rRefreshing.current, dbId );
+
+    const js = await queryApiForRoom( dbId );
+    if (js && js[NOTION_RESULT_SUCCESS]) {
+      setRefreshing( x => removeListItem(x, dbId) );
+      rRefreshing.current = removeListItem(rRefreshing.current, dbId);
+    }
+
+    try {
+      fetchData( authSession );
+    }
+    catch (e) {
+    }
+    setRefreshing( x => removeListItem(x, dbId) );
+    rRefreshing.current = removeListItem(rRefreshing.current, dbId);
   }, [
+    authSession
   ] );
 
   const [cells, setCells] = useState( x => [
@@ -281,9 +322,7 @@ const User = ( ) => {
         cells.push( null );
       }
 
-      setCells( x => {
-        return cells;
-      } );
+      setCells( x => cells );
     }
     catch (err) {
       console.error( err );
@@ -301,14 +340,14 @@ const User = ( ) => {
         title={ 'Rosters List' }
       >
         <button
-          className={ buttonClassNames + " mt-2" }
+          className={ `${buttonClassNames} mt-2` }
           onClick={ () => setOpen( x => true) }>
           Add Roster
         </button>
       </Title>
 
       <div
-        className="flex flex-col grow sm:px-6 lg:px-8"
+        className={ `flex flex-col grow sm:px-6 lg:px-8` }
       >
         <Table
           headers={ headers }
@@ -316,14 +355,16 @@ const User = ( ) => {
           {/* existing rows */}
           {
             cells.map( (cell, cellIdx) => {
+              const key = `c${cellIdx}`;
               const colNum = cellIdx % headers.length;
               if (colNum === 4) {
                 return (
                   <div
+                    key={ key }
                     className={ `${cellClassNames} flex space-x-1` }
                   >
                     <button
-                      data-row={ cells[ cellIdx - 2 ] }
+                      data-row={ cells[ cellIdx - 3 ] }
                       type="button"
                       onClick={ cbDeleteNotionRoom }
                       className={ getButtonClasses( false ) }
@@ -332,24 +373,24 @@ const User = ( ) => {
                       className="h-5 w-5 pointer-events-none"
                       aria-hidden="true" />
                     </button>
-                    {/*
                     <button
                       type="button"
-                      data-row={ cells[ cellIdx - 2 ] }
+                      data-row={ cells[ cellIdx - 3 ] }
                       onClick={ cbRefreshNotionRoom }
-                      className={ getButtonClasses( false ) }
+                      className={ 
+                        `${ getButtonClasses( false ) } ${ refreshing.includes( cells[ cellIdx - 3 ] ) ? `animate-spin` : `` }` }
                     >
                       <ArrowPathIcon
-                        className="h-5 w-5 pointer-events-none"
+                        className={ `h-5 w-5 pointer-events-none ` }
                         aria-hidden="true" />
                     </button>
-                    */}
                   </div>
                 );
               }
               return (
                 cellIdx % headers.length === 2 ? (
                   <div
+                    key={ key}
                     className={ `${cellClassNames} flex flex-row gap-2` }
                   >
                     <ClipboardButton
@@ -362,6 +403,7 @@ const User = ( ) => {
                 )
                 :
                 <div
+                  key={ key }
                   className={ `${cellClassNames}` }
                 >
                   { cell }

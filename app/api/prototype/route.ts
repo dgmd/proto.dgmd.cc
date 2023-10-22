@@ -6,6 +6,16 @@ import {
   supabase
 } from 'utils/supa.js';
 
+import {
+  middleware
+} from 'middleware';
+
+//
+//https://github.com/vercel/next.js/discussions/47933#discussioncomment-6197807
+//
+//https://blog.logrocket.com/using-cors-next-js-handle-cross-origin-requests/
+//
+
 export const URL_PROTOTYPE_PARAM_ID = 'i';
 const PROTOTYPE_ID = 'PROTOTYPE_ID';
 
@@ -29,5 +39,6 @@ export async function GET( request, response ) {
 
   const proto = protoSupa.data[0];
 
-  return NextResponse.json( proto.snapshot );
+  const nextRes = middleware( request );
+  return nextRes.json( proto.snapshot );
 };

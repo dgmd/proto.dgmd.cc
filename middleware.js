@@ -2,9 +2,12 @@ import {
   NextResponse
 } from 'next/server';
 
-const allowedOrigins = process.env.CORS_ORIGINS.split(',').map(
-  origin => process.env[origin]
-);
+const allowedOrigins =
+  process.env.CORS_ORIGINS.split(',').map(
+    origin => process.env[origin]
+  );
+
+const allowedOriginsRegex = generateDomainRegex( allowedOrigins );
 
 
 //
@@ -17,19 +20,15 @@ const allowedOrigins = process.env.CORS_ORIGINS.split(',').map(
 export const middleware = req => {
   const res = NextResponse.next();
 
-  // retrieve the HTTP "Origin" header 
+  // retrieve the HTTP "Origin" header
   // from the incoming request
-  const origin = req.headers.get("origin");
-
-  const reg = generateDomainRegex(allowedOrigins);
-
+  const origin = req.nextUrl.origin;
+  
   // if the origin is an allowed one,
   // add it to the 'Access-Control-Allow-Origin' header
-  // if (allowedOrigins.includes(origin)) {
-  if (reg.test(origin)) {
+  if (allowedOriginsRegex.test(origin)) {
     res.headers.append('Access-Control-Allow-Origin', origin);
   }
-
   // add the remaining CORS headers to the response
   res.headers.append('Access-Control-Allow-Credentials', "true");
   res.headers.append('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');

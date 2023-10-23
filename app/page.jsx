@@ -9,8 +9,6 @@ import {
 
 export default function Hero() {
 
-  console.log( 'err', process.env.REACT_APP_SUPABASE_URL, typeof process.env.REACT_APP_SUPABASE_URL );
-
   return (
     <div className="bg-white">
       <div className="relative isolate overflow-hidden bg-gradient-to-b from-indigo-100/20">
@@ -27,19 +25,18 @@ export default function Hero() {
                   Make data-driven prototypes
                 </h1>
                 <p className="mt-6 text-lg leading-8 text-gray-600">
-                  Use notion to create a database of your data, then extract the data to build prototypes.
+                  Use Notion to create databases for your prototype, then access your data in Framer.
                 </p>
                 <div className="mt-10 flex items-center gap-x-6">
                   {
-                  /*
                   <Link
                     href="/list"
                     className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                   >
                     See Prototypes
                   </Link>
-                  */
                   }
+
                   <Link 
                     href="/user" 
                     className="text-sm font-semibold leading-6 text-gray-900"

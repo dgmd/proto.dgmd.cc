@@ -120,7 +120,7 @@ export default function Page() {
       .from( 'project_archive' )
       .select( 'created_at, url_id')
       .order( 'created_at', { ascending: false } )
-      .eq( 'prototype_id', pPrototypeId );
+      .eq( 'prototype_id', pDatabaseId );
       const irows = getRows( timeStampsSupa.data );
       setRows( r => irows );
     }

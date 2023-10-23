@@ -67,7 +67,7 @@ export default function Page() {
   const params = useParams( );
   const pNotionUserId = params['notion-user-id'];
   const pGroupName = params['group-name'];
-  const pPrototypeId = params[ 'prototype-id' ];
+  const pDatabaseId = params[ 'database-id' ];
 
   const [loading, setLoading] = useState( x => false );
   const rLoading = useRef( loading );
@@ -99,22 +99,22 @@ export default function Page() {
     .from( 'project_archive' )
     .select( 'created_at, url_id')
     .order( 'created_at', { ascending: false } )
-    .eq( 'prototype_id', pPrototypeId );
+    .eq( 'prototype_id', pDatabaseId );
 
     if (timeStampsSupa.data.length === 0 || !initial) {
 
-      const snapshot = await queryApiForProject( pPrototypeId );
+      const snapshot = await queryApiForProject( pDatabaseId );
       const snapshotData = snapshot[NOTION_RESULT];
       
       const insertSupa = await supabase
       .from( 'project_archive' )
       .insert({ 
-        'prototype_id': pPrototypeId,
+        'prototype_id': pDatabaseId,
         'snapshot': snapshotData 
       })
       .select( 'created_at, url_id' )
       .order( 'created_at', { ascending: false } )
-      .eq( 'prototype_id', pPrototypeId );
+      .eq( 'prototype_id', pDatabaseId );
 
       const timeStampsSupa = await supabase
       .from( 'project_archive' )
@@ -143,7 +143,7 @@ export default function Page() {
   return (
     <div className='flex-grow'>  
       <Title
-        title={ 'Prototypes' }
+        title={ 'Database' }
       >
         {
         rows.length > 0 &&

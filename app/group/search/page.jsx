@@ -1,5 +1,7 @@
 "use client"
 
+import 'app/globals.css';
+
 import {
   buttonClassNames
 } from 'components/look.js';
@@ -17,10 +19,11 @@ import {
 import {
   useCallback,
   useState,
-  useEffect
+  useEffect,
+  use
 } from 'react';
 
-const SignIn = () => {
+const Search = () => {
 
   const router = useRouter();
 
@@ -32,78 +35,61 @@ const SignIn = () => {
     supaUiReady
   ] = useAuthentication( );
 
-  useEffect(() => {
-    if (authSessionState === AUTH_STATE_SIGNED_IN) {
-      router.push("/user/");
-    }
-  }, [
-    authSessionState
-  ]);
 
-  const [email, setEmail] = useState( "" );
-  const [password, setPassword] = useState( "" );
+  const [groupName, setGroupName] = useState( "" );
+  const [notionUserId, setNotionUserId] = useState( "" );
 
-  const cbChangeEmail = ( event ) => {
-    setEmail( x => event.target.value );
-  };
+  const cbChangeNotionUserId = useCallback( event => {
+    setNotionUserId( x => event.target.value );
+  }, [ ] );
 
-  const cbChangePassword = ( event ) => {
-    setPassword( x => event.target.value );
-  };
+  const cbChangeGroupName = useCallback( event => {
+    setGroupName( x => event.target.value );
+  }, [ ] );
 
   const cbSignIn = useCallback( event => {
-   const signInWithEmail = async () => {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
-      } );
-      console.log( 'data', data, 'error', error );
-    }
-    console.log( 'go do it' );
-    signInWithEmail();
+    router.push( `/group/${ groupName }/${ notionUserId }/` );
   }, [
-    email,
-    password
-  ] )
-  
+    notionUserId,
+    groupName,
+    router
+  ] );
+
   return (
-    <div
-      className={
-        supaUiReady && authSessionState === AUTH_STATE_SIGNED_OUT ? "visible" : "invisible"
-      }
-    >
+    <div>
     {
 
       <div className="bg-white p-8 rounded-lg shadow-md w-96">
+
         <div
           className="mb-4"
         >
           <label
-            htmlFor="username"
+            htmlFor="group-name"
             className="block text-gray-600 text-sm font-medium mb-2">
-              Username:
+              Group Name:
           </label>
           <input
             type="text"
             className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-400"
-            id="username"
-            onChange={ cbChangeEmail }
+            id="group-name"
+            onChange={ cbChangeGroupName }
           />
         </div>
 
         <div
-          className='mb-4'
+          className="mb-4"
         >
           <label
-            htmlFor="pass"
+            htmlFor="user-id"
             className="block text-gray-600 text-sm font-medium mb-2">
-              Password:
-            </label>
+              Notion User Id:
+          </label>
           <input
-            type="password"
-            id="pass"
-            onChange={ cbChangePassword }
+            type="text"
             className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-400"
+            id="user-id"
+            onChange={ cbChangeNotionUserId }
           />
         </div>
 
@@ -121,4 +107,4 @@ const SignIn = () => {
 
 };
 
-export default SignIn;
+export default Search;

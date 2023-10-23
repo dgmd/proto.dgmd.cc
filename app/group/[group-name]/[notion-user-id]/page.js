@@ -84,7 +84,10 @@ export default function Page() {
         .from( 'notion_rooms' )
         .select( 'name, id')
         .eq( 'name', pGroupName );
-        setGroupName( x => roomSupa.data[0].name );
+
+        setGroupName( x => {
+          roomSupa.data.length ? roomSupa.data[0].name : x
+        } );
 
         const roomDataSupa = await supabase
         .from( 'notion_rooms_data' )
@@ -119,7 +122,7 @@ export default function Page() {
 
       }
       catch (e) {
-        console.log( 'error', e );
+        console.log( 'errordddd', e );
       }
     }
     fetchData();

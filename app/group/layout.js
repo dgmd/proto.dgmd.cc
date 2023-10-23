@@ -13,10 +13,10 @@ export default function Layout({ children }) {
         showUser={ true }
         showAdmin={ true }
       />
-      <div
-        className={ `flex-grow` } >
-        { children }
-      </div>
+        <div 
+          className="flex-grow w-100 h-100 flex items-stretch justify-center items-center">
+          { children }
+        </div>
     </div>
   );
 };

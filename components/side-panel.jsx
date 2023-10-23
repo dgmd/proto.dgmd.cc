@@ -30,8 +30,6 @@ export const SidePanel = props => {
   const loading = props.loading;
   const error = props.error;
 
-  console.log( 'error', error );
-
   return (
     <Transition.Root
       show={open}

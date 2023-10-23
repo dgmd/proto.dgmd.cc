@@ -1,5 +1,5 @@
 import {
-  ArrowUpOnSquareIcon
+  ArrowRightIcon
 } from '@heroicons/react/24/outline';
 
 import Link from 'next/link';
@@ -19,7 +19,7 @@ export const LinkButton = props => {
         type="button"
         className={ getRoundButtonClasses(false) }
       >
-        <ArrowUpOnSquareIcon
+        <ArrowRightIcon
           className={ getRoundButtonIconClasses() }
         />
       </button>

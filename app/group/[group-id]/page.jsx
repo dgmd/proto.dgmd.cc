@@ -22,7 +22,9 @@ import {
 } from 'components/table.jsx';
 
 import {
-  useAuthentication
+  useAuthentication,
+  AUTH_STATE_SIGNED_IN,
+  AUTH_STATE_SIGNED_OUT
 } from 'hooks/AuthenticationHook.js';
 
 import {
@@ -129,11 +131,22 @@ export default function List() {
     setRows( x => frows );
   };
 
-  //todo -- turn away if not signed in
+  useEffect( () => {
+    if (authSessionState === AUTH_STATE_SIGNED_OUT) {
+      router.push("/");
+    }
+  }, [
+    authSessionState,
+    authSession,
+    supabase
+  ] );
+
+  if (!supaUiReady || authSessionState !== AUTH_STATE_SIGNED_IN) {
+    return null;
+  }
 
   return (
-    <div className='flex-grow'>  
-
+    <div className='flex-grow'>
       <Title
         title={ groupName }
       >

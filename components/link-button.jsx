@@ -5,8 +5,8 @@ import {
 import Link from 'next/link';
 
 import {
-  urlButtonClassNames,
-  urlButtonTextClassNames
+  getRoundButtonClasses,
+  getRoundButtonIconClasses
 } from './look';
 
 export const LinkButton = props => {
@@ -17,10 +17,10 @@ export const LinkButton = props => {
     >
       <button
         type="button"
-        className={ urlButtonClassNames }
+        className={ getRoundButtonClasses(false) }
       >
         <ArrowUpOnSquareIcon
-          className={ urlButtonTextClassNames }
+          className={ getRoundButtonIconClasses() }
         />
       </button>
     </Link>

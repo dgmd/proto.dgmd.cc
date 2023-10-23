@@ -4,5 +4,11 @@ export const buttonCancelClassNames = buttonClassBase + ' bg-white text-gray-900
 
 export const cellClassNames = 'box-content border border-transparent inline-block relative w-full whitespace-nowrap overflow-hidden overflow-ellipsis align-top';
 
-export const urlButtonClassNames = 'rounded-md bg-indigo-50 px-1.5 py-1.5 text-sm font-semibold shadow-sm hover:bg-indigo-100';
-export const urlButtonTextClassNames = 'h-4 w-auto text-indigo-600';
+export const getRoundButtonClasses = ( disabledTw ) => {
+  const txt = `rounded-full bg-indigo-600 p-1 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`;
+  return `${txt} ${ disabledTw ? ' opacity-50 cursor-not-allowed' : '' }`;
+};
+
+export const getRoundButtonIconClasses = () => {
+  return `h-5 w-auto pointer-events-none`;
+};

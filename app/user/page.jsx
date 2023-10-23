@@ -30,7 +30,9 @@ import {
 
 import {
   buttonClassNames,
-  cellClassNames
+  cellClassNames,
+  getRoundButtonClasses,
+  getRoundButtonIconClasses
 } from '/components/look.js';
 
 import {
@@ -367,10 +369,10 @@ const User = ( ) => {
                       data-row={ cells[ cellIdx - 3 ] }
                       type="button"
                       onClick={ cbDeleteNotionRoom }
-                      className={ getButtonClasses( false ) }
+                      className={ getRoundButtonClasses( false ) }
                     >
                     <MinusIcon
-                      className="h-5 w-5 pointer-events-none"
+                      className={ getRoundButtonIconClasses() }
                       aria-hidden="true" />
                     </button>
                     <button
@@ -378,10 +380,10 @@ const User = ( ) => {
                       data-row={ cells[ cellIdx - 3 ] }
                       onClick={ cbRefreshNotionRoom }
                       className={ 
-                        `${ getButtonClasses( false ) } ${ refreshing.includes( cells[ cellIdx - 3 ] ) ? `animate-spin` : `` }` }
+                        `${ getRoundButtonClasses( false ) } ${ refreshing.includes( cells[ cellIdx - 3 ] ) ? `animate-spin` : `` }` }
                     >
                       <ArrowPathIcon
-                        className={ `h-5 w-5 pointer-events-none ` }
+                        className={ getRoundButtonIconClasses() }
                         aria-hidden="true" />
                     </button>
                   </div>
@@ -468,11 +470,6 @@ const User = ( ) => {
 };
 
 export default User;
-
-const getButtonClasses = ( disabledTw ) => {
-  const txt = `rounded-full bg-indigo-600 p-1 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`;
-  return txt + (disabledTw ? ' opacity-50 cursor-not-allowed' : '');
-};
 
 const queryApiForRoom = async( dbId ) => {
   const paramsObj = {

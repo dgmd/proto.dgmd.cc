@@ -234,7 +234,7 @@ const User = ( ) => {
       .eq( 'auth_user_id', getUserId(authSession) );
     }
     catch (e) {
-      console.log( 'error deleting', e );
+      // console.log( 'error deleting', e );
     }
     try {
       fetchData( authSession );
@@ -259,8 +259,25 @@ const User = ( ) => {
 
     const js = await queryApiForRoom( dbId );
     if (js && js[NOTION_RESULT_SUCCESS]) {
-      setRefreshing( x => removeListItem(x, dbId) );
-      rRefreshing.current = removeListItem(rRefreshing.current, dbId);
+      const result = js[NOTION_RESULT];
+      
+      const insertRoomSupa = await supabase
+      .from( 'notion_rooms' )
+      .select('id')
+      .eq( 'notion_db_id', dbId );
+
+      const id = insertRoomSupa.data[0].id;
+
+      const insertDataSupa = 
+      await supabase
+      .from( 'notion_rooms_data' )
+      .insert({
+        'auth_user_id': getUserId(authSession),
+        'notion_table': id,
+        'data': result
+      });
+
+      console.log( 'insertDataSupa', insertDataSupa );
     }
 
     try {
@@ -327,7 +344,7 @@ const User = ( ) => {
       setCells( x => cells );
     }
     catch (err) {
-      console.error( err );
+      // console.error( err );
     }
   }
 

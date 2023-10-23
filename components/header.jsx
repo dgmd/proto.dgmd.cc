@@ -6,9 +6,12 @@ import {
 } from 'components/look.js';
 
 import {
-  BeakerIcon,
   UserCircleIcon
 } from '@heroicons/react/20/solid';
+
+import {
+  NotionToFramerLogo
+} from '/components/logo.jsx';
 
 import {
   Fragment
@@ -50,9 +53,9 @@ export const Header = (props) => {
           <Link 
             href="/" 
             className="-m-1.5 p-1.5">
-            <BeakerIcon
-              className="h-12 w-auto text-indigo-600"
-              alt="DGMD"
+            <NotionToFramerLogo
+              // className="h-12 w-auto text-indigo-600"
+              // alt="DGMD"
             />
           </Link>
         </div>

@@ -4,8 +4,8 @@ import 'app/globals.css';
 import Link from 'next/link';
 
 import {
-  BeakerIcon
-} from '@heroicons/react/20/solid';
+  NotionToFramerLogo
+} from '/components/logo.jsx'
 
 export default function Hero() {
 
@@ -17,9 +17,9 @@ export default function Hero() {
             <div className="mx-auto max-w-2xl">
               <div className="max-w-lg">
    
-                <BeakerIcon
-                  className="h-20 w-auto text-indigo-600"
-                  alt="DGMD"
+                <NotionToFramerLogo
+                  // className="h-20 w-auto text-indigo-600"
+                  // alt="DGMD"
                 />
                 <h1 className="mt-10 text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
                   Make data-driven prototypes

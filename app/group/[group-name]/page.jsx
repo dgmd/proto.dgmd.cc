@@ -164,7 +164,6 @@ export default function List() {
             rows.map( (row, idx) => {
               const elements = [];
               for (const [key, value] of Object.entries(row)) {
-                console.log( 'key', key, 'value', value );
                 if (key === USER_ID) {
                   elements.push(
                     <div

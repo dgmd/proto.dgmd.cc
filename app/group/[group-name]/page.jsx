@@ -164,13 +164,14 @@ export default function List() {
             rows.map( (row, idx) => {
               const elements = [];
               for (const [key, value] of Object.entries(row)) {
+                console.log( 'key', key, 'value', value );
                 if (key === USER_ID) {
                   elements.push(
                     <div
                       className={ `${ cellClassNames } flex flex-row gap-2` }
                     >
                       <ClipboardButton
-                        text={ `${window.location.origin}/group/${ pGroupName }/${ value }` }
+                        text={ `${ window.location.origin }/group/${ pGroupName }/${ value }` }
                       />
                       <LinkButton
                         link={ `/group/${ pGroupName }/${ value }` }

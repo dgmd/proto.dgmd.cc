@@ -65,7 +65,7 @@ const PROTO_LINK = 'PROTO_LINK';
 export default function Page() {
 
   const params = useParams( );
-  const pStudentId = params['student-id'];
+  const pNotionUserId = params['notion-user-id'];
   const pGroupName = params['group-name'];
   const pPrototypeId = params[ 'prototype-id' ];
 

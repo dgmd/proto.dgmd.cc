@@ -55,8 +55,8 @@ const PROJECT_ID = 'PROJECT_ID';
 export default function Page() {
 
   const params = useParams( );
-  const pGroupName = params['group-name'];
-  const pStudentId = params[ 'student-id' ];
+  const pGroupName = params[ 'group-name' ];
+  const pNotionUserId = params[ 'notion-user-id' ];
 
   const [groupName, setGroupName] = useState( x => '' );
 
@@ -92,12 +92,10 @@ export default function Page() {
         const json = roomDataSupa.data[0].data;
         const blocks = json[NOTION_RESULT_BLOCKS];
         const block = blocks.find(
-          block => block[NOTION_RESULT_BLOCK_KEY] === pStudentId );
+          block => block[NOTION_RESULT_BLOCK_KEY] === pNotionUserId );
         const blockDbs = block[NOTION_RESULT_BLOCK_DBS];
-        console.log( 'blockDbs', blockDbs );
 
         const rowData = blockDbs.reduce( (acc, cur) => {
-          console.log( 'cur', cur );
           acc.push(
             {
               [PROJECT_TYPE]: PROJECT_NAME,
@@ -126,7 +124,7 @@ export default function Page() {
 
       <Title
         title={ groupName }
-        subtitle={ `student: ${pStudentId}` }
+        subtitle={ `student: ${pNotionUserId}` }
       >
       </Title>
 
@@ -157,10 +155,10 @@ export default function Page() {
                     className={ `${ cellClassNames } flex flex-row gap-2` }
                   >
                     <ClipboardButton
-                      text={ `${window.location.origin}/group/${pGroupName}/${pStudentId}/${row[PROJECT_VAL]}` }
+                      text={ `${window.location.origin}/group/${pGroupName}/${pNotionUserId}/${row[PROJECT_VAL]}` }
                     />
                     <LinkButton
-                      link={ `/group/${pGroupName}/${pStudentId}/${row[PROJECT_VAL]}` }
+                      link={ `/group/${pGroupName}/${pNotionUserId}/${row[PROJECT_VAL]}` }
                     />
                   </div>
 

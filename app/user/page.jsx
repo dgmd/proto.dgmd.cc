@@ -447,7 +447,7 @@ const User = ( ) => {
             <label 
               htmlFor="roster-name"
               className="block text-gray-700 font-semibold mb-2">
-                Roster Name
+                Group Name
               </label>
             <input
               type="text"
@@ -455,7 +455,7 @@ const User = ( ) => {
               onChange={ cbCredentialsChange }
               data-column="name"
               id="roster-name"
-              placeholder="Enter Roster Name"
+              placeholder="Enter Group Name"
               className={ mInputTw }
               ref={ rInputs.current['name'] }
             />
@@ -465,7 +465,7 @@ const User = ( ) => {
             <label
               htmlFor="database-id"
               className="block text-gray-700 font-semibold mb-2">
-                Database ID
+                Notion Roster ID
               </label>
             <input
               type="text"
@@ -473,7 +473,7 @@ const User = ( ) => {
               onChange={ cbCredentialsChange }
               data-column="dbId"
               id="database-id"
-              placeholder="Enter Database ID"
+              placeholder="Enter Notion Roster ID"
               className={ mInputTw }
               ref={ rInputs.current['dbId'] }
             />

@@ -91,8 +91,8 @@ export default function List() {
     try {
       const idResultSupa = await supabase
       .from( 'notion_rooms' )
-      .select( 'id, name' )
-      .eq( 'url_id', pGroupId );
+      .select( 'id' )
+      .eq( 'name', pGroupId );
 
       if (idResultSupa.data && idResultSupa.data.length > 0) {
         const dataResultSupa = await supabase
@@ -120,7 +120,7 @@ export default function List() {
             }
           }
         
-          setGroupName( x => idResultSupa.data[ 0 ].name );
+          setGroupName( x => pGroupId );
         }
       }
     }

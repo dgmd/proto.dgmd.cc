@@ -396,10 +396,10 @@ const User = ( ) => {
                     className={ `${cellClassNames} flex flex-row gap-2` }
                   >
                     <ClipboardButton
-                      text={ `${window.location.origin}/group/${cell}` }
+                      text={ `${window.location.origin}/group/${cells[ cellIdx - 2 ]}` }
                     />
                     <LinkButton
-                      link={ `/group/${cell}` }
+                      link={ `/group/${cells[ cellIdx - 2 ]}` }
                     />
                   </div>
                 )

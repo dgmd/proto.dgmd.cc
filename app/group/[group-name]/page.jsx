@@ -57,7 +57,7 @@ const USER_NAME = 'USER_NAME';
 export default function List() {
 
   const params = useParams( );
-  const pGroupId = params[ 'group-id' ];
+  const pGroupName = params[ 'group-name' ];
 
   const [groupName, setGroupName] = useState( x => '' );
 
@@ -79,20 +79,20 @@ export default function List() {
 
   useEffect( () => {
     if ( supabase ) {
-      fetchData( supabase, pGroupId );
+      fetchData( supabase, pGroupName );
     }
   }, [
     supabase
   ] );
 
-  const fetchData = async ( supabase, pGroupId ) => {
+  const fetchData = async ( supabase, pGroupName ) => {
     const frows = [];
 
     try {
       const idResultSupa = await supabase
       .from( 'notion_rooms' )
       .select( 'id' )
-      .eq( 'name', pGroupId );
+      .eq( 'name', pGroupName );
 
       if (idResultSupa.data && idResultSupa.data.length > 0) {
         const dataResultSupa = await supabase
@@ -120,7 +120,7 @@ export default function List() {
             }
           }
         
-          setGroupName( x => pGroupId );
+          setGroupName( x => pGroupName );
         }
       }
     }
@@ -170,10 +170,10 @@ export default function List() {
                       className={ `${ cellClassNames } flex flex-row gap-2` }
                     >
                       <ClipboardButton
-                        text={ `${window.location.origin}/group/${ pGroupId }/${ value }` }
+                        text={ `${window.location.origin}/group/${ pGroupName }/${ value }` }
                       />
                       <LinkButton
-                        link={ `/group/${ pGroupId }/${ value }` }
+                        link={ `/group/${ pGroupName }/${ value }` }
                       />
                     </div>
                   )

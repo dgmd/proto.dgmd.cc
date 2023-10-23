@@ -55,7 +55,7 @@ const PROJECT_ID = 'PROJECT_ID';
 export default function Page() {
 
   const params = useParams( );
-  const pGroupId = params['group-id'];
+  const pGroupName = params['group-name'];
   const pStudentId = params[ 'student-id' ];
 
   const [groupName, setGroupName] = useState( x => '' );
@@ -81,7 +81,7 @@ export default function Page() {
         const roomSupa = await supabase
         .from( 'notion_rooms' )
         .select( 'name, id')
-        .eq( 'url_id', pGroupId );
+        .eq( 'name', pGroupName );
         setGroupName( x => roomSupa.data[0].name );
 
         const roomDataSupa = await supabase
@@ -157,10 +157,10 @@ export default function Page() {
                     className={ `${ cellClassNames } flex flex-row gap-2` }
                   >
                     <ClipboardButton
-                      text={ `${window.location.origin}/group/${pGroupId}/${pStudentId}/${row[PROJECT_VAL]}` }
+                      text={ `${window.location.origin}/group/${pGroupName}/${pStudentId}/${row[PROJECT_VAL]}` }
                     />
                     <LinkButton
-                      link={ `/group/${pGroupId}/${pStudentId}/${row[PROJECT_VAL]}` }
+                      link={ `/group/${pGroupName}/${pStudentId}/${row[PROJECT_VAL]}` }
                     />
                   </div>
 

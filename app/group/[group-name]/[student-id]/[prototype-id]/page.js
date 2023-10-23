@@ -66,7 +66,7 @@ export default function Page() {
 
   const params = useParams( );
   const pStudentId = params['student-id'];
-  const pGroupId = params['group-id'];
+  const pGroupName = params['group-name'];
   const pPrototypeId = params[ 'prototype-id' ];
 
   const [loading, setLoading] = useState( x => false );
@@ -136,7 +136,7 @@ export default function Page() {
   useEffect( () => {
     fetchData( true );
   }, [
-    pGroupId,
+    pGroupName,
     supabase
   ] );
 

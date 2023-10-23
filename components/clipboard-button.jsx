@@ -1,5 +1,5 @@
 import {
-  ClipboardIcon
+  DocumentDuplicateIcon
 } from '@heroicons/react/24/outline';
 
 import {
@@ -15,7 +15,7 @@ export const ClipboardButton = props => {
       className={ getRoundButtonClasses(false) }
       onClick={ () => navigator.clipboard.writeText(text) }
     >
-      <ClipboardIcon
+      <DocumentDuplicateIcon
         className={ getRoundButtonIconClasses() }
         alt="copy to clipboard"
       />

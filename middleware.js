@@ -22,13 +22,17 @@ export const middleware = req => {
 
   // retrieve the HTTP "Origin" header
   // from the incoming request
-  const origin = req.nextUrl.origin;
+  // const origin = req.nextUrl.origin;
   
   // if the origin is an allowed one,
   // add it to the 'Access-Control-Allow-Origin' header
-  if (allowedOriginsRegex.test(origin)) {
-    res.headers.append('Access-Control-Allow-Origin', origin);
-  }
+  // if (allowedOriginsRegex.test(origin)) {
+  //   res.headers.append('Access-Control-Allow-Origin', origin);
+  // }
+
+  res.headers.append('Access-Control-Allow-Origin', '*');
+
+
   // add the remaining CORS headers to the response
   res.headers.append('Access-Control-Allow-Credentials', "true");
   res.headers.append('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');

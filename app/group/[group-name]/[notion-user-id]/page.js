@@ -32,6 +32,7 @@ import {
 } from '/components/look.js';
 
 import {
+  NOTION_RESULT_PRIMARY_DATABASE,
   NOTION_RESULT_BLOCKS,
   NOTION_RESULT_BLOCK_DBS,
   NOTION_RESULT_BLOCK_KEY,
@@ -59,6 +60,7 @@ export default function Page() {
   const pNotionUserId = params[ 'notion-user-id' ];
 
   const [groupName, setGroupName] = useState( x => '' );
+  const [notionUserName, setNotionUserName] = useState( x => '' );
 
   const [
     authSessionState, 
@@ -90,6 +92,11 @@ export default function Page() {
         .eq( 'notion_table', roomSupa.data[0].id );
         
         const json = roomDataSupa.data[0].data;
+        const data = json[NOTION_RESULT_PRIMARY_DATABASE];
+        const datum = data.find( x => x['id'][EXPORT_DATA_VALUE] === pNotionUserId );
+        const name = datum['Name'][EXPORT_DATA_VALUE];
+        setNotionUserName( x => name );
+
         const blocks = json[NOTION_RESULT_BLOCKS];
         const block = blocks.find(
           block => block[NOTION_RESULT_BLOCK_KEY] === pNotionUserId );
@@ -119,12 +126,16 @@ export default function Page() {
   }, [
   ] );
 
+  if ( !notionUserName ) {
+    return null;
+  }
+
   return (
     <div className='flex-grow'>  
 
       <Title
-        title={ groupName }
-        subtitle={ `student: ${pNotionUserId}` }
+        title={ notionUserName }
+        subtitle={ `notion user id: ${ pNotionUserId }` }
       >
       </Title>
 

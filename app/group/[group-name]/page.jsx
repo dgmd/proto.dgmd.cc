@@ -57,7 +57,7 @@ const USER_NAME = 'USER_NAME';
 export default function List() {
 
   const params = useParams( );
-  const pGroupName = params[ 'group-name' ];
+  const pGroupName = decodeURI( params[ 'group-name' ] );
 
   const [groupName, setGroupName] = useState( x => '' );
 

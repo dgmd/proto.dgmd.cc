@@ -65,9 +65,9 @@ const PROTO_LINK = 'PROTO_LINK';
 export default function Page() {
 
   const params = useParams( );
-  const pNotionUserId = params['notion-user-id'];
-  const pGroupName = params['group-name'];
-  const pDatabaseId = params[ 'database-id' ];
+  const pNotionUserId = decodeURI( params['notion-user-id'] );
+  const pGroupName = decodeURI( params['group-name'] );
+  const pDatabaseId = decodeURI( params[ 'database-id' ] );
 
   const [loading, setLoading] = useState( x => false );
   const rLoading = useRef( loading );

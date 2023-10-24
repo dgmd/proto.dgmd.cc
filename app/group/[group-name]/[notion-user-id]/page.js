@@ -56,8 +56,8 @@ const PROJECT_ID = 'PROJECT_ID';
 export default function Page() {
 
   const params = useParams( );
-  const pGroupName = params[ 'group-name' ];
-  const pNotionUserId = params[ 'notion-user-id' ];
+  const pGroupName = decodeURI( params[ 'group-name' ] );
+  const pNotionUserId = decodeURI( params[ 'notion-user-id' ] );
 
   const [groupName, setGroupName] = useState( x => '' );
   const [notionUserName, setNotionUserName] = useState( x => '' );
@@ -122,7 +122,7 @@ export default function Page() {
 
       }
       catch (e) {
-        console.log( 'errordddd', e );
+        console.log( e );
       }
     }
     fetchData();

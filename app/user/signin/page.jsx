@@ -52,6 +52,7 @@ const SignIn = () => {
   };
 
   const cbSignIn = useCallback( event => {
+  try{
    const signInWithEmail = async () => {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email,
@@ -61,6 +62,9 @@ const SignIn = () => {
     }
     console.log( 'go do it' );
     signInWithEmail();
+  } catch( error ) {
+    console.log( 'good morning error', error );
+  }
   }, [
     email,
     password

@@ -42,7 +42,7 @@ import {
 
   NOTION_RESULT,
   NOTION_RESULT_SUCCESS
-} from 'app/api/query/route.ts';
+} from 'app/api/query/keys.js';
 
 import {
   getUserId

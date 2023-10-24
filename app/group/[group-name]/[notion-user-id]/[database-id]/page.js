@@ -30,7 +30,7 @@ import {
   URL_SEARCH_PARAM_RELATIONS_REQUEST,
 
   NOTION_RESULT
-} from 'app/api/query/route.ts';
+} from 'app/api/query/keys.js';
 
 import {
   getTextFromReadableStream

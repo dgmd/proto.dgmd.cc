@@ -41,7 +41,7 @@ import {
   NOTION_RESULT_BLOCK_KEY,
 
   EXPORT_DATA_VALUE
-} from 'app/api/query/route.ts';
+} from 'app/api/query/keys.js';
 
 import {
   ClipboardButton

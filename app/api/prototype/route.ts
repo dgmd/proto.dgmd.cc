@@ -4,7 +4,7 @@ import {
 
 import {
   supabase
-} from 'utils/supa.js';
+} from '../../../utils/supa.js';
 
 import {
   URL_PROTOTYPE_PARAM_ID

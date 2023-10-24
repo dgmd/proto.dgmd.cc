@@ -6,9 +6,9 @@ import {
   supabase
 } from 'utils/supa.js';
 
-import {
-  middleware
-} from 'middleware';
+// import {
+//   middleware
+// } from 'middleware';
 
 //
 //https://github.com/vercel/next.js/discussions/47933#discussioncomment-6197807
@@ -40,7 +40,7 @@ export async function GET( request, response ) {
   const proto = protoSupa.data[0];
 
   //i guess this is how to handle CORS?!!?
-  const resHeaders = middleware( request );
-  const resJson = NextResponse.json( proto.snapshot, resHeaders.headers );
+  // const resHeaders = middleware( request );
+  const resJson = NextResponse.json( proto.snapshot ); // resHeaders.headers );
   return resJson;
 };

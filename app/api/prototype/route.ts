@@ -6,6 +6,10 @@ import {
   supabase
 } from 'utils/supa.js';
 
+import {
+  URL_PROTOTYPE_PARAM_ID
+} from './keys.js';
+
 // import {
 //   middleware
 // } from 'middleware';
@@ -44,4 +48,3 @@ export async function GET( request, response ) {
   return resJson;
 };
 
-export const URL_PROTOTYPE_PARAM_ID = 'i';

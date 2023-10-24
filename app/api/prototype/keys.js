@@ -1,0 +1,1 @@
+export const URL_PROTOTYPE_PARAM_ID = 'i';

@@ -1,6 +1,5 @@
-//
-//https://supabase.com/docs/guides/auth/quickstarts/react
-//  
+"use client"
+import { useEffect } from 'react';
 
 import {
     createClient

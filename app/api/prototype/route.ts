@@ -16,7 +16,6 @@ import {
 //https://blog.logrocket.com/using-cors-next-js-handle-cross-origin-requests/
 //
 
-export const URL_PROTOTYPE_PARAM_ID = 'i';
 const PROTOTYPE_ID = 'PROTOTYPE_ID';
 
 export async function GET( request, response ) {
@@ -44,3 +43,5 @@ export async function GET( request, response ) {
   const resJson = NextResponse.json( proto.snapshot ); // resHeaders.headers );
   return resJson;
 };
+
+export const URL_PROTOTYPE_PARAM_ID = 'i';

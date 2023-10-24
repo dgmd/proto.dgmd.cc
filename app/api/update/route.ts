@@ -43,27 +43,27 @@ import {
 
   export async function GET( req: Request, res: Response ) {
   
-    // connect to NOTION
-    const notionSecret = SECRET_ID;
-    const nClient = new Client({ 
-      auth: notionSecret
-    });
+    // // connect to NOTION
+    // const notionSecret = SECRET_ID;
+    // const nClient = new Client({ 
+    //   auth: notionSecret
+    // });
   
-    const pageId = '87d1d139-0f1a-4739-a0de-ecf275928d59';
-    const response = await nClient.pages.update({
-      page_id: pageId,
+    // const pageId = '87d1d139-0f1a-4739-a0de-ecf275928d59';
+    // const response = await nClient.pages.update({
+    //   page_id: pageId,
   
-      properties: {
-        'name': {
-          title: [{
-            text: {
-              content: 'soy protein'
-            }
-          }]
-        }
-      }
-    });
-    console.log(response);
+    //   properties: {
+    //     'name': {
+    //       title: [{
+    //         text: {
+    //           content: 'soy protein'
+    //         }
+    //       }]
+    //     }
+    //   }
+    // });
+    // console.log(response);
   
   
     return NextResponse.json( { hello: 'world' } );

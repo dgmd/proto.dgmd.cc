@@ -85,9 +85,6 @@ export default function Page() {
         .select( 'id' );
         // .eq( 'name', pGroupName );
 
-        console.log( 'pGroupName', pGroupName );
-        console.log( 'roomSupa', roomSupa );
-
         setGroupName( x => {
           roomSupa.data.length ? roomSupa.data[0].name : x
         } );

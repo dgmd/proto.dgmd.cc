@@ -10,9 +10,10 @@ import {
   URL_PROTOTYPE_PARAM_ID
 } from './keys.js';
 
-// import {
-//   middleware
-// } from 'middleware';
+import {
+  getApiCoriHeaders
+} from '../../../utils/coriHeaders.js';
+
 
 //
 //https://github.com/vercel/next.js/discussions/47933#discussioncomment-6197807
@@ -42,9 +43,14 @@ export async function GET( request, response ) {
 
   const proto = protoSupa.data[0];
 
-  //i guess this is how to handle CORS?!!?
-  // const resHeaders = middleware( request );
-  const resJson = NextResponse.json( proto.snapshot ); // resHeaders.headers );
+  const resJson = NextResponse.json(
+    proto.snapshot
+  );
+  const headersList = getApiCoriHeaders( request );
+  for (const header of headersList) {
+    resJson.headers.set( header[0], header[1] );
+  }
+
   return resJson;
 };
 

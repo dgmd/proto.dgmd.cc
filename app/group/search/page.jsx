@@ -7,51 +7,35 @@ import {
 } from 'components/look.js';
 
 import {
-  AUTH_STATE_SIGNED_IN,
-  AUTH_STATE_SIGNED_OUT,
-  useAuthentication
-} from 'hooks/AuthenticationHook.js';
-
-import {
   useRouter
 } from "next/navigation";
 
 import {
   useCallback,
-  useState,
-  useEffect,
-  use
+  useState
 } from 'react';
 
 const Search = () => {
 
   const router = useRouter();
 
-  const [
-    authSessionState, 
-    authSession, 
-    authEvent,
-    supabase,
-    supaUiReady
-  ] = useAuthentication( );
+  const [studentCode, setStudentCode] = useState( "" );
 
-
-  const [groupName, setGroupName] = useState( "" );
-  const [notionUserId, setNotionUserId] = useState( "" );
-
-  const cbChangeNotionUserId = useCallback( event => {
-    setNotionUserId( x => event.target.value );
-  }, [ ] );
-
-  const cbChangeGroupName = useCallback( event => {
-    setGroupName( x => event.target.value );
+  const cbChangeStudentCode = useCallback( event => {
+    setStudentCode( x => event.target.value.trim() );
   }, [ ] );
 
   const cbSignIn = useCallback( event => {
-    router.push( `/group/${ groupName }/${ notionUserId }/` );
+    const lastHyphenIndex = studentCode.lastIndexOf('-');
+    if (lastHyphenIndex !== -1) {
+      const groupName = studentCode.substring(0, lastHyphenIndex);
+      const notionUserId = studentCode.substring(lastHyphenIndex + 1);
+      if (groupName.length > 0 && notionUserId.length > 0) {
+        router.push( `/group/${ groupName }/${ notionUserId }/` );
+      }
+    }
   }, [
-    notionUserId,
-    groupName,
+    studentCode,
     router
   ] );
 
@@ -65,31 +49,15 @@ const Search = () => {
           className="mb-4"
         >
           <label
-            htmlFor="group-name"
+            htmlFor="student-code"
             className="block text-gray-600 text-sm font-medium mb-2">
-              Group Name:
+              Student Code:
           </label>
           <input
             type="text"
             className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-400"
-            id="group-name"
-            onChange={ cbChangeGroupName }
-          />
-        </div>
-
-        <div
-          className="mb-4"
-        >
-          <label
-            htmlFor="user-id"
-            className="block text-gray-600 text-sm font-medium mb-2">
-              Notion User Id:
-          </label>
-          <input
-            type="text"
-            className="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-400"
-            id="user-id"
-            onChange={ cbChangeNotionUserId }
+            id="student-code"
+            onChange={ cbChangeStudentCode }
           />
         </div>
 

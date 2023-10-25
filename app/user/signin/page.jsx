@@ -58,9 +58,7 @@ const SignIn = () => {
         email: email,
         password: password,
       } );
-      console.log( 'data', data, 'error', error );
     }
-    console.log( 'go do it' );
     signInWithEmail();
   } catch( error ) {
     console.log( 'good morning error', error );

@@ -82,8 +82,8 @@ export default function Page() {
         //try to load in what we got here already
         const roomSupa = await supabase
         .from( 'notion_rooms' )
-        .select( 'id' );
-        // .eq( 'name', pGroupName );
+        .select( 'id' )
+        .eq( 'name', pGroupName );
 
         setGroupName( x => {
           roomSupa.data.length ? roomSupa.data[0].name : x

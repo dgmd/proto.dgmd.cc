@@ -62,13 +62,10 @@ const QUERY_PREFIX = 'QUERY_PREFIX';
 const QUERY_KEY = 'QUERY_KEY';
 const QUERY_PROPERTIES = 'QUERY_PROPERTIES';
 
-
-
 const SECRET_ID = 'SECRET_ID';
 const DATABASE_ID = 'DATABASE_ID';
 const RELATIONS_REQUEST = 'RELATIONS_REQUEST';
 const BLOCKS_REQUEST = 'BLOCKS_REQUEST';
-
 
 export async function GET( request, response ) {
 
@@ -210,9 +207,12 @@ const getNotionDbaseProperties = notionDatas => {
       for (const key of keys) {
         if (key === NOTION_ID) {
 
+          const id = resultData[key];
+          const idSansHyphens = id.replace( /-/g, '' );
+
           somedata[DGMDCC_ID] = {
             [EXPORT_DATA_TYPE]: DGMDCC_ID,
-            [EXPORT_DATA_VALUE]: resultData[key]
+            [EXPORT_DATA_VALUE]: idSansHyphens
           };
         }
         else if (key === NOTION_URL) {
@@ -310,7 +310,9 @@ const getNotionDbaseProperties = notionDatas => {
                 NOTION_DATA_TYPE_MULTI_SELECT,
                 NOTION_DATA_TYPE_FILES,
                 NOTION_DATA_TYPE_NUMBER,
-                NOTION_DATA_TYPE_TITLE
+                NOTION_DATA_TYPE_TITLE,
+                NOTION_DATA_TYPE_RICH_TEXT,
+                NOTION_DATA_TYPE_RELATION
               ].includes( propertyType )) {
 
                 somedata[propertyKey] = {

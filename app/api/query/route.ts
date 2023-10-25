@@ -7,6 +7,10 @@ import {
 } from "@notionhq/client";
 
 import {
+  removeHyphens
+} from '../../../utils/strings.js';
+
+import {
   EXPORT_DATA_TYPE,
   EXPORT_DATA_VALUE,
   EXPORT_DATA_KEY,
@@ -208,7 +212,7 @@ const getNotionDbaseProperties = notionDatas => {
         if (key === NOTION_ID) {
 
           const id = resultData[key];
-          const idSansHyphens = id.replace( /-/g, '' );
+          const idSansHyphens = removeHyphens( id );
 
           somedata[DGMDCC_ID] = {
             [EXPORT_DATA_TYPE]: DGMDCC_ID,
@@ -358,9 +362,10 @@ const getNotionBlockKeyedDatabases = blockDatas => {
       const gotPropertyVal = propertyVal !== null && propertyVal !== undefined;
       if (gotPropertyVal && propertyType === NOTION_DATA_TYPE_CHILD_DATABASE) {
         const id = cur[NOTION_KEY_ID];
+        const idSansHyphens = removeHyphens( id );
         const propertyValTitle = propertyVal[NOTION_DATA_TYPE_TITLE];
         const obj = {
-          [EXPORT_DATA_KEY]: id,
+          [EXPORT_DATA_KEY]: idSansHyphens,
           [EXPORT_DATA_VALUE]: propertyValTitle
         };
         acc.push( obj );

@@ -32,6 +32,10 @@ import {
   
 } from './keys.js';
 
+import {
+  getApiCoriHeaders
+} from '../../../utils/coriHeaders.js';
+
 const NOTION_ID = 'id';
 const DGMDCC_ID = 'id';
 
@@ -171,18 +175,31 @@ export async function GET( request, response ) {
       orgDbResults[NOTION_RESULT_BLOCKS] = notionBlockResultsIndexed;
     }
 
-    return NextResponse.json( {
+    // return NextResponse.json( {
+    //   [NOTION_RESULT_SUCCESS]: true,
+    //   [NOTION_RESULT]: orgDbResults
+    // } );
+    return createResponse( {
       [NOTION_RESULT_SUCCESS]: true,
       [NOTION_RESULT]: orgDbResults
-    } );
+    }, request );
+
   }
   catch ( e ) {
-    return NextResponse.json( {
+    return createResponse( {
       [NOTION_RESULT_SUCCESS]: false,
       [NOTION_RESULT_ERROR]: 'invalid credentials'
-    } );
+    }, request );
   }
+};
 
+const createResponse = (json, request) => {
+  const resJson = NextResponse.json( json );
+  const headersList = getApiCoriHeaders( request );
+  for (const header of headersList) {
+    resJson.headers.set( header[0], header[1] );
+  }
+  return resJson;
 };
 
 const getNotionDbaseRelationIds = notionDbases => {

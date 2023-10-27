@@ -23,6 +23,8 @@ import {
 
 const PROTOTYPE_ID = 'PROTOTYPE_ID';
 
+const SNAPSHOT_TIMESTAMP = 'SNAPSHOT_TIMESTAMP';
+
 export async function GET( request, response ) {
 
   const values = {
@@ -37,15 +39,17 @@ export async function GET( request, response ) {
 
   const protoSupa = await supabase
   .from( 'project_archive' )
-  .select( 'snapshot' )
+  .select( 'snapshot, created_at' )
   .eq( 'url_id', values[PROTOTYPE_ID] )
   .limit( 1 );
 
   const proto = protoSupa.data[0];
+  proto.snapshot[SNAPSHOT_TIMESTAMP] = proto['created_at'];
 
   const resJson = NextResponse.json(
     proto.snapshot
   );
+
   const headersList = getApiCoriHeaders( request );
   for (const header of headersList) {
     resJson.headers.set( header[0], header[1] );

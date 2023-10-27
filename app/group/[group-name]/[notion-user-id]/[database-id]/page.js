@@ -33,6 +33,10 @@ import {
 } from 'app/api/query/keys.js';
 
 import {
+  URL_PROTOTYPE_PARAM_ID
+} from 'app/api/prototype/keys.js'
+
+import {
   getTextFromReadableStream
 } from 'utils/network.js';
 
@@ -219,7 +223,7 @@ const getRows = ( rows, liveDataLink ) => {
     } );
     acc.push( {
      [PROTO_TYPE]: PROTO_LINK,
-     [PROTO_VAL]: `/api/prototype?i=${cur.url_id}`
+     [PROTO_VAL]: `/api/prototype?${ URL_PROTOTYPE_PARAM_ID }=${ cur.url_id }`
     } );
     return acc;
   }, [

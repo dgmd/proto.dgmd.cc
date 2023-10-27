@@ -1,6 +1,3 @@
-import {
-    NextResponse
-  } from 'next/server';
   
   const allowedOrigins =
     process.env.CORS_ORIGINS.split(',').map(

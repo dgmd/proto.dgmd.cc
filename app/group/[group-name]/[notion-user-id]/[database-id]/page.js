@@ -3,8 +3,8 @@
 import 'app/globals.css';
 
 import {
-  useRef,
   useEffect,
+  useRef,
   useState
 } from "react";
 
@@ -12,29 +12,26 @@ import {
   useParams
 } from 'next/navigation';
 
-import Link from 'next/link';
-
 import {
   Title
 } from 'components/title';
 
 import {
-  Table,
+  TABLE_HEADER_HIDE,
   TABLE_HEADER_NAME,
-  TABLE_HEADER_HIDE
+  Table
 } from 'components/table.jsx';
 
 import {
-  URL_SEARCH_PARAM_DATABASE,
+  NOTION_RESULT,
   URL_SEARCH_PARAM_BLOCKS_REQUEST,
-  URL_SEARCH_PARAM_RELATIONS_REQUEST,
-
-  NOTION_RESULT
+  URL_SEARCH_PARAM_DATABASE,
+  URL_SEARCH_PARAM_RELATIONS_REQUEST
 } from 'app/api/query/keys.js';
 
 import {
   URL_PROTOTYPE_PARAM_ID
-} from 'app/api/prototype/keys.js'
+} from 'app/api/prototype/keys.js';
 
 import {
   getTextFromReadableStream

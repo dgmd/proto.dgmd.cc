@@ -11,16 +11,14 @@ import {
   useParams
 } from 'next/navigation';
 
-import Link from 'next/link';
-
 import {
   Title
 } from 'components/title';
 
 import {
-  Table,
+  TABLE_HEADER_HIDE,
   TABLE_HEADER_NAME,
-  TABLE_HEADER_HIDE
+  Table
 } from 'components/table.jsx';
 
 import {
@@ -32,12 +30,12 @@ import {
 } from '/components/look.js';
 
 import {
-  NOTION_RESULT_PRIMARY_DATABASE,
+  EXPORT_DATA_KEY,
+  EXPORT_DATA_VALUE,
   NOTION_RESULT_BLOCKS,
   NOTION_RESULT_BLOCK_DBS,
   NOTION_RESULT_BLOCK_KEY,
-  EXPORT_DATA_KEY,
-  EXPORT_DATA_VALUE
+  NOTION_RESULT_PRIMARY_DATABASE
 } from 'app/api/query/keys.js';
 
 import {

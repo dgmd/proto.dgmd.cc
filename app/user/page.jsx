@@ -36,12 +36,11 @@ import {
 } from '/components/look.js';
 
 import {
-  URL_SEARCH_PARAM_DATABASE,
-  URL_SEARCH_PARAM_BLOCKS_REQUEST,
-  URL_SEARCH_PARAM_RELATIONS_REQUEST,
-
   NOTION_RESULT,
-  NOTION_RESULT_SUCCESS
+  NOTION_RESULT_SUCCESS,
+  URL_SEARCH_PARAM_BLOCKS_REQUEST,
+  URL_SEARCH_PARAM_DATABASE,
+  URL_SEARCH_PARAM_RELATIONS_REQUEST
 } from 'app/api/query/keys.js';
 
 import {
@@ -49,11 +48,11 @@ import {
 } from 'hooks/AuthenticationHook.js';
 
 import {
-  Table,
   TABLE_COL_HIDE_MD,
   TABLE_COL_HIDE_SM,
+  TABLE_HEADER_HIDE,
   TABLE_HEADER_NAME,
-  TABLE_HEADER_HIDE
+  Table
 } from 'components/table.jsx';
 
 import {

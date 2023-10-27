@@ -1,7 +1,7 @@
 import {
-  useState,
+  useCallback,
   useRef,
-  useCallback
+  useState
 } from 'react';
 
 import {

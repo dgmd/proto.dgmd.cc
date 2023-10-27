@@ -16,8 +16,8 @@ import {
 
 import {
   useCallback,
-  useState,
-  useEffect
+  useEffect,
+  useState
 } from 'react';
 
 const SignIn = () => {

@@ -84,7 +84,7 @@ export default function Page() {
     { [TABLE_HEADER_NAME]: 'date', [TABLE_HEADER_HIDE]: null },
     { [TABLE_HEADER_NAME]: 'link', [TABLE_HEADER_HIDE]: null }
   ] );
-  const [rows, setRows] = useState( x => [] );
+  const [rows, setRows] = useState( x => getRows( [], getLiveDataLink(pDatabaseId) ) );
 
   const fetchData = async ( initial ) => {
     if (rLoading.current) {
@@ -101,7 +101,8 @@ export default function Page() {
     .order( 'created_at', { ascending: false } )
     .eq( 'prototype_id', pDatabaseId );
 
-    if (timeStampsSupa.data.length === 0 || !initial) {
+    // if (timeStampsSupa.data.length === 0 || !initial) {
+    if (!initial) {
 
       const snapshot = await queryApiForProject( pDatabaseId );
       const snapshotData = snapshot[NOTION_RESULT];
@@ -121,11 +122,11 @@ export default function Page() {
       .select( 'created_at, url_id')
       .order( 'created_at', { ascending: false } )
       .eq( 'prototype_id', pDatabaseId );
-      const irows = getRows( timeStampsSupa.data );
+      const irows = getRows( timeStampsSupa.data, getLiveDataLink(pDatabaseId) );
       setRows( r => irows );
     }
     else {
-      const irows = getRows( timeStampsSupa.data );
+      const irows = getRows( timeStampsSupa.data, getLiveDataLink(pDatabaseId) );
       setRows( r => irows );
     }
 
@@ -136,6 +137,7 @@ export default function Page() {
   useEffect( () => {
     fetchData( true );
   }, [
+    pDatabaseId,
     pGroupName,
     supabase
   ] );
@@ -149,7 +151,7 @@ export default function Page() {
         rows.length > 0 &&
         <button
           className={ buttonClassNames + " mt-2" }
-          onClick={ () => fetchData(false) }>
+          onClick={ () => fetchData( false ) }>
           Grab New Snapshot
           <ArrowPathIcon
             className={ `h-5 w-5 pointer-events-none ${ loading ? `animate-spin` : `` }` }
@@ -200,22 +202,16 @@ export default function Page() {
 };
 
 const queryApiForProject = async( dbId ) => {
-  const paramsObj = {
-    [URL_SEARCH_PARAM_DATABASE]: dbId,
-    [URL_SEARCH_PARAM_BLOCKS_REQUEST]: false,
-    [URL_SEARCH_PARAM_RELATIONS_REQUEST]: true
-  };
-  const params = new URLSearchParams( paramsObj );
-  const res = await fetch(
-    `/api/query?${ params.toString() }`
-  );
+  const link = getLiveDataLink( dbId );
+  const res = await fetch( link );
   const resBody = res.body;
   const text = await getTextFromReadableStream( resBody );
   const js = JSON.parse( text );
   return js;
 };
 
-const getRows = ( rows ) => {
+const getRows = ( rows, liveDataLink ) => {
+
   return rows.reduce( (acc, cur) => {
     acc.push( {
       [PROTO_TYPE]: PROTO_DATE,
@@ -226,5 +222,25 @@ const getRows = ( rows ) => {
      [PROTO_VAL]: `/api/prototype?i=${cur.url_id}`
     } );
     return acc;
-  }, [] );
+  }, [
+    {
+      [PROTO_TYPE]: PROTO_DATE,
+      [PROTO_VAL]: 'LIVE DATA'
+    },
+    {
+      [PROTO_TYPE]: PROTO_LINK,
+      [PROTO_VAL]: liveDataLink
+    }
+
+  ] );
+};
+
+const getLiveDataLink = dbId => {
+  const paramsObj = {
+    [URL_SEARCH_PARAM_DATABASE]: dbId,
+    [URL_SEARCH_PARAM_BLOCKS_REQUEST]: false,
+    [URL_SEARCH_PARAM_RELATIONS_REQUEST]: true
+  };
+  const params = new URLSearchParams( paramsObj );
+  return `/api/query?${ params.toString() }`;
 };

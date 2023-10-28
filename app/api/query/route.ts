@@ -175,10 +175,6 @@ export async function GET( request, response ) {
       orgDbResults[NOTION_RESULT_BLOCKS] = notionBlockResultsIndexed;
     }
 
-    // return NextResponse.json( {
-    //   [NOTION_RESULT_SUCCESS]: true,
-    //   [NOTION_RESULT]: orgDbResults
-    // } );
     return createResponse( {
       [NOTION_RESULT_SUCCESS]: true,
       [NOTION_RESULT]: orgDbResults

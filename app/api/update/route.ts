@@ -14,7 +14,10 @@
     CRUD_RESPONSE_SUCCESS,
     URL_SEARCH_PARAM_ACTION,
     URL_SEARCH_VALUE_ACTION_DELETE,
-    URL_SEARCH_PARAM_DELETE_BLOCK_ID
+    URL_SEARCH_PARAM_DELETE_BLOCK_ID,
+    URL_SEARCH_VALUE_ACTION_APPEND,
+    URL_SEARCH_PARAM_APPEND_BLOCK_ID,
+    URL_SEARCH_PARAM_APPEND_CHILDREN
   } from './keys.js';
   
   const NOTION_ID = 'id';
@@ -78,7 +81,26 @@
         rObj[CRUD_RESPONSE_SUCCESS] = true;
       }
       catch (error) {
-        console.error( 'error', error );
+        rObj[CRUD_RESPONSE_SUCCESS] = false;
+      }
+      return createResponse( rObj, request );
+    }
+    else if (paramAction === URL_SEARCH_VALUE_ACTION_APPEND) {
+      const appendBlockId = params.get(URL_SEARCH_PARAM_APPEND_BLOCK_ID);
+      const rObj = {};
+      try {
+        const appendChildren = params.get(URL_SEARCH_PARAM_APPEND_CHILDREN);
+        const children = JSON.parse( decodeURIComponent(appendChildren) );
+        console.log( 'children', children );
+
+        // const response = await nClient.blocks.children.append( {
+        //   block_id: appendBlockId,
+        //   children: children
+        // } );
+        // console.log( 'response', response );
+        rObj[CRUD_RESPONSE_SUCCESS] = true;
+      }
+      catch (error) {
         rObj[CRUD_RESPONSE_SUCCESS] = false;
       }
       return createResponse( rObj, request );

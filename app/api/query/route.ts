@@ -23,6 +23,7 @@ import {
   NOTION_RESULT_PRIMARY_DATABASE,
   NOTION_RESULT_RELATION_DATABASES,
   NOTION_RESULT_BLOCKS,
+  NOTION_RESULT_DATABASE_ID,
   
   NOTION_RESULT_BLOCK_KEY,
   NOTION_RESULT_BLOCK_DBS,
@@ -68,6 +69,7 @@ const NOTION_KEY_RELATION = 'relation';
 
 const QUERY_PREFIX = 'QUERY_PREFIX';
 const QUERY_KEY = 'QUERY_KEY';
+const QUERY_ID = 'QUERY_ID';
 const QUERY_PROPERTIES = 'QUERY_PROPERTIES';
 
 const SECRET_ID = 'SECRET_ID';
@@ -134,19 +136,27 @@ export async function GET( request, response ) {
       [NOTION_RESULT_PRIMARY_DATABASE]: null,
     };
     if (requests[RELATIONS_REQUEST]) {
-      orgDbResult[NOTION_RESULT_RELATION_DATABASES] = {};
+      orgDbResult[NOTION_RESULT_RELATION_DATABASES] = [];
     }
 
     //organize the results
     const orgDbResults = allDbResults.reduce( (acc, cur) => {
+      const qId = cur[QUERY_ID];
       const qKey = cur[QUERY_KEY];
       const qProps = cur[QUERY_PROPERTIES];
       const unprefixedKey = qKey.replace( QUERY_PREFIX, '' );
       if (unprefixedKey.length === 0) {
-        acc[NOTION_RESULT_PRIMARY_DATABASE] = qProps;
+        acc[NOTION_RESULT_PRIMARY_DATABASE] = {
+          [NOTION_RESULT_BLOCKS]: qProps,
+          [NOTION_RESULT_DATABASE_ID]: qId
+        }
       }
       else if (requests[RELATIONS_REQUEST]) {
-        acc[NOTION_RESULT_RELATION_DATABASES][unprefixedKey] = qProps;
+        acc[NOTION_RESULT_RELATION_DATABASES].push( {
+          [NOTION_RESULT_BLOCKS]: qProps,
+          [NOTION_RESULT_DATABASE_ID]: qId
+          // add unprefixedKey??
+        } );
       }
       return acc;
     }, orgDbResult );
@@ -356,7 +366,8 @@ const getNotionDbasePromise = (nClient, dbaseId, queryKey) => {
         const properties = getNotionDbaseProperties( result );
         const propertyObj = {
           [QUERY_KEY]: queryKey,
-          [QUERY_PROPERTIES]: properties
+          [QUERY_PROPERTIES]: properties,
+          [QUERY_ID]: dbaseId
         };
         resolve( propertyObj );
       })

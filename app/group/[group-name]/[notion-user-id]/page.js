@@ -93,7 +93,7 @@ export default function Page() {
         .eq( 'notion_table', roomSupa.data[0].id );
         
         const json = roomDataSupa.data[0].data;
-        const data = json[NOTION_RESULT_PRIMARY_DATABASE];
+        const data = json[NOTION_RESULT_PRIMARY_DATABASE][NOTION_RESULT_BLOCKS];
         const datum = data.find( x => x['id'][EXPORT_DATA_VALUE] === pNotionUserId );
         const name = datum['Name'][EXPORT_DATA_VALUE];
         setNotionUserName( x => name );

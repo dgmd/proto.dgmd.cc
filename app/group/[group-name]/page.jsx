@@ -103,7 +103,7 @@ export default function List() {
 
         if (dataResultSupa.data && dataResultSupa.data.length > 0) {
           const room = dataResultSupa.data[0].data;
-          const students = room[NOTION_RESULT_PRIMARY_DATABASE];
+          const students = room[NOTION_RESULT_PRIMARY_DATABASE][NOTION_RESULT_BLOCKS];
           const blocks = room[NOTION_RESULT_BLOCKS];
           for (const student of students) {
             const studentId = student['id'][EXPORT_DATA_VALUE];

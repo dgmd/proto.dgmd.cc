@@ -17,47 +17,14 @@
     URL_SEARCH_PARAM_DELETE_BLOCK_ID,
     URL_SEARCH_VALUE_ACTION_APPEND,
     URL_SEARCH_PARAM_APPEND_BLOCK_ID,
-    URL_SEARCH_PARAM_APPEND_CHILDREN
+    URL_SEARCH_PARAM_APPEND_CHILDREN,
+    URL_SEARCH_VALUE_ACTION_UPDATE,
+    URL_SEARCH_PARAM_UPDATE_BLOCK_ID,
+    URL_SEARCH_PARAM_UPDATE_BLOCK
   } from './keys.js';
-  
-  const NOTION_ID = 'id';
-  const DGMDCC_ID = 'id';
-  
-  const NOTION_URL = 'url';
-  const DGMDCC_URL = 'url';
-  
-  const NOTION_RESULTS = 'results';
-  const NOTION_PROPERTIES = 'properties';
-  
-  const NOTION_DATA_TYPE = 'type';
-  const NOTION_DATA_TYPE_NUMBER = 'number';
-  const NOTION_DATA_TYPE_SELECT = 'select';
-  const NOTION_DATA_TYPE_MULTI_SELECT = 'multi_select';
-  const NOTION_DATA_TYPE_FILES = 'files';
-  const NOTION_DATA_TYPE_TITLE = 'title';
-  const NOTION_DATA_TYPE_RICH_TEXT = 'rich_text';
-  const NOTION_DATA_TYPE_RELATION = 'relation';
-  
-  const NOTION_KEY_NAME = 'name';
-  const NOTION_KEY_FILE = 'file';
-  const NOTION_KEY_URL = 'url';
-  const NOTION_KEY_PLAIN_TEXT = 'plain_text';
-  const NOTION_KEY_DATABASE_ID = 'database_id';
-  const NOTION_KEY_ID = 'id';
-  
-  const NOTION_KEY_RELATION = 'relation';
-  
-  const QUERY_PREFIX = 'QUERY_PREFIX';
-  const QUERY_KEY = 'QUERY_KEY';
-  const QUERY_PROPERTIES = 'QUERY_PROPERTIES';
-  
-  const NOTION_RESULT_PRIMARY_DATABASE = 'NOTION_RESULT_PRIMARY_DATABASE';
-  const NOTION_RESULT_RELATION_DATABASES = 'NOTION_RESULT_RELATION_DATABASES';
   
   const SECRET_ID = 'SECRET_ID';
   const DATABASE_ID = 'DATABASE_ID';
-
-
 
   export async function GET( request, response ) {
 
@@ -74,64 +41,68 @@
 
     if (paramAction === URL_SEARCH_VALUE_ACTION_DELETE) {
       const deleteBlockId = params.get(URL_SEARCH_PARAM_DELETE_BLOCK_ID);
-      const rObj = {};
+      const rObj = {
+        [CRUD_RESPONSE_SUCCESS]: false
+      };
       try {
-        const response = await nClient.blocks.delete( {block_id: deleteBlockId} );
+        const response = await nClient.blocks.delete( {
+          block_id: deleteBlockId
+        } );
         // console.log( 'response', response );
         rObj[CRUD_RESPONSE_SUCCESS] = true;
       }
       catch (error) {
-        rObj[CRUD_RESPONSE_SUCCESS] = false;
+        console.log( 'error', error );
       }
       return createResponse( rObj, request );
     }
     else if (paramAction === URL_SEARCH_VALUE_ACTION_APPEND) {
-      const appendBlockId = params.get(URL_SEARCH_PARAM_APPEND_BLOCK_ID);
-      const rObj = {};
+      const rObj = {
+        [CRUD_RESPONSE_SUCCESS]: false
+      };
       try {
-        const appendChildren = params.get(URL_SEARCH_PARAM_APPEND_CHILDREN);
-        const children = JSON.parse( decodeURIComponent(appendChildren) );
-        console.log( 'children', children );
+        const appendBlockId = params.get(URL_SEARCH_PARAM_APPEND_BLOCK_ID);
+        const appendChildrenParam = params.get(URL_SEARCH_PARAM_APPEND_CHILDREN);
+        const appendChildrenObj = JSON.parse( decodeURIComponent(appendChildrenParam) );
 
-        // const response = await nClient.blocks.children.append( {
-        //   block_id: appendBlockId,
-        //   children: children
-        // } );
-        // console.log( 'response', response );
+        await nClient.pages.create({
+          parent: {
+            type: 'database_id',
+            database_id: appendBlockId
+          },
+          properties: appendChildrenObj,
+          children: [],
+        });
         rObj[CRUD_RESPONSE_SUCCESS] = true;
       }
       catch (error) {
-        rObj[CRUD_RESPONSE_SUCCESS] = false;
+        console.log( 'error', error );
+      }
+      return createResponse( rObj, request );
+    }
+    else if (paramAction === URL_SEARCH_VALUE_ACTION_UPDATE) {
+      const rObj = {
+        [CRUD_RESPONSE_SUCCESS]: false
+      };
+      try {
+        const updateBlockId = params.get(URL_SEARCH_PARAM_UPDATE_BLOCK_ID);
+        const updateBlockParam = params.get( URL_SEARCH_PARAM_UPDATE_BLOCK );
+        const updateBlockObj = JSON.parse( decodeURIComponent(updateBlockParam) );
+        const response = await nClient.pages.update({
+          page_id: updateBlockId,
+          properties: updateBlockObj
+        });
+        rObj[CRUD_RESPONSE_SUCCESS] = true;
+      }
+      catch (error) {
+        console.log( 'error', error );
       }
       return createResponse( rObj, request );
     }
 
-
-  
-    // // connect to NOTION
-    // const notionSecret = SECRET_ID;
-    // const nClient = new Client({ 
-    //   auth: notionSecret
-    // });
-  
-    // const pageId = '87d1d139-0f1a-4739-a0de-ecf275928d59';
-    // const response = await nClient.pages.update({
-    //   page_id: pageId,
-  
-    //   properties: {
-    //     'name': {
-    //       title: [{
-    //         text: {
-    //           content: 'soy protein'
-    //         }
-    //       }]
-    //     }
-    //   }
-    // });
-    // console.log(response);
-  
-  
-    return NextResponse.json( { hello: 'world' } );
+    return createResponse( {
+      [CRUD_RESPONSE_SUCCESS]: false
+    }, request );
   
   };
 

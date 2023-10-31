@@ -3,8 +3,10 @@
 import 'app/globals.css';
 
 import {
+  useCallback,
   useEffect,
-  useState
+  useState,
+  useRef
 } from "react";
 
 import {
@@ -26,8 +28,13 @@ import {
 } from 'hooks/AuthenticationHook.js';
 
 import {
+  buttonClassNames,
   cellClassNames
 } from '/components/look.js';
+
+import {
+  ArrowPathIcon
+} from '@heroicons/react/20/solid';
 
 import {
   EXPORT_DATA_KEY,
@@ -35,7 +42,10 @@ import {
   NOTION_RESULT_BLOCKS,
   NOTION_RESULT_BLOCK_DBS,
   NOTION_RESULT_BLOCK_KEY,
-  NOTION_RESULT_PRIMARY_DATABASE
+  NOTION_RESULT_PRIMARY_DATABASE,
+
+  NOTION_RESULT,
+  NOTION_RESULT_SUCCESS
 } from 'app/api/query/keys.js';
 
 import {
@@ -45,6 +55,11 @@ import {
 import {
   LinkButton
 } from 'components/link-button.jsx';
+
+import {
+  queryApiForRoom
+} from 'hooks/FetchNotionDataHook.js';
+
 
 const PROJECT_TYPE = 'PROJECT_TYPE';
 const PROJECT_VAL = 'PROJECT_VAL';
@@ -74,58 +89,108 @@ export default function Page() {
   ] );
   const [rows, setRows] = useState( x => [] );
 
-  useEffect( () => {
-    const fetchData = async () => {
-      try {
-        //try to load in what we got here already
-        const roomSupa = await supabase
-        .from( 'notion_rooms' )
-        .select( 'id' )
-        .eq( 'name', pGroupName  );
+  const [loading, setLoading] = useState( x => false );
+  const rLoading = useRef( loading );
 
-        setGroupName( x => {
-          roomSupa.data.length ? roomSupa.data[0].name : x
-        } );
+  const fetchData = async () => {
+    try {
+      //try to load in what we got here already
+      const roomSupa = await supabase
+      .from( 'notion_rooms' )
+      .select( 'id' )
+      .eq( 'name', pGroupName  );
 
-        const roomDataSupa = await supabase
-        .from( 'notion_rooms_data' )
-        .select( 'data' )
-        .order( 'created_at', { ascending: false } )
-        .eq( 'notion_table', roomSupa.data[0].id );
-        
-        const json = roomDataSupa.data[0].data;
-        const data = json[NOTION_RESULT_PRIMARY_DATABASE][NOTION_RESULT_BLOCKS];
-        const datum = data.find( x => x['id'][EXPORT_DATA_VALUE] === pNotionUserId );
-        const name = datum['Name'][EXPORT_DATA_VALUE];
-        setNotionUserName( x => name );
+      setGroupName( x => {
+        roomSupa.data.length ? roomSupa.data[0].name : x
+      } );
 
-        const blocks = json[NOTION_RESULT_BLOCKS];
-        const block = blocks.find(
-          block => block[NOTION_RESULT_BLOCK_KEY] === pNotionUserId );
-        const blockDbs = block[NOTION_RESULT_BLOCK_DBS];
+      const roomDataSupa = await supabase
+      .from( 'notion_rooms_data' )
+      .select( 'data' )
+      .order( 'created_at', { ascending: false } )
+      .eq( 'notion_table', roomSupa.data[0].id );
+      
+      const json = roomDataSupa.data[0].data;
+      const data = json[NOTION_RESULT_PRIMARY_DATABASE][NOTION_RESULT_BLOCKS];
+      const datum = data.find( x => x['id'][EXPORT_DATA_VALUE] === pNotionUserId );
+      const name = datum['Name'][EXPORT_DATA_VALUE];
+      setNotionUserName( x => name );
 
-        const rowData = blockDbs.reduce( (acc, cur) => {
-          acc.push(
-            {
-              [PROJECT_TYPE]: PROJECT_NAME,
-              [PROJECT_VAL]: cur[EXPORT_DATA_VALUE]
-            },
-            {
-              [PROJECT_TYPE]: PROJECT_ID,
-              [PROJECT_VAL]: cur[EXPORT_DATA_KEY]
-            }
-          );
-          return acc;
-        }, [] );
-        setRows( x => rowData );
+      const blocks = json[NOTION_RESULT_BLOCKS];
+      const block = blocks.find(
+        block => block[NOTION_RESULT_BLOCK_KEY] === pNotionUserId );
+      const blockDbs = block[NOTION_RESULT_BLOCK_DBS];
 
-      }
-      catch (e) {
-        console.log( e );
-      }
+      const rowData = blockDbs.reduce( (acc, cur) => {
+        acc.push(
+          {
+            [PROJECT_TYPE]: PROJECT_NAME,
+            [PROJECT_VAL]: cur[EXPORT_DATA_VALUE]
+          },
+          {
+            [PROJECT_TYPE]: PROJECT_ID,
+            [PROJECT_VAL]: cur[EXPORT_DATA_KEY]
+          }
+        );
+        return acc;
+      }, [] );
+      setRows( x => rowData );
+
     }
+    catch (e) {
+      console.log( e );
+    }
+
+    setLoading( x => false );
+  };
+
+  useEffect( () => {
+    if (rLoading.current) {
+      return;
+    }
+    setLoading( x => true );
     fetchData();
   }, [
+  ] );
+
+  const cbRefresh = useCallback( async() => {
+    if (rLoading.current) {
+      return;
+    }
+    rLoading.current = true;
+    setLoading( x => true );
+
+    try {
+      const supaRoomId = await supabase
+      .from( 'notion_rooms' )
+      .select( 'notion_db_id, id' )
+      .eq( 'name', pGroupName  );
+      const roomData = supaRoomId.data[0];
+      const roomNotionDbId = roomData.notion_db_id;
+      const roomNotionId = roomData.id;
+
+      const js = await queryApiForRoom( roomNotionDbId );
+      if (js && js[NOTION_RESULT_SUCCESS]) {
+        const result = js[NOTION_RESULT];
+
+        const insertDataSupa = 
+        await supabase
+        .from( 'notion_rooms_data' )
+        .insert( {
+          'notion_table': roomNotionId,
+          'data': result
+        } );
+      }
+    }
+    catch (e) {
+      console.log( e );
+    }
+
+    rLoading.current = false;
+    setLoading( x => false );
+    fetchData();
+  }, [
+    pGroupName
   ] );
 
   if ( !notionUserName ) {
@@ -139,6 +204,17 @@ export default function Page() {
         title={ notionUserName }
         subtitle={ `notion user id: ${ pNotionUserId }` }
       >
+        {
+        rows.length > 0 &&
+        <button
+          className={ buttonClassNames + " mt-2" }
+          onClick={ cbRefresh }>
+          Update Listings
+          <ArrowPathIcon
+            className={ `h-5 w-5 pointer-events-none ${ loading ? `animate-spin` : `` }` }
+            aria-hidden="true" />
+        </button>
+        }
       </Title>
 
       <div
@@ -186,4 +262,5 @@ export default function Page() {
       </div>
     </div>
   );
+
 };

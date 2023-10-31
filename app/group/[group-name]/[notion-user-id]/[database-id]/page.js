@@ -102,7 +102,6 @@ export default function Page() {
     .order( 'created_at', { ascending: false } )
     .eq( 'prototype_id', pDatabaseId );
 
-    // if (timeStampsSupa.data.length === 0 || !initial) {
     if (!initial) {
 
       const snapshot = await queryApiForProject( pDatabaseId );
@@ -138,9 +137,6 @@ export default function Page() {
   useEffect( () => {
     fetchData( true );
   }, [
-    pDatabaseId,
-    pGroupName,
-    supabase
   ] );
 
   return (

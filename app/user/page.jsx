@@ -25,8 +25,8 @@ import {
 } from '@heroicons/react/20/solid';
 
 import {
-  getTextFromReadableStream
-} from 'utils/network.js';
+  queryApiForRoom
+} from 'hooks/FetchNotionDataHook.js';
 
 import {
   buttonClassNames,
@@ -37,10 +37,7 @@ import {
 
 import {
   NOTION_RESULT,
-  NOTION_RESULT_SUCCESS,
-  URL_SEARCH_PARAM_BLOCKS_REQUEST,
-  URL_SEARCH_PARAM_DATABASE,
-  URL_SEARCH_PARAM_RELATIONS_REQUEST
+  NOTION_RESULT_SUCCESS
 } from 'app/api/query/keys.js';
 
 import {
@@ -275,8 +272,6 @@ const User = ( ) => {
         'notion_table': id,
         'data': result
       });
-
-      console.log( 'insertDataSupa', insertDataSupa );
     }
 
     try {
@@ -486,19 +481,3 @@ const User = ( ) => {
 };
 
 export default User;
-
-const queryApiForRoom = async( dbId ) => {
-  const paramsObj = {
-    [URL_SEARCH_PARAM_DATABASE]: dbId,
-    [URL_SEARCH_PARAM_BLOCKS_REQUEST]: true,
-    [URL_SEARCH_PARAM_RELATIONS_REQUEST]: false
-  };
-  const params = new URLSearchParams( paramsObj );
-  const res = await fetch(
-    `/api/query?${ params.toString() }`
-  );
-  const resBody = res.body;
-  const text = await getTextFromReadableStream( resBody );
-  const js = JSON.parse( text );
-  return js;
-};

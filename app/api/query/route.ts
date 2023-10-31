@@ -53,6 +53,7 @@ const NOTION_DATA_TYPE_MULTI_SELECT = 'multi_select';
 const NOTION_DATA_TYPE_FILES = 'files';
 const NOTION_DATA_TYPE_TITLE = 'title';
 const NOTION_DATA_TYPE_RICH_TEXT = 'rich_text';
+const NOTION_DATA_TYPE_CHECKBOX = 'checkbox';
 const NOTION_DATA_TYPE_RELATION = 'relation';
 const NOTION_DATA_TYPE_CHILD_DATABASE = 'child_database';
 
@@ -298,6 +299,12 @@ const getNotionDbaseProperties = notionDatas => {
                   [EXPORT_DATA_VALUE]: propertyVal
                 };
               }
+              else if (propertyType == NOTION_DATA_TYPE_CHECKBOX) {
+                somedata[propertyKey] = {
+                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_CHECKBOX,
+                  [EXPORT_DATA_VALUE]: propertyVal
+                };
+              }
               else if (propertyType == NOTION_DATA_TYPE_TITLE || propertyType == NOTION_DATA_TYPE_RICH_TEXT) {
 
                 const titles = propertyVal.map( m => m[NOTION_KEY_PLAIN_TEXT] );
@@ -338,6 +345,7 @@ const getNotionDbaseProperties = notionDatas => {
                 NOTION_DATA_TYPE_FILES,
                 NOTION_DATA_TYPE_NUMBER,
                 NOTION_DATA_TYPE_TITLE,
+                NOTION_DATA_TYPE_CHECKBOX,
                 NOTION_DATA_TYPE_RICH_TEXT,
                 NOTION_DATA_TYPE_RELATION
               ].includes( propertyType )) {

@@ -88,6 +88,7 @@
         const updateBlockId = params.get(URL_SEARCH_PARAM_UPDATE_BLOCK_ID);
         const updateBlockParam = params.get( URL_SEARCH_PARAM_UPDATE_BLOCK );
         const updateBlockObj = JSON.parse( decodeURIComponent(updateBlockParam) );
+
         const response = await nClient.pages.update({
           page_id: updateBlockId,
           properties: updateBlockObj

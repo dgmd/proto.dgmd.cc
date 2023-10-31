@@ -90,6 +90,7 @@ export default function Page() {
         const roomDataSupa = await supabase
         .from( 'notion_rooms_data' )
         .select( 'data' )
+        .order( 'created_at', { ascending: false } )
         .eq( 'notion_table', roomSupa.data[0].id );
         
         const json = roomDataSupa.data[0].data;

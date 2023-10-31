@@ -262,7 +262,7 @@ const User = ( ) => {
       
       const insertRoomSupa = await supabase
       .from( 'notion_rooms' )
-      .select('id')
+      .select( 'id' )
       .eq( 'notion_db_id', dbId );
 
       const id = insertRoomSupa.data[0].id;

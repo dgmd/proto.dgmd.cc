@@ -57,6 +57,7 @@ const NOTION_DATA_TYPE_FILES = 'files';
 const NOTION_DATA_TYPE_TITLE = 'title';
 const NOTION_DATA_TYPE_RICH_TEXT = 'rich_text';
 const NOTION_DATA_TYPE_CHECKBOX = 'checkbox';
+const NOTION_DATA_TYPE_EMAIL = 'email';
 const NOTION_DATA_TYPE_STATUS = 'status';
 const NOTION_DATA_TYPE_RELATION = 'relation';
 const NOTION_DATA_TYPE_CHILD_DATABASE = 'child_database';
@@ -320,6 +321,12 @@ const getNotionDbaseProperties = notionDatas => {
               else if (propertyType == NOTION_DATA_TYPE_URL) {
                 somedata[propertyKey] = {
                   [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_URL,
+                  [EXPORT_DATA_VALUE]: propertyVal
+                };
+              }
+              else if (propertyType == NOTION_DATA_TYPE_EMAIL) {
+                somedata[propertyKey] = {
+                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_EMAIL,
                   [EXPORT_DATA_VALUE]: propertyVal
                 };
               }

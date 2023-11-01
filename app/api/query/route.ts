@@ -60,6 +60,8 @@ const NOTION_DATA_TYPE_CHECKBOX = 'checkbox';
 const NOTION_DATA_TYPE_STATUS = 'status';
 const NOTION_DATA_TYPE_RELATION = 'relation';
 const NOTION_DATA_TYPE_CHILD_DATABASE = 'child_database';
+const NOTION_DATA_TYPE_FORMULA = 'formula';
+const NOTION_DATA_TYPE_URL = 'url';
 
 const NOTION_KEY_NAME = 'name';
 const NOTION_KEY_FILE = 'file';
@@ -67,7 +69,6 @@ const NOTION_KEY_URL = 'url';
 const NOTION_KEY_EXTERNAL = 'external';
 const NOTION_KEY_PLAIN_TEXT = 'plain_text';
 const NOTION_KEY_DATABASE_ID = 'database_id';
-const NOTION_DATA_TYPE_FORMULA = 'formula';
 const NOTION_KEY_ID = 'id';
 
 const QUERY_PRIMARY = 'QUERY_PRIMARY';
@@ -316,6 +317,12 @@ const getNotionDbaseProperties = notionDatas => {
                   [EXPORT_DATA_VALUE]: propertyVal
                 };
               }
+              else if (propertyType == NOTION_DATA_TYPE_URL) {
+                somedata[propertyKey] = {
+                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_URL,
+                  [EXPORT_DATA_VALUE]: propertyVal
+                };
+              }
               else if (propertyType == NOTION_DATA_TYPE_STATUS) {
                 somedata[propertyKey] = {
                   [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_STATUS,
@@ -352,11 +359,11 @@ const getNotionDbaseProperties = notionDatas => {
               // }
               else {
                 //todo... handle other types
-                console.log(
-                  '***',
-                  'propertyType', propertyType,
-                  'prototypeKey', propertyKey
-                );
+                // console.log(
+                //   '***',
+                //   'propertyType', propertyType,
+                //   'prototypeKey', propertyKey
+                // );
               }
             }
             else {

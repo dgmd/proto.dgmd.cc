@@ -61,6 +61,7 @@ const NOTION_DATA_TYPE_EMAIL = 'email';
 const NOTION_DATA_TYPE_STATUS = 'status';
 const NOTION_DATA_TYPE_RELATION = 'relation';
 const NOTION_DATA_TYPE_CHILD_DATABASE = 'child_database';
+const NOTION_DATA_TYPE_CHILD_PHONE_NUMBER = 'phone_number';
 const NOTION_DATA_TYPE_FORMULA = 'formula';
 const NOTION_DATA_TYPE_URL = 'url';
 
@@ -327,6 +328,12 @@ const getNotionDbaseProperties = notionDatas => {
               else if (propertyType == NOTION_DATA_TYPE_EMAIL) {
                 somedata[propertyKey] = {
                   [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_EMAIL,
+                  [EXPORT_DATA_VALUE]: propertyVal
+                };
+              }
+              else if (propertyType == NOTION_DATA_TYPE_CHILD_PHONE_NUMBER) {
+                somedata[propertyKey] = {
+                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_CHILD_PHONE_NUMBER,
                   [EXPORT_DATA_VALUE]: propertyVal
                 };
               }

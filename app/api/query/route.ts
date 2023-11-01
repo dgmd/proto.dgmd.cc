@@ -24,6 +24,9 @@ import {
   NOTION_RESULT_RELATION_DATABASES,
   NOTION_RESULT_BLOCKS,
   NOTION_RESULT_DATABASE_ID,
+
+  NOTION_RESULT_RELATION_DATABASE_ID,
+  NOTION_RESULT_RELATION_BLOCK_ID,
   
   NOTION_RESULT_BLOCK_KEY,
   NOTION_RESULT_BLOCK_DBS,
@@ -54,6 +57,7 @@ const NOTION_DATA_TYPE_FILES = 'files';
 const NOTION_DATA_TYPE_TITLE = 'title';
 const NOTION_DATA_TYPE_RICH_TEXT = 'rich_text';
 const NOTION_DATA_TYPE_CHECKBOX = 'checkbox';
+const NOTION_DATA_TYPE_STATUS = 'status';
 const NOTION_DATA_TYPE_RELATION = 'relation';
 const NOTION_DATA_TYPE_CHILD_DATABASE = 'child_database';
 
@@ -66,10 +70,7 @@ const NOTION_KEY_DATABASE_ID = 'database_id';
 const NOTION_DATA_TYPE_FORMULA = 'formula';
 const NOTION_KEY_ID = 'id';
 
-const NOTION_KEY_RELATION = 'relation';
-
-const QUERY_PREFIX = 'QUERY_PREFIX';
-const QUERY_KEY = 'QUERY_KEY';
+const QUERY_PRIMARY = 'QUERY_PRIMARY';
 const QUERY_ID = 'QUERY_ID';
 const QUERY_PROPERTIES = 'QUERY_PROPERTIES';
 
@@ -111,7 +112,7 @@ export async function GET( request, response ) {
     });
     //prepare queries for the databases
     const notionDbaseQueryPromises = [
-      getNotionDbasePromise( nClient, secrets[DATABASE_ID], QUERY_PREFIX ),
+      getNotionDbasePromise( nClient, secrets[DATABASE_ID], true ),
     ];
 
     if (requests[RELATIONS_REQUEST]) {
@@ -123,10 +124,8 @@ export async function GET( request, response ) {
       //parse the database names
       const nDbRelationIds = getNotionDbaseRelationIds( notionDbases );
 
-      for (const dbName in nDbRelationIds) {
-        const dbaseId = nDbRelationIds[dbName];
-        const dbaseNamePrefixed = `${QUERY_PREFIX}${dbName}`;
-        notionDbaseQueryPromises.push( getNotionDbasePromise( nClient, dbaseId, dbaseNamePrefixed ) );
+      for (const dbaseId of nDbRelationIds) {
+        notionDbaseQueryPromises.push( getNotionDbasePromise( nClient, dbaseId, false ) );
       }
     }
 
@@ -143,10 +142,23 @@ export async function GET( request, response ) {
     //organize the results
     const orgDbResults = allDbResults.reduce( (acc, cur) => {
       const qId = cur[QUERY_ID];
-      const qKey = cur[QUERY_KEY];
+      const qPrimary = cur[QUERY_PRIMARY];
       const qProps = cur[QUERY_PROPERTIES];
-      const unprefixedKey = qKey.replace( QUERY_PREFIX, '' );
-      if (unprefixedKey.length === 0) {
+
+      //go through all relations and find their database ids
+      for (const qProp of qProps) {
+        for (const [qPropKey, qPropObj] of Object.entries(qProp)) {
+          if (qPropObj[EXPORT_DATA_TYPE] === NOTION_DATA_TYPE_RELATION) {
+            const qPropValues = qPropObj[EXPORT_DATA_VALUE];
+            for (const qPropValue of qPropValues) {
+              const dbId = findRelationDbId( allDbResults, qPropValue[NOTION_RESULT_RELATION_BLOCK_ID] );
+              qPropValue[NOTION_RESULT_RELATION_DATABASE_ID] = dbId;
+            }
+          }
+        }
+      }
+
+      if (qPrimary) {
         acc[NOTION_RESULT_PRIMARY_DATABASE] = {
           [NOTION_RESULT_BLOCKS]: qProps,
           [NOTION_RESULT_DATABASE_ID]: qId
@@ -156,7 +168,6 @@ export async function GET( request, response ) {
         acc[NOTION_RESULT_RELATION_DATABASES].push( {
           [NOTION_RESULT_BLOCKS]: qProps,
           [NOTION_RESULT_DATABASE_ID]: qId
-          // add unprefixedKey??
         } );
       }
       return acc;
@@ -210,21 +221,21 @@ const createResponse = (json, request) => {
 };
 
 const getNotionDbaseRelationIds = notionDbases => {
-  const ids = {};
+  const ids = new Set();
   if (NOTION_PROPERTIES in notionDbases) {
     const ndbProperties = notionDbases[NOTION_PROPERTIES];
     const ndbPropertiesKeys = Object.keys( ndbProperties );
     for (const ndbPropertiesKey of ndbPropertiesKeys) {
       const ndpPropertyVal = ndbProperties[ndbPropertiesKey];
       const ndpPropertyType = ndpPropertyVal[NOTION_DATA_TYPE];
-      if (ndpPropertyType === NOTION_KEY_RELATION) {
-        const relation = ndpPropertyVal[NOTION_KEY_RELATION];
+      if (ndpPropertyType === NOTION_DATA_TYPE_RELATION) {
+        const relation = ndpPropertyVal[NOTION_DATA_TYPE_RELATION];
         const dbaseId = relation[NOTION_KEY_DATABASE_ID];
-        ids[ndbPropertiesKey] = dbaseId;
+        ids.add( removeHyphens(dbaseId) );
       }
     }
   }
-  return ids;
+  return Array.from( ids );
 };
 
 const getNotionDbaseProperties = notionDatas => {
@@ -305,6 +316,12 @@ const getNotionDbaseProperties = notionDatas => {
                   [EXPORT_DATA_VALUE]: propertyVal
                 };
               }
+              else if (propertyType == NOTION_DATA_TYPE_STATUS) {
+                somedata[propertyKey] = {
+                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_STATUS,
+                  [EXPORT_DATA_VALUE]: propertyVal[NOTION_KEY_NAME]
+                };
+              }
               else if (propertyType == NOTION_DATA_TYPE_TITLE || propertyType == NOTION_DATA_TYPE_RICH_TEXT) {
 
                 const titles = propertyVal.map( m => m[NOTION_KEY_PLAIN_TEXT] );
@@ -316,7 +333,11 @@ const getNotionDbaseProperties = notionDatas => {
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_RELATION) {
-                const val = propertyVal.map( m => m[NOTION_KEY_ID] );
+                const val = propertyVal.map( m => {
+                  return {
+                    [NOTION_RESULT_RELATION_DATABASE_ID]: null,
+                    [NOTION_RESULT_RELATION_BLOCK_ID]: removeHyphens( m[NOTION_KEY_ID] )
+                  } });
                 somedata[propertyKey] = {
                   [EXPORT_DATA_TYPE]: propertyType,
                   [EXPORT_DATA_VALUE]: val
@@ -367,13 +388,13 @@ const getNotionDbaseProperties = notionDatas => {
   return {};
 };
 
-const getNotionDbasePromise = (nClient, dbaseId, queryKey) => {
+const getNotionDbasePromise = (nClient, dbaseId, primary) => {
   const p = new Promise((resolve, reject) => {
     nClient.databases.query({ [NOTION_KEY_DATABASE_ID]: dbaseId })
       .then( result => {
         const properties = getNotionDbaseProperties( result );
         const propertyObj = {
-          [QUERY_KEY]: queryKey,
+          [QUERY_PRIMARY]: primary,
           [QUERY_PROPERTIES]: properties,
           [QUERY_ID]: dbaseId
         };
@@ -438,4 +459,22 @@ function stringToBoolean(str) {
   str = str.toLowerCase().trim();
 
   return str === 'true' || str === '1' || str === 'yes' || str === 'y' || str === 'on';
+};
+
+const findRelationDbId = (allResults, blockId) => {
+  for (const cur of allResults) {
+    const qId = cur[QUERY_ID];
+    const qProps = cur[QUERY_PROPERTIES];
+    for (const qProp of qProps) {
+      for (const [qPropKey, qPropObj] of Object.entries(qProp)) {
+        if (qPropObj[EXPORT_DATA_TYPE] === NOTION_ID) {
+          const idValue = qPropObj[EXPORT_DATA_VALUE];
+          if (idValue === blockId) {
+            return qId;
+          }
+        }
+      }
+    }
+  }
+  return null;
 };

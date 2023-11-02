@@ -7,10 +7,10 @@ export const Title = props => {
     <div className="flex items-center justify-between">
       <div className="tracking-tight font-bold text-gray-900">
         <h2 className="text-3xl">
-        { decodeURI(pTitle) }
+        { `\u00a0${decodeURI(pTitle)}` }
         </h2>
         <h3 className="text-1xl text-gray-500">
-        { pSubtitle ? decodeURI(pSubtitle) : '' }
+        { `\u00a0 ${ pSubtitle ? decodeURI(pSubtitle) : '' }` }
         </h3>
         { pChildren }
       </div>

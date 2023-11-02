@@ -23,11 +23,18 @@ import {
 } from 'components/table.jsx';
 
 import {
-  NOTION_RESULT,
+  EXPORT_DATA_KEY,
+  EXPORT_DATA_VALUE,
   URL_SEARCH_PARAM_BLOCKS_REQUEST,
   URL_SEARCH_PARAM_DATABASE,
-  URL_SEARCH_PARAM_RELATIONS_REQUEST
+  URL_SEARCH_PARAM_RELATIONS_REQUEST,
+  NOTION_RESULT_BLOCKS,
+  NOTION_RESULT_BLOCK_DBS,
+  NOTION_RESULT_BLOCK_KEY,
+
+  NOTION_RESULT
 } from 'app/api/query/keys.js';
+
 
 import {
   URL_PROTOTYPE_PARAM_ID
@@ -69,6 +76,7 @@ export default function Page() {
   const pNotionUserId = decodeURI( params['notion-user-id'] );
   const pGroupName = decodeURI( params['group-name'] );
   const pDatabaseId = decodeURI( params[ 'database-id' ] );
+  const [databaseName, setDatabaseName] = useState( x => '' );
 
   const [loading, setLoading] = useState( x => false );
   const rLoading = useRef( loading );
@@ -86,6 +94,28 @@ export default function Page() {
     { [TABLE_HEADER_NAME]: 'link', [TABLE_HEADER_HIDE]: null }
   ] );
   const [rows, setRows] = useState( x => getRows( [], getLiveDataLink(pDatabaseId) ) );
+
+  const fetchTitle = async() => {
+    const roomSupa = await supabase
+    .from( 'notion_rooms' )
+    .select( 'id' )
+    .eq( 'name', pGroupName  );
+
+    const roomDataSupa = await supabase
+    .from( 'notion_rooms_data' )
+    .select( 'data' )
+    .order( 'created_at', { ascending: false } )
+    .eq( 'notion_table', roomSupa.data[0].id );
+
+    const json = roomDataSupa.data[0].data;
+    const blocks = json[NOTION_RESULT_BLOCKS];
+    const block = blocks.find(
+      block => block[NOTION_RESULT_BLOCK_KEY] === pNotionUserId );
+    const blockDbs = block[NOTION_RESULT_BLOCK_DBS];
+    const blockIdx = blockDbs.findIndex( x => x[EXPORT_DATA_KEY] === pDatabaseId );
+    const blockVal = blockDbs[blockIdx][EXPORT_DATA_VALUE];
+    setDatabaseName( x => blockVal );
+  };
 
   const fetchData = async ( initial ) => {
     if (rLoading.current) {
@@ -135,6 +165,7 @@ export default function Page() {
   };
 
   useEffect( () => {
+    fetchTitle( );
     fetchData( true );
   }, [
   ] );
@@ -143,6 +174,7 @@ export default function Page() {
     <div className='flex-grow'>  
       <Title
         title={ 'Database' }
+        subtitle={ databaseName }
       >
         {
         rows.length > 0 &&

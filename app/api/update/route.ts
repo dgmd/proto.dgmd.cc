@@ -11,16 +11,30 @@
   } from '../../../utils/coriHeaders.js';
 
   import {
-    CRUD_RESPONSE_SUCCESS,
+    removeHyphens
+  } from '../../../utils/strings.js';
+
+  import {
+    CRUD_RESPONSE_RESULT,
+    CRUD_RESPONSE_DELETE,
+    CRUD_RESPONSE_DELETE_ID,
+    CRUD_RESPONSE_CREATE,
+    CRUD_RESPONSE_CREATE_ID,
+    CRUD_RESPONSE_CREATE_BLOCKS,
+    CRUD_RESPONSE_UPDATE_ID,
+    CRUD_RESPONSE_UPDATE_BLOCKS,
     URL_SEARCH_PARAM_ACTION,
     URL_SEARCH_VALUE_ACTION_DELETE,
     URL_SEARCH_PARAM_DELETE_BLOCK_ID,
-    URL_SEARCH_VALUE_ACTION_APPEND,
-    URL_SEARCH_PARAM_APPEND_BLOCK_ID,
-    URL_SEARCH_PARAM_APPEND_CHILDREN,
+    URL_SEARCH_VALUE_ACTION_CREATE,
+    URL_SEARCH_PARAM_CREATE_BLOCK_ID,
+    URL_SEARCH_PARAM_CREATE_CHILDREN,
     URL_SEARCH_VALUE_ACTION_UPDATE,
     URL_SEARCH_PARAM_UPDATE_BLOCK_ID,
-    URL_SEARCH_PARAM_UPDATE_BLOCK
+    URL_SEARCH_PARAM_UPDATE_BLOCK,
+    CRUD_RESPONSE_BLOCK,
+    CRUD_RESPONSE_BLOCK_KEY,
+    CRUD_RESPONSE_BLOCK_ID
   } from './keys.js';
   
   const SECRET_ID = 'SECRET_ID';
@@ -40,69 +54,83 @@
     });
 
     if (paramAction === URL_SEARCH_VALUE_ACTION_DELETE) {
-      const deleteBlockId = params.get(URL_SEARCH_PARAM_DELETE_BLOCK_ID);
       const rObj = {
-        [CRUD_RESPONSE_SUCCESS]: false
+        [CRUD_RESPONSE_RESULT]: {
+          [CRUD_RESPONSE_DELETE]: false
+        }
       };
       try {
-        const response = await nClient.blocks.delete( {
+        const deleteBlockId = removeHyphens( params.get(URL_SEARCH_PARAM_DELETE_BLOCK_ID) );
+        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_DELETE_ID] = deleteBlockId;
+        await nClient.blocks.delete( {
           block_id: deleteBlockId
         } );
-        // console.log( 'response', response );
-        rObj[CRUD_RESPONSE_SUCCESS] = true;
+        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_DELETE] = true;
       }
       catch (error) {
-        console.log( 'error', error );
+        console.log( 'delete error', error );
       }
       return createResponse( rObj, request );
     }
-    else if (paramAction === URL_SEARCH_VALUE_ACTION_APPEND) {
+    else if (paramAction === URL_SEARCH_VALUE_ACTION_CREATE) {
       const rObj = {
-        [CRUD_RESPONSE_SUCCESS]: false
+        [CRUD_RESPONSE_RESULT]: {
+          [CRUD_RESPONSE_CREATE]: false
+        }
       };
       try {
-        const appendBlockId = params.get(URL_SEARCH_PARAM_APPEND_BLOCK_ID);
-        const appendChildrenParam = params.get(URL_SEARCH_PARAM_APPEND_CHILDREN);
+        const appendBlockId = removeHyphens( params.get( URL_SEARCH_PARAM_CREATE_BLOCK_ID ) );
+        const appendChildrenParam = params.get( URL_SEARCH_PARAM_CREATE_CHILDREN );
         const appendChildrenObj = JSON.parse( decodeURIComponent(appendChildrenParam) );
 
-        await nClient.pages.create({
+        const createObj = await nClient.pages.create({
           parent: {
             type: 'database_id',
             database_id: appendBlockId
           },
-          properties: appendChildrenObj,
+          properties: {},
           children: [],
         });
-        rObj[CRUD_RESPONSE_SUCCESS] = true;
+        const createBlockId = removeHyphens( createObj.id );
+        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_CREATE] = true;
+        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_CREATE_ID] = createBlockId;
+        const rBlocks = [];
+        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_CREATE_BLOCKS] = rBlocks;
+
+        for (const [key, value] of Object.entries(appendChildrenObj)) {
+          await updateBlock( nClient, createBlockId, key, value, rBlocks );
+        }
+
       }
       catch (error) {
-        console.log( 'error', error );
+        console.log( 'create error', error );
       }
       return createResponse( rObj, request );
     }
     else if (paramAction === URL_SEARCH_VALUE_ACTION_UPDATE) {
       const rObj = {
-        [CRUD_RESPONSE_SUCCESS]: false
+        [CRUD_RESPONSE_RESULT]: {}
       };
       try {
-        const updateBlockId = params.get(URL_SEARCH_PARAM_UPDATE_BLOCK_ID);
+        const updateBlockId = removeHyphens( params.get(URL_SEARCH_PARAM_UPDATE_BLOCK_ID) );
+        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_UPDATE_ID] = updateBlockId;
         const updateBlockParam = params.get( URL_SEARCH_PARAM_UPDATE_BLOCK );
         const updateBlockObj = JSON.parse( decodeURIComponent(updateBlockParam) );
 
-        const response = await nClient.pages.update({
-          page_id: updateBlockId,
-          properties: updateBlockObj
-        });
-        rObj[CRUD_RESPONSE_SUCCESS] = true;
+        const rBlocks = [];
+        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_UPDATE_BLOCKS] = rBlocks;
+
+        for (const [key, value] of Object.entries(updateBlockObj)) {
+          await updateBlock( nClient, updateBlockId, key, value, rBlocks );
+        }
       }
       catch (error) {
-        console.log( 'error', error );
       }
       return createResponse( rObj, request );
     }
 
     return createResponse( {
-      [CRUD_RESPONSE_SUCCESS]: false
+      [CRUD_RESPONSE_RESULT]: false
     }, request );
   
   };
@@ -114,4 +142,34 @@
       resJson.headers.set( header[0], header[1] );
     }
     return resJson;
+  };
+
+  const updateBlock = async (nClient, blockId, blockKey, blockValue, responseBlocks) => {
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+    try {
+
+      //https://www.reddit.com/r/Notion/comments/s8uast/error_deleting_all_the_blocks_in_a_page/
+      await delay( 50 );
+
+      const blockResponse =
+      await nClient.pages.update({
+        page_id: blockId,
+        properties: {
+          [blockKey]: blockValue
+        }
+      });
+      const blockResponseId = removeHyphens( blockResponse.id );
+      responseBlocks.push( {
+        [CRUD_RESPONSE_BLOCK]: true,
+        [CRUD_RESPONSE_BLOCK_KEY]: blockKey,
+        [CRUD_RESPONSE_BLOCK_ID]: blockResponseId
+      })
+    }
+    catch (e) {
+      console.log( 'update error', e );
+      responseBlocks.push( {
+        [CRUD_RESPONSE_BLOCK]: false,
+        [CRUD_RESPONSE_BLOCK_KEY]: blockKey,
+      } );
+    }
   };

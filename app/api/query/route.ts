@@ -128,7 +128,10 @@ export async function GET( request, response ) {
       });
 
       //parse the database names
-      const nDbRelationIds = getNotionDbaseRelationIds( notionDbases );
+      const nDbRelationIds =
+        getNotionDbaseRelationIds( notionDbases )
+        //don't need a dupe of the primary database
+        .filter( id => id !== secrets[DATABASE_ID] );
 
       for (const dbaseId of nDbRelationIds) {
         notionDbaseQueryPromises.push( getNotionDbasePromise( nClient, dbaseId, false ) );

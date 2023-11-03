@@ -24,7 +24,7 @@ import {
   NOTION_RESULT_RELATION_DATABASES,
   NOTION_RESULT_BLOCKS,
   NOTION_RESULT_DATABASE_ID,
-  NOTION_RESULT_DATABASE_NAME,
+  NOTION_RESULT_DATABASE_TITLE,
 
   NOTION_RESULT_RELATION_DATABASE_ID,
   NOTION_RESULT_RELATION_BLOCK_ID,
@@ -124,7 +124,15 @@ export async function GET( request, response ) {
     const notionDbases = await nClient.databases.retrieve({
       [NOTION_KEY_DATABASE_ID]: secrets[DATABASE_ID]
     });
-    const primaryTitle = notionDbases.title[0].plain_text;
+
+    //all of this nonsense because title is not in the typescript
+    let primaryTitle = '';
+    for (const [key, value] of Object.entries(notionDbases)) {
+      if (key === 'title') {
+        primaryTitle = value[0].plain_text;
+      }
+    }
+    
     const notionDbaseQueryPromises = [
       getNotionDbasePromise( nClient, secrets[DATABASE_ID], primaryTitle, true ),
     ];
@@ -177,7 +185,7 @@ export async function GET( request, response ) {
       const dbResult = {
         [NOTION_RESULT_BLOCKS]: qProps,
         [NOTION_RESULT_DATABASE_ID]: qId,
-        [NOTION_RESULT_DATABASE_NAME]: qName
+        [NOTION_RESULT_DATABASE_TITLE]: qName
       };
 
       if (qPrimary) {
@@ -214,7 +222,6 @@ export async function GET( request, response ) {
     }
 
     return createResponse( {
-      test: true,
       [NOTION_RESULT_SUCCESS]: true,
       [NOTION_RESULT]: orgDbResults
     }, request );

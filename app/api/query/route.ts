@@ -24,6 +24,7 @@ import {
   NOTION_RESULT_RELATION_DATABASES,
   NOTION_RESULT_BLOCKS,
   NOTION_RESULT_DATABASE_ID,
+  NOTION_RESULT_DATABASE_NAME,
 
   NOTION_RESULT_RELATION_DATABASE_ID,
   NOTION_RESULT_RELATION_BLOCK_ID,
@@ -78,6 +79,7 @@ const NOTION_KEY_ID = 'id';
 
 const QUERY_PRIMARY = 'QUERY_PRIMARY';
 const QUERY_ID = 'QUERY_ID';
+const QUERY_NAME = 'QUERY_NAME';
 const QUERY_PROPERTIES = 'QUERY_PROPERTIES';
 
 const SECRET_ID = 'SECRET_ID';
@@ -116,26 +118,30 @@ export async function GET( request, response ) {
     const nClient = new Client({ 
       auth: secrets[SECRET_ID]
     });
+
     //prepare queries for the databases
+    //next, collect all databases
+    const notionDbases = await nClient.databases.retrieve({
+      [NOTION_KEY_DATABASE_ID]: secrets[DATABASE_ID]
+    });
+    const primaryTitle = notionDbases.title[0].plain_text;
     const notionDbaseQueryPromises = [
-      getNotionDbasePromise( nClient, secrets[DATABASE_ID], true ),
+      getNotionDbasePromise( nClient, secrets[DATABASE_ID], primaryTitle, true ),
     ];
 
     if (requests[RELATIONS_REQUEST]) {
-      //next, collect all databases
-      const notionDbases = await nClient.databases.retrieve({
-        [NOTION_KEY_DATABASE_ID]: secrets[DATABASE_ID],
-      });
 
       //parse the database names
       const nDbRelationIds =
-        getNotionDbaseRelationIds( notionDbases )
-        //don't need a dupe of the primary database
-        .filter( id => id !== secrets[DATABASE_ID] );
+        getNotionDbaseRelationIds( notionDbases );
+      //remove the primary database id
+      nDbRelationIds.delete( secrets[DATABASE_ID] );
 
-      for (const dbaseId of nDbRelationIds) {
-        notionDbaseQueryPromises.push( getNotionDbasePromise( nClient, dbaseId, false ) );
-      }
+      nDbRelationIds.forEach( (dbaseTitle, dbaseId) => {
+        notionDbaseQueryPromises.push( 
+          getNotionDbasePromise( nClient, dbaseId, dbaseTitle, false )
+        );
+      } );
     }
 
     //execute all queries
@@ -153,6 +159,7 @@ export async function GET( request, response ) {
       const qId = cur[QUERY_ID];
       const qPrimary = cur[QUERY_PRIMARY];
       const qProps = cur[QUERY_PROPERTIES];
+      const qName = cur[QUERY_NAME];
 
       //go through all relations and find their database ids
       for (const qProp of qProps) {
@@ -167,17 +174,17 @@ export async function GET( request, response ) {
         }
       }
 
+      const dbResult = {
+        [NOTION_RESULT_BLOCKS]: qProps,
+        [NOTION_RESULT_DATABASE_ID]: qId,
+        [NOTION_RESULT_DATABASE_NAME]: qName
+      };
+
       if (qPrimary) {
-        acc[NOTION_RESULT_PRIMARY_DATABASE] = {
-          [NOTION_RESULT_BLOCKS]: qProps,
-          [NOTION_RESULT_DATABASE_ID]: qId
-        }
+        acc[NOTION_RESULT_PRIMARY_DATABASE] = dbResult
       }
       else if (requests[RELATIONS_REQUEST]) {
-        acc[NOTION_RESULT_RELATION_DATABASES].push( {
-          [NOTION_RESULT_BLOCKS]: qProps,
-          [NOTION_RESULT_DATABASE_ID]: qId
-        } );
+        acc[NOTION_RESULT_RELATION_DATABASES].push( dbResult );
       }
       return acc;
     }, orgDbResult );
@@ -230,7 +237,7 @@ const createResponse = (json, request) => {
 };
 
 const getNotionDbaseRelationIds = notionDbases => {
-  const ids = new Set();
+  const ids = new Map();
   if (NOTION_PROPERTIES in notionDbases) {
     const ndbProperties = notionDbases[NOTION_PROPERTIES];
     const ndbPropertiesKeys = Object.keys( ndbProperties );
@@ -240,11 +247,11 @@ const getNotionDbaseRelationIds = notionDbases => {
       if (ndpPropertyType === NOTION_DATA_TYPE_RELATION) {
         const relation = ndpPropertyVal[NOTION_DATA_TYPE_RELATION];
         const dbaseId = relation[NOTION_KEY_DATABASE_ID];
-        ids.add( removeHyphens(dbaseId) );
+        ids.set( removeHyphens(dbaseId), ndbPropertiesKey );
       }
     }
   }
-  return Array.from( ids );
+  return ids;
 };
 
 const getNotionDbaseProperties = notionDatas => {
@@ -435,7 +442,7 @@ const getNotionDbaseProperties = notionDatas => {
   return {};
 };
 
-const getNotionDbasePromise = (nClient, dbaseId, primary) => {
+const getNotionDbasePromise = (nClient, dbaseId, dbaseName, primary) => {
   const p = new Promise((resolve, reject) => {
     nClient.databases.query({ [NOTION_KEY_DATABASE_ID]: dbaseId })
       .then( result => {
@@ -443,7 +450,8 @@ const getNotionDbasePromise = (nClient, dbaseId, primary) => {
         const propertyObj = {
           [QUERY_PRIMARY]: primary,
           [QUERY_PROPERTIES]: properties,
-          [QUERY_ID]: dbaseId
+          [QUERY_ID]: dbaseId,
+          [QUERY_NAME]: dbaseName,
         };
         resolve( propertyObj );
       })

@@ -214,6 +214,7 @@ export async function GET( request, response ) {
     }
 
     return createResponse( {
+      test: true,
       [NOTION_RESULT_SUCCESS]: true,
       [NOTION_RESULT]: orgDbResults
     }, request );

@@ -11,30 +11,27 @@ import {
 } from '../../../utils/strings.js';
 
 import {
+  EXPORT_DATA_KEY,
   EXPORT_DATA_TYPE,
   EXPORT_DATA_VALUE,
-  EXPORT_DATA_KEY,
-  
-  //TODO: RENAME
-  NOTION_RESULT_SUCCESS,
-  NOTION_RESULT_ERROR,
   NOTION_RESULT,
-  
-  NOTION_RESULT_PRIMARY_DATABASE,
-  NOTION_RESULT_RELATION_DATABASES,
   NOTION_RESULT_BLOCKS,
-  NOTION_RESULT_DATABASE_ID,
-  NOTION_RESULT_DATABASE_TITLE,
-
-  NOTION_RESULT_RELATION_DATABASE_ID,
-  NOTION_RESULT_RELATION_BLOCK_ID,
-  
-  NOTION_RESULT_BLOCK_KEY,
   NOTION_RESULT_BLOCK_DBS,
-  URL_SEARCH_PARAM_DATABASE,
+  NOTION_RESULT_BLOCK_KEY,
+  NOTION_RESULT_DATABASE_ID,
+  NOTION_RESULT_PARENT_ID,
+  NOTION_RESULT_PARENT_TITLE,
+  NOTION_RESULT_PARENT_TYPE,
+  NOTION_RESULT_DATABASE_TITLE,
+  NOTION_RESULT_ERROR,
+  NOTION_RESULT_PRIMARY_DATABASE,
+  NOTION_RESULT_RELATION_BLOCK_ID,
+  NOTION_RESULT_RELATION_DATABASES,
+  NOTION_RESULT_RELATION_DATABASE_ID,
+  NOTION_RESULT_SUCCESS,
   URL_SEARCH_PARAM_BLOCKS_REQUEST,
+  URL_SEARCH_PARAM_DATABASE,
   URL_SEARCH_PARAM_RELATIONS_REQUEST
-  
 } from './keys.js';
 
 import {
@@ -77,9 +74,14 @@ const NOTION_KEY_PLAIN_TEXT = 'plain_text';
 const NOTION_KEY_DATABASE_ID = 'database_id';
 const NOTION_KEY_ID = 'id';
 
-const QUERY_PRIMARY = 'QUERY_PRIMARY';
-const QUERY_ID = 'QUERY_ID';
-const QUERY_NAME = 'QUERY_NAME';
+const DATABASE_QUERY_PRIMARY = 'DATABASE_QUERY_PRIMARY';
+const DATABASE_QUERY_ID = 'DATABASE_QUERY_ID';
+const DATABASE_QUERY_TITLE = 'DATABASE_QUERY_TITLE';
+const DATABASE_QUERY_PARENT_ID = 'DATABASE_QUERY_PARENT_ID';
+const DATABASE_QUERY_PARENT_TITLE = 'DATABASE_QUERY_PARENT_TITLE';
+const DATABASE_QUERY_PARENT_TYPE = 'DATABASE_QUERY_PARENT_TYPE';
+
+const QUERY_META = 'QUERY_META';
 const QUERY_PROPERTIES = 'QUERY_PROPERTIES';
 
 const SECRET_ID = 'SECRET_ID';
@@ -119,35 +121,62 @@ export async function GET( request, response ) {
       auth: secrets[SECRET_ID]
     });
 
-    //prepare queries for the databases
-    //next, collect all databases
-    const notionDbases = await nClient.databases.retrieve({
+    const nDbase = await nClient.databases.retrieve({
       [NOTION_KEY_DATABASE_ID]: secrets[DATABASE_ID]
     });
 
-    //all of this nonsense because title is not in the typescript
-    let primaryTitle = '';
-    for (const [key, value] of Object.entries(notionDbases)) {
-      if (key === 'title') {
-        primaryTitle = value[0].plain_text;
-      }
-    }
-    
+    const primaryMeta = {
+      [DATABASE_QUERY_PRIMARY]: true,
+      [DATABASE_QUERY_ID]: secrets[DATABASE_ID],
+      [DATABASE_QUERY_TITLE]: undefined,
+      [DATABASE_QUERY_PARENT_ID]: undefined,
+      [DATABASE_QUERY_PARENT_TITLE]: undefined,
+      [DATABASE_QUERY_PARENT_TYPE]: undefined,
+    };
+
+    notionUpdateDbaseMeta( nClient, nDbase, primaryMeta );
+
     const notionDbaseQueryPromises = [
-      getNotionDbasePromise( nClient, secrets[DATABASE_ID], primaryTitle, true ),
+      getNotionDbasePromise( nClient, primaryMeta )
     ];
 
     if (requests[RELATIONS_REQUEST]) {
-
-      //parse the database names
-      const nDbRelationIds =
-        getNotionDbaseRelationIds( notionDbases );
-      //remove the primary database id
+      //parse the relation database ids from properties
+      const nDbRelationIds =  getNotionDbaseRelationIds( nDbase );
+      //remove the primary database id - no need for redundant queries
       nDbRelationIds.delete( secrets[DATABASE_ID] );
 
-      nDbRelationIds.forEach( (dbaseTitle, dbaseId) => {
-        notionDbaseQueryPromises.push( 
-          getNotionDbasePromise( nClient, dbaseId, dbaseTitle, false )
+      //we need info about the title of each database
+      const dbDataPromises = Array.from(nDbRelationIds).map(
+        (dbaseId: string) => {
+          return new Promise((resolve, reject) => {
+            const dbQuery = {
+              [NOTION_KEY_DATABASE_ID]: dbaseId
+            }
+            nClient.databases.retrieve( dbQuery )
+            .then( result => {
+              resolve( result );
+            } );
+          } );          
+        }
+      );
+      const dbDatas = await Promise.all( dbDataPromises );
+
+      nDbRelationIds.forEach( dbaseId => {
+        const rMeta = {
+          [DATABASE_QUERY_PRIMARY]: false,
+          [DATABASE_QUERY_ID]: dbaseId,
+          [DATABASE_QUERY_TITLE]: undefined,
+          [DATABASE_QUERY_PARENT_ID]: undefined,
+          [DATABASE_QUERY_PARENT_TITLE]: undefined
+        };
+        const rdbData = dbDatas.find( dbData => {
+          return removeHyphens(dbData[NOTION_ID]) === dbaseId;
+        } );
+        notionUpdateDbaseMeta( nClient, rdbData, rMeta );
+
+        notionDbaseQueryPromises.push(
+          getNotionDbasePromise( nClient, rMeta )
         );
       } );
     }
@@ -164,10 +193,14 @@ export async function GET( request, response ) {
 
     //organize the results
     const orgDbResults = allDbResults.reduce( (acc, cur) => {
-      const qId = cur[QUERY_ID];
-      const qPrimary = cur[QUERY_PRIMARY];
       const qProps = cur[QUERY_PROPERTIES];
-      const qName = cur[QUERY_NAME];
+      const qMeta = cur[QUERY_META];
+      const qPrimary = qMeta[DATABASE_QUERY_PRIMARY];
+      const qId = qMeta[DATABASE_QUERY_ID];
+      const qTitle = qMeta[DATABASE_QUERY_TITLE];
+      const qParentTitle = qMeta[DATABASE_QUERY_PARENT_TITLE];
+      const qParentId = qMeta[DATABASE_QUERY_PARENT_ID];
+      const qParentType = qMeta[DATABASE_QUERY_PARENT_TYPE];
 
       //go through all relations and find their database ids
       for (const qProp of qProps) {
@@ -185,11 +218,14 @@ export async function GET( request, response ) {
       const dbResult = {
         [NOTION_RESULT_BLOCKS]: qProps,
         [NOTION_RESULT_DATABASE_ID]: qId,
-        [NOTION_RESULT_DATABASE_TITLE]: qName
+        [NOTION_RESULT_DATABASE_TITLE]: qTitle,
+        [NOTION_RESULT_PARENT_ID]: qParentId,
+        [NOTION_RESULT_PARENT_TITLE]: qParentTitle,
+        [NOTION_RESULT_PARENT_TYPE]: qParentType
       };
 
       if (qPrimary) {
-        acc[NOTION_RESULT_PRIMARY_DATABASE] = dbResult
+        acc[NOTION_RESULT_PRIMARY_DATABASE] = dbResult;
       }
       else if (requests[RELATIONS_REQUEST]) {
         acc[NOTION_RESULT_RELATION_DATABASES].push( dbResult );
@@ -245,21 +281,52 @@ const createResponse = (json, request) => {
 };
 
 const getNotionDbaseRelationIds = notionDbases => {
-  const ids = new Map();
+  const ids = new Set();
   if (NOTION_PROPERTIES in notionDbases) {
     const ndbProperties = notionDbases[NOTION_PROPERTIES];
     const ndbPropertiesKeys = Object.keys( ndbProperties );
     for (const ndbPropertiesKey of ndbPropertiesKeys) {
+      //ndbPropertiesKey is the dbase property title
       const ndpPropertyVal = ndbProperties[ndbPropertiesKey];
       const ndpPropertyType = ndpPropertyVal[NOTION_DATA_TYPE];
       if (ndpPropertyType === NOTION_DATA_TYPE_RELATION) {
         const relation = ndpPropertyVal[NOTION_DATA_TYPE_RELATION];
         const dbaseId = relation[NOTION_KEY_DATABASE_ID];
-        ids.set( removeHyphens(dbaseId), ndbPropertiesKey );
+        ids.add( removeHyphens(dbaseId) );
       }
     }
   }
   return ids;
+};
+
+//all of this nonsense because title is not in the typescript
+//https://github.com/makenotion/notion-sdk-js/issues/471
+const getNotionDbaseTitle = notionDbases => {
+  for (const [key, value] of Object.entries(notionDbases)) {
+    if (key === 'title') {
+      return value[0].plain_text;
+    }
+  }
+};
+
+const getNotionDbaseParentId = nDatabase => {
+  for (const [key, value] of Object.entries(nDatabase)) {
+    if (key === 'parent') {
+      const parentType = value['type'];
+      const parentId = removeHyphens( value[parentType] );
+      return [parentId, parentType]
+    }
+  }
+};
+
+const getNotionPageTitle = nPage => {
+  const props = nPage.properties;
+  for (const [key, value] of Object.entries(props)) {
+    if (value['type'] === 'title') {
+      const title = value['title'][0]['plain_text'];
+      return title;
+    }
+  }
 };
 
 const getNotionDbaseProperties = notionDatas => {
@@ -403,14 +470,6 @@ const getNotionDbaseProperties = notionDatas => {
                   [EXPORT_DATA_VALUE]: propertyVal
                 };
               }
-              
-              // else if (propertyType == NOTION_DATA_TYPE_FORMULA) {
-              //   somedata[propertyKey] = {
-              //     [EXPORT_DATA_TYPE]: propertyType,
-              //     [EXPORT_DATA_VALUE]: propertyVal
-              //   };
-              //   console.log( 'NOTION_DATA_TYPE_FORMULA', propertyKey, propertyVal );
-              // }
               else {
                 // todo... handle other types
                 // console.log(
@@ -431,6 +490,12 @@ const getNotionDbaseProperties = notionDatas => {
                 NOTION_DATA_TYPE_RICH_TEXT,
                 NOTION_DATA_TYPE_RELATION,
                 NOTION_DATA_TYPE_DATE,
+                NOTION_DATA_TYPE_EMAIL,
+                NOTION_DATA_TYPE_PHONE_NUMBER,
+                NOTION_DATA_TYPE_STATUS,
+                NOTION_DATA_TYPE_URL,
+                NOTION_DATA_LAST_EDITED_TIME,
+                NOTION_DATA_CREATED_TIME
               ].includes( propertyType )) {
 
                 somedata[propertyKey] = {
@@ -450,16 +515,14 @@ const getNotionDbaseProperties = notionDatas => {
   return {};
 };
 
-const getNotionDbasePromise = (nClient, dbaseId, dbaseName, primary) => {
+const getNotionDbasePromise = (nClient, meta) => {
   const p = new Promise((resolve, reject) => {
-    nClient.databases.query({ [NOTION_KEY_DATABASE_ID]: dbaseId })
+    nClient.databases.query({ [NOTION_KEY_DATABASE_ID]: meta[DATABASE_QUERY_ID] })
       .then( result => {
         const properties = getNotionDbaseProperties( result );
         const propertyObj = {
-          [QUERY_PRIMARY]: primary,
           [QUERY_PROPERTIES]: properties,
-          [QUERY_ID]: dbaseId,
-          [QUERY_NAME]: dbaseName,
+          [QUERY_META]: meta,
         };
         resolve( propertyObj );
       })
@@ -526,18 +589,36 @@ function stringToBoolean(str) {
 
 const findRelationDbId = (allResults, blockId) => {
   for (const cur of allResults) {
-    const qId = cur[QUERY_ID];
     const qProps = cur[QUERY_PROPERTIES];
     for (const qProp of qProps) {
       for (const [qPropKey, qPropObj] of Object.entries(qProp)) {
         if (qPropObj[EXPORT_DATA_TYPE] === NOTION_ID) {
           const idValue = qPropObj[EXPORT_DATA_VALUE];
           if (idValue === blockId) {
-            return qId;
+            const qMeta = cur[QUERY_META];
+            return qMeta[DATABASE_QUERY_ID];
           }
         }
       }
     }
   }
   return null;
+};
+
+const notionUpdateDbaseMeta = async(nClient, nDbase, meta) => {
+  try {
+    const primaryTitle = getNotionDbaseTitle( nDbase );
+    meta[DATABASE_QUERY_TITLE] = primaryTitle;
+    const [primaryParentId, primaryParentType] = getNotionDbaseParentId( nDbase );
+    meta[DATABASE_QUERY_PARENT_ID] = primaryParentId;
+    if (primaryParentType === 'page_id') {
+      const primaryPageParent = await nClient.pages.retrieve({ page_id: primaryParentId });
+      const primaryPageParentTitle = getNotionPageTitle( primaryPageParent );
+      meta[DATABASE_QUERY_PARENT_TITLE] = primaryPageParentTitle;
+      meta[DATABASE_QUERY_PARENT_TYPE] = primaryParentType;
+    }
+  }
+  catch (e) {
+    console.log( 'primary meta collection error', e );
+  }
 };

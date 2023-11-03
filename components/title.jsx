@@ -10,7 +10,7 @@ export const Title = props => {
         { `\u00a0${decodeURI(pTitle)}` }
         </h2>
         <h3 className="text-1xl text-gray-500">
-        { `\u00a0 ${ pSubtitle ? decodeURI(pSubtitle) : '' }` }
+        { `\u00a0${ pSubtitle ? decodeURI(pSubtitle) : '' }` }
         </h3>
         { pChildren }
       </div>

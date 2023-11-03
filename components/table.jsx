@@ -60,7 +60,7 @@ export const Table = props => {
                 key={ headerIdx }
                 scope="col"
                 className={ 
-                  `truncate sticky ${ hideStr } top-0 border-b border-gray-300 bg-white bg-opacity-75 py-3.5 text-left text-sm font-semibold text-gray-900 backdrop-blur backdrop-filter`}
+                  `truncate sticky ${ hideStr } h-16 top-0 bg-gray-200 border-2 border-solid border-transparent text-left text-sm font-semibold text-gray-900`}
               >
                 { headerName }
               </th>
@@ -145,10 +145,7 @@ const getRowElements = ( row, rowIdx, pHeaders ) => {
     return (
       <td
         colSpan={ pHeaders.length }
-        className="p-0"
-        // className={ 
-        //   `border-b border-gray-200 whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 lg:pl-8`
-        // }
+        className={ 'p-0' }
       >
         { cells }
       </td>
@@ -160,8 +157,9 @@ const getRowElements = ( row, rowIdx, pHeaders ) => {
     return (
       <td
         key={ cellIdx }
-        className={ 
-          `${ hideStr } border-b border-gray-200 whitespace-nowrap py-4 text-sm font-medium text-gray-900`
+        className={
+          //https://github.com/tailwindlabs/tailwindcss/pull/560#issuecomment-503222143
+          `${ hideStr } border-b border-r border-gray-200 whitespace-nowrap py-4 text-sm font-medium`
         }
       >
         { cell }

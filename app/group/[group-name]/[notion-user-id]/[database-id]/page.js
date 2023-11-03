@@ -93,8 +93,8 @@ export default function Page() {
   ] = useAuthentication();
 
   const [headers, setHeaders] = useState( x => [ 
-    { [TABLE_HEADER_NAME]: 'date', [TABLE_HEADER_HIDE]: null },
-    { [TABLE_HEADER_NAME]: 'link', [TABLE_HEADER_HIDE]: null }
+    { [TABLE_HEADER_NAME]: 'Snapshot', [TABLE_HEADER_HIDE]: null },
+    { [TABLE_HEADER_NAME]: 'LINKS', [TABLE_HEADER_HIDE]: null }
   ] );
   const [rows, setRows] = useState( x => getRows( [], getLiveDataLink(pDatabaseId) ) );
 

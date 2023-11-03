@@ -1,4 +1,4 @@
-const buttonClassBase = 'inline-flex items-center gap-x-2 rounded-md px-3.5 py-2.5';
+const buttonClassBase = 'inline-flex items-center gap-x-2 rounded-md px-3.5 py-2.5 w-fit';
 export const buttonClassNames = buttonClassBase + ' bg-indigo-600 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600';
 export const buttonCancelClassNames = buttonClassBase + ' bg-white text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:ring-gray-400';
 

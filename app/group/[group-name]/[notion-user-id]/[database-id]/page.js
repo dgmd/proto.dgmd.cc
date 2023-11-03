@@ -31,6 +31,7 @@ import {
   NOTION_RESULT_BLOCKS,
   NOTION_RESULT_BLOCK_DBS,
   NOTION_RESULT_BLOCK_KEY,
+  NOTION_RESULT_PRIMARY_DATABASE,
 
   NOTION_RESULT
 } from 'app/api/query/keys.js';
@@ -76,7 +77,9 @@ export default function Page() {
   const pNotionUserId = decodeURI( params['notion-user-id'] );
   const pGroupName = decodeURI( params['group-name'] );
   const pDatabaseId = decodeURI( params[ 'database-id' ] );
+
   const [databaseName, setDatabaseName] = useState( x => '' );
+  const [notionUserName, setNotionUserName] = useState( x => '' );
 
   const [loading, setLoading] = useState( x => false );
   const rLoading = useRef( loading );
@@ -115,6 +118,12 @@ export default function Page() {
     const blockIdx = blockDbs.findIndex( x => x[EXPORT_DATA_KEY] === pDatabaseId );
     const blockVal = blockDbs[blockIdx][EXPORT_DATA_VALUE];
     setDatabaseName( x => blockVal );
+
+    const userBlock = json[NOTION_RESULT_PRIMARY_DATABASE][NOTION_RESULT_BLOCKS].find( x => {
+      return x['id'][EXPORT_DATA_VALUE] === pNotionUserId;
+    } );
+    const title = userBlock['Name'][EXPORT_DATA_VALUE];
+    setNotionUserName( x => title );
   };
 
   const fetchData = async ( initial ) => {
@@ -122,7 +131,7 @@ export default function Page() {
       return;
     }
 
-    setLoading( x => true );
+    setLoading( x => !initial );
     rLoading.current = true;
 
     //try to load in what we got here already
@@ -173,19 +182,32 @@ export default function Page() {
   return (
     <div className='flex-grow'>  
       <Title
-        title={ 'Database' }
-        subtitle={ databaseName }
       >
         {
         rows.length > 0 &&
-        <button
-          className={ buttonClassNames + " mt-2" }
-          onClick={ () => fetchData( false ) }>
-          Grab New Snapshot
-          <ArrowPathIcon
-            className={ `h-5 w-5 pointer-events-none ${ loading ? `animate-spin` : `` }` }
-            aria-hidden="true" />
-        </button>
+        <div
+          className="flex flex-col gap-8 pt-8">
+          <div
+            className='grid grid-cols-2 gap-2'
+          >
+            <div
+              className='w-32'
+            >DATABASE</div>
+            <div>{databaseName}</div>
+            <div>NOTION USER</div>
+            <div>{notionUserName}</div>
+            <div>GROUP</div>
+            <div>{pGroupName}</div>
+          </div>
+          <button
+            className={ buttonClassNames + " mt-2" }
+            onClick={ () => fetchData( false ) }>
+            Grab New Snapshot
+            <ArrowPathIcon
+              className={ `h-5 w-5 pointer-events-none ${ loading ? `animate-spin` : `` }` }
+              aria-hidden="true" />
+          </button>
+        </div>
         }
       </Title>
 

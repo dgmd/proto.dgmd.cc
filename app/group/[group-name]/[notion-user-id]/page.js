@@ -72,7 +72,6 @@ export default function Page() {
   const pGroupName = decodeURI( params[ 'group-name' ] );
   const pNotionUserId = decodeURI( params[ 'notion-user-id' ] );
 
-  const [groupName, setGroupName] = useState( x => '' );
   const [notionUserName, setNotionUserName] = useState( x => '' );
 
   const [
@@ -99,10 +98,6 @@ export default function Page() {
       .from( 'notion_rooms' )
       .select( 'id' )
       .eq( 'name', pGroupName  );
-
-      setGroupName( x => {
-        roomSupa.data.length ? roomSupa.data[0].name : x
-      } );
 
       const roomDataSupa = await supabase
       .from( 'notion_rooms_data' )
@@ -205,7 +200,7 @@ export default function Page() {
         subtitle={ `notion user id: ${ pNotionUserId }` }
       >
         {
-        rows.length > 0 &&
+        // rows.length > 0 &&
         <button
           className={ buttonClassNames + " mt-2" }
           onClick={ cbRefresh }>

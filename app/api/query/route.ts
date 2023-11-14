@@ -17,6 +17,7 @@ import {
   NOTION_RESULT,
   NOTION_RESULT_BLOCKS,
   NOTION_RESULT_BLOCK_DBS,
+  NOTION_RESULT_COLUMN_LISTS,
   NOTION_RESULT_BLOCK_KEY,
   NOTION_RESULT_DATABASE_ID,
   NOTION_RESULT_PARENT_ID,
@@ -59,6 +60,9 @@ const NOTION_DATA_TYPE_EMAIL = 'email';
 const NOTION_DATA_TYPE_STATUS = 'status';
 const NOTION_DATA_TYPE_RELATION = 'relation';
 const NOTION_DATA_TYPE_CHILD_DATABASE = 'child_database';
+const NOTION_DATA_TYPE_COLUMN_LIST = 'column_list';
+const NOTION_DATA_TYPE_COLUMN = 'column';
+const NOTION_DATA_TYPE_BLOCK = 'block';
 const NOTION_DATA_TYPE_PHONE_NUMBER = 'phone_number';
 const NOTION_DATA_TYPE_FORMULA = 'formula';
 const NOTION_DATA_TYPE_URL = 'url';
@@ -239,7 +243,11 @@ export async function GET( request, response ) {
         const qProps = dbResult[QUERY_PROPERTIES];
         qProps.forEach( qProp => {
           const qPropId = qProp[DGMDCC_ID][EXPORT_DATA_VALUE];
-          const result = getNotionPageBlockPromise( nClient, qPropId );
+          const collector = {
+            [NOTION_RESULT_BLOCK_DBS]: [],
+            [NOTION_RESULT_COLUMN_LISTS]: []
+          };
+          const result = getNotionPageBlockPromise( nClient, qPropId, collector );
           notionPageBlockQueryPromises.push( result );
         });
       });
@@ -533,46 +541,65 @@ const getNotionDbasePromise = (nClient, meta) => {
   return p;
 };
 
-const getNotionBlockKeyedDatabases = blockDatas => {
+const getNotionBlockKeyedDatabases = (blockDatas, collector) => {
   if (NOTION_RESULTS in blockDatas) {
     const somedata = blockDatas[NOTION_RESULTS].reduce( (acc, cur) => {
       const propertyType = cur[NOTION_DATA_TYPE];
       const propertyVal = cur[propertyType];
       const gotPropertyVal = propertyVal !== null && propertyVal !== undefined;
-      if (gotPropertyVal && propertyType === NOTION_DATA_TYPE_CHILD_DATABASE) {
-        const id = cur[NOTION_KEY_ID];
-        const idSansHyphens = removeHyphens( id );
+      const id = cur[NOTION_KEY_ID];
+      const idSansHyphens = removeHyphens( id );
+
+      if (gotPropertyVal) {
         const propertyValTitle = propertyVal[NOTION_DATA_TYPE_TITLE];
-        const obj = {
-          [EXPORT_DATA_KEY]: idSansHyphens,
-          [EXPORT_DATA_VALUE]: propertyValTitle
-        };
-        acc.push( obj );
+        if (propertyType === NOTION_DATA_TYPE_CHILD_DATABASE) {
+          const obj = {
+            [EXPORT_DATA_KEY]: idSansHyphens,
+            [EXPORT_DATA_VALUE]: propertyValTitle
+          };
+          acc[NOTION_RESULT_BLOCK_DBS].push( obj );
+        }
+        else if (
+          propertyType === NOTION_DATA_TYPE_COLUMN_LIST ||
+          propertyType === NOTION_DATA_TYPE_COLUMN) {
+          acc[NOTION_RESULT_COLUMN_LISTS].push( idSansHyphens );
+        }        
       }
+
       return acc;
-    }, [] );
+    }, collector );
     return somedata;
   }
   return [];
 };
 
-const getNotionPageBlockPromise = (nClient, blockId) => {
+const getNotionPageBlockPromise = async(nClient, blockId, collector) => {
   const p = new Promise((resolve, reject) => {
     nClient.blocks.children.list( { 
       block_id: blockId,
       page_size: 50
     } )
     .then( result => {
-      const keyedDatabases = getNotionBlockKeyedDatabases( result );
+      const keyedDatabases = getNotionBlockKeyedDatabases( result, collector );
+
       resolve( {
         [NOTION_RESULT_BLOCK_KEY]: blockId,
-        [NOTION_RESULT_BLOCK_DBS]: keyedDatabases
+        [NOTION_RESULT_BLOCK_DBS]: keyedDatabases[NOTION_RESULT_BLOCK_DBS],
+        [NOTION_RESULT_COLUMN_LISTS]: keyedDatabases[NOTION_RESULT_COLUMN_LISTS]
       } );
     })
     .catch( error => {
       reject(error);
     });
   });
+  let results = await p;
+  const clList = results[NOTION_RESULT_COLUMN_LISTS];
+  for (var clListIdx = clList.length-1; clListIdx >= 0; clListIdx--) {
+    const cListItemId = clList[clListIdx];
+    clList.splice( clListIdx, 1 );
+    getNotionPageBlockPromise( nClient, cListItemId, collector );
+  }
+
   return p;
 };
 

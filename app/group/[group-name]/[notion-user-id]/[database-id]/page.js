@@ -65,6 +65,7 @@ import {
 import {
   LinkButton
 } from 'components/link-button.jsx';
+import { EXPORT_DATA_METADATA, EXPORT_DATA_PROPERTIES } from '../../../../api/query/keys';
 
 const PROTO_TYPE = 'PROTO_TYPE';
 const PROTO_VAL = 'PROTO_VAL';
@@ -120,9 +121,9 @@ export default function Page() {
     setDatabaseName( x => blockVal );
 
     const userBlock = json[NOTION_RESULT_PRIMARY_DATABASE][NOTION_RESULT_BLOCKS].find( x => {
-      return x['id'][EXPORT_DATA_VALUE] === pNotionUserId;
+      return x[EXPORT_DATA_METADATA]['id'][EXPORT_DATA_VALUE] === pNotionUserId;
     } );
-    const title = userBlock['Name'][EXPORT_DATA_VALUE];
+    const title = userBlock[EXPORT_DATA_PROPERTIES]['Name'][EXPORT_DATA_VALUE];
     setNotionUserName( x => title );
   };
 
@@ -178,6 +179,10 @@ export default function Page() {
     fetchData( true );
   }, [
   ] );
+
+  // if (true) {
+  //   return "loading..."
+  // }
 
   return (
     <div className='flex-grow'>  

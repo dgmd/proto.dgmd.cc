@@ -49,6 +49,7 @@ import {
 import {
   LinkButton
 } from 'components/link-button.jsx';
+import { EXPORT_DATA_METADATA, EXPORT_DATA_PROPERTIES } from '../../api/query/keys';
 
 const USER_ID = 'USER_ID';
 const USER_NAME = 'USER_NAME';
@@ -106,12 +107,12 @@ export default function List() {
           const students = room[NOTION_RESULT_PRIMARY_DATABASE][NOTION_RESULT_BLOCKS];
           const blocks = room[NOTION_RESULT_BLOCKS];
           for (const student of students) {
-            const studentId = student['id'][EXPORT_DATA_VALUE];
+            const studentId = student[EXPORT_DATA_METADATA]['id'][EXPORT_DATA_VALUE];
             const studentBlocks = blocks.find(
               block => block[NOTION_RESULT_BLOCK_KEY] == studentId );
             const keys = Object.keys(studentBlocks);
             if (keys.length > 0) {
-              const studentName = student['Name'][EXPORT_DATA_VALUE];
+              const studentName = student[EXPORT_DATA_PROPERTIES]['Name'][EXPORT_DATA_VALUE];
               frows.push( {
                 [USER_NAME]: studentName,
                 [USER_ID]: studentId

@@ -37,6 +37,8 @@ import {
 } from '@heroicons/react/20/solid';
 
 import {
+  EXPORT_DATA_METADATA,
+  EXPORT_DATA_PROPERTIES,
   EXPORT_DATA_KEY,
   EXPORT_DATA_VALUE,
   NOTION_RESULT_BLOCKS,
@@ -107,8 +109,10 @@ export default function Page() {
       
       const json = roomDataSupa.data[0].data;
       const data = json[NOTION_RESULT_PRIMARY_DATABASE][NOTION_RESULT_BLOCKS];
-      const datum = data.find( x => x['id'][EXPORT_DATA_VALUE] === pNotionUserId );
-      const name = datum['Name'][EXPORT_DATA_VALUE];
+      const datum = data.find( x => {
+        return x[EXPORT_DATA_METADATA]['id'][EXPORT_DATA_VALUE] === pNotionUserId;
+      } );
+      const name = datum[EXPORT_DATA_PROPERTIES]['Name'][EXPORT_DATA_VALUE];
       setNotionUserName( x => name );
 
       const blocks = json[NOTION_RESULT_BLOCKS];
@@ -163,8 +167,10 @@ export default function Page() {
       const roomData = supaRoomId.data[0];
       const roomNotionDbId = roomData.notion_db_id;
       const roomNotionId = roomData.id;
+      console.log( 'roomNotionDbId', roomNotionDbId, roomNotionId );
 
       const js = await queryApiForRoom( roomNotionDbId );
+      console.log( 'js', js );
       if (js && js[NOTION_RESULT_SUCCESS]) {
         const result = js[NOTION_RESULT];
 

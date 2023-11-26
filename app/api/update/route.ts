@@ -21,17 +21,24 @@
     CRUD_RESPONSE_CREATE,
     CRUD_RESPONSE_CREATE_ID,
     CRUD_RESPONSE_CREATE_BLOCKS,
+    CRUD_RESPONSE_CREATE_METAS,
+    CRUD_RESPONSE_META,
+    CRUD_RESPONSE_META_KEY,
+    CRUD_RESPONSE_META_ID,
     CRUD_RESPONSE_UPDATE_ID,
     CRUD_RESPONSE_UPDATE_BLOCKS,
+    CRUD_RESPONSE_UPDATE_METAS,
     URL_SEARCH_PARAM_ACTION,
     URL_SEARCH_VALUE_ACTION_DELETE,
     URL_SEARCH_PARAM_DELETE_BLOCK_ID,
     URL_SEARCH_VALUE_ACTION_CREATE,
     URL_SEARCH_PARAM_CREATE_BLOCK_ID,
     URL_SEARCH_PARAM_CREATE_CHILDREN,
+    URL_SEARCH_PARAM_CREATE_META,
     URL_SEARCH_VALUE_ACTION_UPDATE,
     URL_SEARCH_PARAM_UPDATE_BLOCK_ID,
     URL_SEARCH_PARAM_UPDATE_BLOCK,
+    URL_SEARCH_PARAM_UPDATE_META,
     CRUD_RESPONSE_BLOCK,
     CRUD_RESPONSE_BLOCK_KEY,
     CRUD_RESPONSE_BLOCK_ID
@@ -82,6 +89,8 @@
         const appendBlockId = removeHyphens( params.get( URL_SEARCH_PARAM_CREATE_BLOCK_ID ) );
         const appendChildrenParam = params.get( URL_SEARCH_PARAM_CREATE_CHILDREN );
         const appendChildrenObj = JSON.parse( decodeURIComponent(appendChildrenParam) );
+        const appendMetaParam = params.get( URL_SEARCH_PARAM_CREATE_META );
+        const appendMetaObj = JSON.parse( decodeURIComponent(appendMetaParam) );
 
         const createObj = await nClient.pages.create({
           parent: {
@@ -91,14 +100,22 @@
           properties: {},
           children: [],
         });
-        const createBlockId = removeHyphens( createObj.id );
+        const createPageId = removeHyphens( createObj.id );
         rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_CREATE] = true;
-        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_CREATE_ID] = createBlockId;
+        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_CREATE_ID] = createPageId;
         const rBlocks = [];
         rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_CREATE_BLOCKS] = rBlocks;
 
         for (const [key, value] of Object.entries(appendChildrenObj)) {
-          await updateBlock( nClient, createBlockId, key, value, rBlocks );
+          await updateBlock( nClient, createPageId, key, value, rBlocks );
+        }
+
+        const rMetas = [];
+        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_CREATE_METAS] = rMetas;
+        for (const [key, value] of Object.entries(appendMetaObj)) {
+          if (key === 'icon' || key === 'cover') {
+            await updateMeta( nClient, createPageId, key, value, rMetas );
+          }
         }
 
       }
@@ -112,16 +129,26 @@
         [CRUD_RESPONSE_RESULT]: {}
       };
       try {
-        const updateBlockId = removeHyphens( params.get(URL_SEARCH_PARAM_UPDATE_BLOCK_ID) );
-        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_UPDATE_ID] = updateBlockId;
+        const updatePageId = removeHyphens( params.get(URL_SEARCH_PARAM_UPDATE_BLOCK_ID) );
+        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_UPDATE_ID] = updatePageId;
         const updateBlockParam = params.get( URL_SEARCH_PARAM_UPDATE_BLOCK );
         const updateBlockObj = JSON.parse( decodeURIComponent(updateBlockParam) );
+        const updateMetaParam = params.get( URL_SEARCH_PARAM_UPDATE_META );
+        const updateMetaObj = JSON.parse( decodeURIComponent(updateMetaParam) );
 
         const rBlocks = [];
         rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_UPDATE_BLOCKS] = rBlocks;
 
         for (const [key, value] of Object.entries(updateBlockObj)) {
-          await updateBlock( nClient, updateBlockId, key, value, rBlocks );
+          await updateBlock( nClient, updatePageId, key, value, rBlocks );
+        }
+
+        const rMetas = [];
+        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_UPDATE_METAS] = rMetas;
+        for (const [key, value] of Object.entries(updateMetaObj)) {
+          if (key === 'icon' || key === 'cover') {
+            await updateMeta( nClient, updatePageId, key, value, rMetas );
+          }
         }
       }
       catch (error) {
@@ -144,8 +171,9 @@
     return resJson;
   };
 
-  const updateBlock = async (nClient, blockId, blockKey, blockValue, responseBlocks) => {
-    const delay = ms => new Promise(res => setTimeout(res, ms));
+  const delay = ms => new Promise(res => setTimeout(res, ms));
+
+  const updateBlock = async (nClient, pageId, blockKey, blockValue, responseBlocks) => {
     try {
 
       //https://www.reddit.com/r/Notion/comments/s8uast/error_deleting_all_the_blocks_in_a_page/
@@ -153,7 +181,7 @@
 
       const blockResponse =
       await nClient.pages.update({
-        page_id: blockId,
+        page_id: pageId,
         properties: {
           [blockKey]: blockValue
         }
@@ -170,6 +198,33 @@
       responseBlocks.push( {
         [CRUD_RESPONSE_BLOCK]: false,
         [CRUD_RESPONSE_BLOCK_KEY]: blockKey,
+      } );
+    }
+  };
+
+  const updateMeta = async (nClient, pageId, metaKey, metaValue, responseMetas) => {
+    try {
+
+      //https://www.reddit.com/r/Notion/comments/s8uast/error_deleting_all_the_blocks_in_a_page/
+      await delay( 50 );
+
+      const metaResponse =
+      await nClient.pages.update({
+        page_id: pageId,
+        [metaKey]: metaValue
+      });
+      const metaResponseId = removeHyphens( metaResponse.id );
+      responseMetas.push( {
+        [CRUD_RESPONSE_META]: true,
+        [CRUD_RESPONSE_META_KEY]: metaKey,
+        [CRUD_RESPONSE_META_ID]: metaResponseId
+      })
+    }
+    catch (e) {
+      console.log( 'update error', e );
+      responseMetas.push( {
+        [CRUD_RESPONSE_META]: false,
+        [CRUD_RESPONSE_META_KEY]: metaKey,
       } );
     }
   };

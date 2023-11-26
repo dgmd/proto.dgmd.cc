@@ -77,6 +77,8 @@ const NOTION_DATA_LAST_EDITED_TIME = 'last_edited_time';
 const NOTION_DATA_CREATED_TIME = 'created_time';
 const NOTION_DATA_TYPE_ICON = 'icon';
 const NOTION_DATA_TYPE_COVER = 'cover';
+const NOTION_DATA_TYPE_EMOJI = 'emoji';
+const NOTION_DATA_TYPE_EXTERNAL = 'external';
 
 const NOTION_KEY_NAME = 'name';
 const NOTION_KEY_FILE = 'file';
@@ -613,54 +615,6 @@ const getNotionBlockKeyedDatabases = (blockDatas, collector) => {
   }
   return [];
 };
-
-// const getNotionPagePromise = async( nClient, pageId ) => {
-//   const p = new Promise((resolve, reject) => {
-//     nClient.pages.retrieve({ page_id: pageId })
-//     .then( result => {
-//       const icon = result[NOTION_DATA_TYPE_ICON];
-//       let iconVal = null;
-//       let iconType = null;
-//       if (icon) {
-//         iconType = icon.type;
-//         if (iconType === 'emoji') {
-//           iconVal = icon.emoji;
-//         }
-//         else if (iconType === 'external') {
-//           iconVal = icon.external.url;
-//         }
-//       }
-//       const iconObj = {
-//         [EXPORT_DATA_KEY]: 'icon',
-//         [EXPORT_DATA_VALUE]: iconVal
-//       };
-
-//       const cover = result[NOTION_DATA_TYPE_COVER];
-//       let coverVal = null;
-//       let coverType = null;
-//       if (cover) {
-//         coverType = cover.type;
-//         if (coverType === 'external') {
-//           coverVal = cover.external.url;
-//         }
-//         else if (coverType === 'file') {
-//           coverVal = cover.file.url;
-//         }
-//       }
-//       const coverObj = {
-//         [EXPORT_DATA_KEY]: 'cover',
-//         [EXPORT_DATA_VALUE]: coverVal
-//       };
-
-//       const collector = {[NOTION_RESULT_PAGE_DATA]: []};
-//       collector[NOTION_RESULT_PAGE_DATA].push( iconObj );
-//       collector[NOTION_RESULT_PAGE_DATA].push( coverObj );
-//       resolve( collector );
-//     } );
-//   });
-
-//   return p;
-// };
 
 const getCover = cover => {
   let coverVal = null;

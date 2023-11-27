@@ -375,15 +375,17 @@ const getNotionDbaseProperties = (notionDatas, dbLookup) => {
           };
         }
         else if (key === NOTION_DATA_TYPE_ICON) {
+          const iconObj = getIcon( resultData[key] );
           metadata[NOTION_DATA_TYPE_ICON] = {
-            [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_ICON,
-            [EXPORT_DATA_VALUE]: getIcon( resultData[key] )
+            [EXPORT_DATA_TYPE]: iconObj['type'],
+            [EXPORT_DATA_VALUE]: iconObj['value']
           };
         }
         else if (key === NOTION_DATA_TYPE_COVER) {
+          const coverObj = getCover( resultData[key] );
           metadata[NOTION_DATA_TYPE_COVER] = {
-            [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_COVER,
-            [EXPORT_DATA_VALUE]: getCover( resultData[key] )
+            [EXPORT_DATA_TYPE]: coverObj['type'],
+            [EXPORT_DATA_VALUE]: coverObj['value']
           };
         }
         else if (key === NOTION_PROPERTIES) {
@@ -628,7 +630,10 @@ const getCover = cover => {
       coverVal = cover.file.url;
     }
   }
-  return coverVal;
+  return {
+    type: coverType,
+    value: coverVal
+  };
 };
 
 const getIcon = icon => {
@@ -643,7 +648,10 @@ const getIcon = icon => {
       iconVal = icon.external.url;
     }
   }
-  return iconVal;
+  return {
+    type: iconType,
+    value: iconVal
+  };
 };
 
 const getNotionPageBlockPromise = async(nClient, blockId, collector) => {
@@ -710,9 +718,9 @@ const notionUpdateDbaseMeta = async(nClient, nDbase, meta) => {
     const primaryTitle = getNotionDbaseTitle( nDbase );
     meta[DATABASE_QUERY_TITLE] = primaryTitle;
     const primaryCover = getCover( nDbase[NOTION_DATA_TYPE_COVER] );
-    meta[DATABASE_QUERY_COVER] = primaryCover;
+    meta[DATABASE_QUERY_COVER] = primaryCover['value'];
     const primaryIcon = getIcon( nDbase[NOTION_DATA_TYPE_ICON] );
-    meta[DATABASE_QUERY_ICON] = primaryIcon;
+    meta[DATABASE_QUERY_ICON] = primaryIcon['value'];
     const [primaryParentId, primaryParentType] = getNotionDbaseParentId( nDbase );
     meta[DATABASE_QUERY_PARENT_ID] = primaryParentId;
     if (primaryParentType === 'page_id') {

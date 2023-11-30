@@ -38,7 +38,9 @@ import {
   NOTION_RESULT_SUCCESS,
   URL_SEARCH_PARAM_BLOCKS_REQUEST,
   URL_SEARCH_PARAM_DATABASE,
-  URL_SEARCH_PARAM_RELATIONS_REQUEST
+  // URL_SEARCH_PARAM_RELATIONS_REQUEST,
+  URL_SEARCH_PARAM_PAGE_CURSOR_TYPE_REQUEST,
+  URL_SEARCH_PARAM_PAGE_CURSOR_ID_REQUEST
 } from './keys.js';
 
 import {
@@ -59,6 +61,7 @@ const NOTION_DATA_TYPE_NUMBER = 'number';
 const NOTION_DATA_TYPE_SELECT = 'select';
 const NOTION_DATA_TYPE_MULTI_SELECT = 'multi_select';
 const NOTION_DATA_TYPE_FILES = 'files';
+const NOTION_DATA_TYPE_FILE = 'file';
 const NOTION_DATA_TYPE_TITLE = 'title';
 const NOTION_DATA_TYPE_RICH_TEXT = 'rich_text';
 const NOTION_DATA_TYPE_CHECKBOX = 'checkbox';
@@ -88,10 +91,15 @@ const NOTION_KEY_PLAIN_TEXT = 'plain_text';
 const NOTION_KEY_DATABASE_ID = 'database_id';
 const NOTION_KEY_ID = 'id';
 
+const NOTION_HAS_MORE = 'has_more';
+const NOTION_NEXT_CURSOR = 'next_cursor';
+
 const DATABASE_QUERY_PRIMARY = 'DATABASE_QUERY_PRIMARY';
 const DATABASE_QUERY_ID = 'DATABASE_QUERY_ID';
 const DATABASE_QUERY_TITLE = 'DATABASE_QUERY_TITLE';
 const DATABASE_QUERY_PARENT_ID = 'DATABASE_QUERY_PARENT_ID';
+const DATABASE_QUERY_PAGE_CURSOR_TYPE = 'DATABASE_QUERY_PAGE_CURSOR_TYPE';
+const DATABASE_QUERY_PAGE_CURSOR_ID = 'DATABASE_QUERY_PAGE_CURSOR_ID';
 const DATABASE_QUERY_PARENT_TITLE = 'DATABASE_QUERY_PARENT_TITLE';
 const DATABASE_QUERY_PARENT_TYPE = 'DATABASE_QUERY_PARENT_TYPE';
 const DATABASE_QUERY_COVER = 'DATABASE_QUERY_COVER';
@@ -99,31 +107,47 @@ const DATABASE_QUERY_ICON = 'DATABASE_QUERY_ICON';
 
 const QUERY_META = 'QUERY_META';
 const QUERY_PROPERTIES = 'QUERY_PROPERTIES';
+const QUERY_PAGES = 'QUERY_PAGES';
 
 const SECRET_ID = 'SECRET_ID';
-const DATABASE_ID = 'DATABASE_ID';
+const DATABASE_ID_REQUEST = 'DATABASE_ID_REQUEST';
 const RELATIONS_REQUEST = 'RELATIONS_REQUEST';
 const BLOCKS_REQUEST = 'BLOCKS_REQUEST';
+const PAGE_CURSOR_REQUEST = 'PAGE_CURSOR_REQUEST';
+const PAGE_CURSOR_TYPE_REQUEST = 'PAGE_CURSOR_TYPE_REQUEST';
+const PAGE_CURSOR_ID_REQUEST = 'PAGE_CURSOR_ID_REQUEST';
+const PAGE_CURSOR_TYPE_DEFAULT = 'PAGE_CURSOR_TYPE_DEFAULT';
+const PAGE_CURSOR_TYPE_SPECIFIC = 'PAGE_CURSOR_TYPE_SPECIFIC';
+const PAGE_CURSOR_TYPE_ALL = 'PAGE_CURSOR_TYPE_ALL';
 
 export async function GET( request, response ) {
 
   const secrets = {
-    [SECRET_ID]: process.env.NOTION_SECRET,
-    [DATABASE_ID]: null
+    [SECRET_ID]: process.env.NOTION_SECRET
   };
+
   const requests = {
-    [RELATIONS_REQUEST]: false,
-    [BLOCKS_REQUEST]: false
+    [RELATIONS_REQUEST]: true,
+    [BLOCKS_REQUEST]: false,
+    [DATABASE_ID_REQUEST]: null,
+    [PAGE_CURSOR_REQUEST]: {
+      [PAGE_CURSOR_TYPE_REQUEST]: PAGE_CURSOR_TYPE_DEFAULT,
+      [PAGE_CURSOR_ID_REQUEST]: null
+    },
   };
 
   const params = request.nextUrl.searchParams;
   if (params.has(URL_SEARCH_PARAM_DATABASE)) {
     const dbId = params.get(URL_SEARCH_PARAM_DATABASE);
-    secrets[DATABASE_ID] = dbId;
+    requests[DATABASE_ID_REQUEST] = dbId;
   }
-  if (params.has(URL_SEARCH_PARAM_RELATIONS_REQUEST)) {
-    const relations = params.get(URL_SEARCH_PARAM_RELATIONS_REQUEST);
-    requests[RELATIONS_REQUEST] = stringToBoolean(relations);
+  if (params.has(URL_SEARCH_PARAM_PAGE_CURSOR_TYPE_REQUEST)) {
+    const pcs = params.get(URL_SEARCH_PARAM_PAGE_CURSOR_TYPE_REQUEST);
+    requests[PAGE_CURSOR_REQUEST][PAGE_CURSOR_TYPE_REQUEST] = pcs;
+  }
+  if (params.has(URL_SEARCH_PARAM_PAGE_CURSOR_ID_REQUEST)) {
+    const pcid = params.get(URL_SEARCH_PARAM_PAGE_CURSOR_ID_REQUEST);
+    requests[PAGE_CURSOR_REQUEST][PAGE_CURSOR_ID_REQUEST] = pcid;
   }
   if (params.has(URL_SEARCH_PARAM_BLOCKS_REQUEST)) {
     const blocks = params.get(URL_SEARCH_PARAM_BLOCKS_REQUEST);
@@ -137,110 +161,129 @@ export async function GET( request, response ) {
     });
 
     const nDbase = await nClient.databases.retrieve({
-      [NOTION_KEY_DATABASE_ID]: secrets[DATABASE_ID]
+      [NOTION_KEY_DATABASE_ID]: requests[DATABASE_ID_REQUEST]
     });
 
-    const primaryMeta = getDbMeta( true, secrets[DATABASE_ID] );
+    const primaryDbId = requests[DATABASE_ID_REQUEST];
+    const primaryMeta = getDbMeta(
+      true, 
+      primaryDbId,
+      requests[PAGE_CURSOR_REQUEST] );
 
     notionUpdateDbaseMeta( nClient, nDbase, primaryMeta );
 
     //parse the relation database ids from properties
-    const rIds =  getNotionDbaseRelationIds( nDbase );
-    const nDbRelationIds = rIds.ids;
-    const nDbRelationLookup = rIds.lookup;
+    const nDbRelationLookup =  getNotionDbaseRelationIds( nDbase );
+    const nDbPromise = getNotionDbasePromise( nClient, primaryMeta, nDbRelationLookup )
 
-    const notionDbaseQueryPromises = [
-      getNotionDbasePromise( nClient, primaryMeta, nDbRelationLookup )
-    ];
+    // if (requests[RELATIONS_REQUEST]) {
+    //   //remove the primary database id - no need for redundant queries
+    //   nDbRelationIds.delete( requests[DATABASE_ID_REQUEST] );
 
-    if (requests[RELATIONS_REQUEST]) {
-      //remove the primary database id - no need for redundant queries
-      nDbRelationIds.delete( secrets[DATABASE_ID] );
+    //   //we need info about the title of each database
+    //   const dbDataPromises = Array.from(nDbRelationIds).map(
+    //     (dbaseId: string) => {
+    //       return new Promise((resolve, reject) => {
+    //         const dbQuery = {
+    //           [NOTION_KEY_DATABASE_ID]: dbaseId
+    //         }
+    //         nClient.databases.retrieve( dbQuery )
+    //         .then( result => {
+    //           resolve( result );
+    //         } );
+    //       } );          
+    //     }
+    //   );
+    //   const dbDatas = await Promise.all( dbDataPromises );
 
-      //we need info about the title of each database
-      const dbDataPromises = Array.from(nDbRelationIds).map(
-        (dbaseId: string) => {
-          return new Promise((resolve, reject) => {
-            const dbQuery = {
-              [NOTION_KEY_DATABASE_ID]: dbaseId
-            }
-            nClient.databases.retrieve( dbQuery )
-            .then( result => {
-              resolve( result );
-            } );
-          } );          
+    //   nDbRelationIds.forEach((dbaseId: string) => {
+    //     const rMeta = getDbMeta( 
+    //       false, dbaseId, null );
+    //     const rdbData = dbDatas.find( dbData => {
+    //       return removeHyphens(dbData[NOTION_ID]) === dbaseId;
+    //     } );
+    //     notionUpdateDbaseMeta( nClient, rdbData, rMeta );
+
+    //     notionDbaseQueryPromises.push(
+    //       getNotionDbasePromise( nClient, rMeta, nDbRelationLookup )
+    //     );
+    //   } );
+    // }
+
+    const nDbResult = await nDbPromise;
+    const qProps = nDbResult[QUERY_PROPERTIES];
+    const qPages = nDbResult[QUERY_PAGES];
+    const qMeta = nDbResult[QUERY_META];
+    const qPrimary = qMeta[DATABASE_QUERY_PRIMARY];
+    const qId = qMeta[DATABASE_QUERY_ID];
+    const qTitle = qMeta[DATABASE_QUERY_TITLE];
+    const qParentTitle = qMeta[DATABASE_QUERY_PARENT_TITLE];
+    const qParentId = qMeta[DATABASE_QUERY_PARENT_ID];
+    const qParentType = qMeta[DATABASE_QUERY_PARENT_TYPE];
+    const qIcon = qMeta[DATABASE_QUERY_ICON];
+    const qCover = qMeta[DATABASE_QUERY_COVER];
+
+    //track what we've loaded so we don't do it again
+    const unloadedPageIds = qProps.reduce((acc, cur) => {
+      const props = cur[EXPORT_DATA_PROPERTIES];
+      const propKeys = Object.keys( props );
+      for (const propKey of propKeys) {
+        const prop = props[propKey];
+        const propVal = prop[EXPORT_DATA_VALUE];
+        if (propVal && propVal.length > 0) {
+          if (prop[EXPORT_DATA_TYPE] === NOTION_DATA_TYPE_RELATION) {
+            const propValIds = propVal.map( pv => pv[NOTION_RESULT_RELATION_PAGE_ID] );
+            acc.push( ...propValIds );
+          }
         }
-      );
-      const dbDatas = await Promise.all( dbDataPromises );
-
-      nDbRelationIds.forEach( dbaseId => {
-        const rMeta = getDbMeta( false, dbaseId );
-        const rdbData = dbDatas.find( dbData => {
-          return removeHyphens(dbData[NOTION_ID]) === dbaseId;
-        } );
-        notionUpdateDbaseMeta( nClient, rdbData, rMeta );
-
-        notionDbaseQueryPromises.push(
-          getNotionDbasePromise( nClient, rMeta, nDbRelationLookup )
-        );
-      } );
+      }
+      return acc;
+    }, []);
+    const loadedPageIds = [];
+    
+    while( unloadedPageIds.length > 0 ) {
+      const pageId = unloadedPageIds.shift();
+      const response = await nClient.pages.retrieve({ 
+        page_id: pageId
+      });
     }
 
-    //execute all queries
-    const allDbResults = await Promise.all( notionDbaseQueryPromises );
-
-    const orgDbResult = {
-      [NOTION_RESULT_PRIMARY_DATABASE]: null,
-    };
-    if (requests[RELATIONS_REQUEST]) {
-      orgDbResult[NOTION_RESULT_RELATION_DATABASES] = [];
-    }
-
-    //organize the results
-    const orgDbResults = allDbResults.reduce( (acc, cur) => {
-      const qProps = cur[QUERY_PROPERTIES];
-      const qMeta = cur[QUERY_META];
-      const qPrimary = qMeta[DATABASE_QUERY_PRIMARY];
-      const qId = qMeta[DATABASE_QUERY_ID];
-      const qTitle = qMeta[DATABASE_QUERY_TITLE];
-      const qParentTitle = qMeta[DATABASE_QUERY_PARENT_TITLE];
-      const qParentId = qMeta[DATABASE_QUERY_PARENT_ID];
-      const qParentType = qMeta[DATABASE_QUERY_PARENT_TYPE];
-      const qIcon = qMeta[DATABASE_QUERY_ICON];
-      const qCover = qMeta[DATABASE_QUERY_COVER];
-
-      //go through all relations and find their database ids
-      for (const qProp of qProps) {
-        for (const [qPropKey, qPropObj] of Object.entries(qProp)) {
-          if (qPropObj[EXPORT_DATA_TYPE] === NOTION_DATA_TYPE_RELATION) {
-            const qPropValues = qPropObj[EXPORT_DATA_VALUE];
-            for (const qPropValue of qPropValues) {
-              const dbId = findRelationDbId( allDbResults, qPropValue[NOTION_RESULT_RELATION_BLOCK_ID] );
-              qPropValue[NOTION_RESULT_RELATION_DATABASE_ID] = dbId;
+    for (const qProp of qProps) {
+      const qqProps = qProp[EXPORT_DATA_PROPERTIES];
+      for (const [qPropKey, qPropObj] of Object.entries(qqProps)) {
+        if (qPropObj[EXPORT_DATA_TYPE] === NOTION_DATA_TYPE_RELATION) {
+          const qPropValues = qPropObj[EXPORT_DATA_VALUE];
+          for (const qPropValue of qPropValues) {
+            const dbId = qPropValue[NOTION_RESULT_RELATION_DATABASE_ID];
+            if (dbId !== primaryDbId) {
+              const pageId = qPropValue[NOTION_RESULT_RELATION_PAGE_ID];
+              const response = await nClient.pages.retrieve({ 
+                page_id: pageId
+              });
+              console.log( 'response', response );
+              console.log( '' );
             }
           }
         }
       }
+    }
 
-      const dbResult = {
-        [NOTION_RESULT_BLOCKS]: qProps,
-        [NOTION_RESULT_DATABASE_ID]: qId,
-        [NOTION_RESULT_DATABASE_TITLE]: qTitle,
-        [NOTION_RESULT_PARENT_ID]: qParentId,
-        [NOTION_RESULT_PARENT_TITLE]: qParentTitle,
-        [NOTION_RESULT_PARENT_TYPE]: qParentType,
-        [NOTION_RESULT_ICON]: qIcon,
-        [NOTION_RESULT_COVER]: qCover,
-      };
-
-      if (qPrimary) {
-        acc[NOTION_RESULT_PRIMARY_DATABASE] = dbResult;
-      }
-      else if (requests[RELATIONS_REQUEST]) {
-        acc[NOTION_RESULT_RELATION_DATABASES].push( dbResult );
-      }
-      return acc;
-    }, orgDbResult );
+    const dbResult = {
+      //todo -- this should be "pages"
+      [NOTION_RESULT_BLOCKS]: qProps,
+      [NOTION_RESULT_PAGE_DATA]: qPages,
+      [NOTION_RESULT_DATABASE_ID]: qId,
+      [NOTION_RESULT_DATABASE_TITLE]: qTitle,
+      [NOTION_RESULT_PARENT_ID]: qParentId,
+      [NOTION_RESULT_PARENT_TITLE]: qParentTitle,
+      [NOTION_RESULT_PARENT_TYPE]: qParentType,
+      [NOTION_RESULT_ICON]: qIcon,
+      [NOTION_RESULT_COVER]: qCover,
+    };
+    const orgDbResult = {
+      [NOTION_RESULT_PRIMARY_DATABASE]: dbResult,
+      [NOTION_RESULT_RELATION_DATABASES]: []
+    };
 
     if (requests[BLOCKS_REQUEST]) {
       const notionPagePromises = [];
@@ -272,7 +315,7 @@ export async function GET( request, response ) {
 
     return createResponse( {
       [NOTION_RESULT_SUCCESS]: true,
-      [NOTION_RESULT]: orgDbResults
+      [NOTION_RESULT]: orgDbResult
     }, request );
 
   }
@@ -295,7 +338,7 @@ const createResponse = (json, request) => {
 };
 
 const getNotionDbaseRelationIds = notionDbase => {
-  const ids = new Set();
+  // const ids = new Set();
   const lookup = {};
   if (NOTION_PROPERTIES in notionDbase) {
     const ndbProperties = notionDbase[NOTION_PROPERTIES];
@@ -309,12 +352,12 @@ const getNotionDbaseRelationIds = notionDbase => {
         const relation = ndpPropertyVal[NOTION_DATA_TYPE_RELATION];
         const dbaseId = relation[NOTION_KEY_DATABASE_ID];
         const dbaseIdSansHyphens = removeHyphens( dbaseId );
-        ids.add( dbaseIdSansHyphens );
+        // ids.add( dbaseIdSansHyphens );
         lookup[propertyValId] = dbaseIdSansHyphens;
       }
     }
   }
-  return {ids, lookup};
+  return lookup;
 };
 
 //all of this nonsense because title is not in the typescript
@@ -554,12 +597,29 @@ const getNotionDbaseProperties = (notionDatas, dbLookup) => {
 
 const getNotionDbasePromise = (nClient, meta, dbLookup) => {
   const p = new Promise((resolve, reject) => {
-    nClient.databases.query({ [NOTION_KEY_DATABASE_ID]: meta[DATABASE_QUERY_ID] })
+    const queryObj = {
+      [NOTION_KEY_DATABASE_ID]: meta[DATABASE_QUERY_ID],
+      start_cursor: undefined,
+    };
+
+    // start_cursor: 'e72a7ea3-da12-4ab1-b128-f32f244e12a1'
+    // // "5a87cc79-3901-4015-afc3-a090d0cc0332"
+
+    nClient.databases.query( queryObj )
       .then( result => {
+        const has_more = result[NOTION_HAS_MORE];
+        const pagesObj = {
+          [NOTION_HAS_MORE]: has_more
+        };
+        if (has_more) {
+          const next_cursor = result[NOTION_NEXT_CURSOR];
+          pagesObj[NOTION_NEXT_CURSOR] = next_cursor;
+        }
         const properties = getNotionDbaseProperties( result, dbLookup );
         const propertyObj = {
           [QUERY_PROPERTIES]: properties,
           [QUERY_META]: meta,
+          [QUERY_PAGES]: pagesObj
         };
         resolve( propertyObj );
       })
@@ -615,7 +675,7 @@ const getNotionBlockKeyedDatabases = (blockDatas, collector) => {
     }, collector );
     return somedata;
   }
-  return [];
+  return collector;
 };
 
 const getCover = cover => {
@@ -623,10 +683,10 @@ const getCover = cover => {
   let coverType = null;
   if (cover) {
     coverType = cover.type;
-    if (coverType === 'external') {
+    if (coverType === NOTION_DATA_TYPE_EXTERNAL) {
       coverVal = cover.external.url;
     }
-    else if (coverType === 'file') {
+    else if (coverType === NOTION_DATA_TYPE_FILE) {
       coverVal = cover.file.url;
     }
   }
@@ -641,10 +701,10 @@ const getIcon = icon => {
   let iconType = null;
   if (icon) {
     iconType = icon.type;
-    if (iconType === 'emoji') {
+    if (iconType === NOTION_DATA_TYPE_EMOJI) {
       iconVal = icon.emoji;
     }
-    else if (iconType === 'external') {
+    else if (iconType === NOTION_DATA_TYPE_EXTERNAL) {
       iconVal = icon.external.url;
     }
   }
@@ -695,24 +755,6 @@ function stringToBoolean(str) {
   return str === 'true' || str === '1' || str === 'yes' || str === 'y' || str === 'on';
 };
 
-const findRelationDbId = (allResults, blockId) => {
-  for (const cur of allResults) {
-    const qProps = cur[QUERY_PROPERTIES];
-    for (const qProp of qProps) {
-      for (const [qPropKey, qPropObj] of Object.entries(qProp)) {
-        if (qPropObj[EXPORT_DATA_TYPE] === NOTION_ID) {
-          const idValue = qPropObj[EXPORT_DATA_VALUE];
-          if (idValue === blockId) {
-            const qMeta = cur[QUERY_META];
-            return qMeta[DATABASE_QUERY_ID];
-          }
-        }
-      }
-    }
-  }
-  return null;
-};
-
 const notionUpdateDbaseMeta = async(nClient, nDbase, meta) => {
   try {
     const primaryTitle = getNotionDbaseTitle( nDbase );
@@ -735,8 +777,8 @@ const notionUpdateDbaseMeta = async(nClient, nDbase, meta) => {
   }
 };
 
-const getDbMeta = (primary, dbId) => {
-  return {
+const getDbMeta = (primary, dbId, dbPgCursor) => {
+  const obj = {
     [DATABASE_QUERY_PRIMARY]: primary,
     [DATABASE_QUERY_ID]: dbId,
     [DATABASE_QUERY_TITLE]: undefined,
@@ -746,4 +788,9 @@ const getDbMeta = (primary, dbId) => {
     [DATABASE_QUERY_COVER]: undefined,
     [DATABASE_QUERY_ICON]: undefined
   };
+  if (dbPgCursor) {
+    obj[DATABASE_QUERY_PAGE_CURSOR_TYPE] = dbPgCursor[PAGE_CURSOR_TYPE_REQUEST];
+    obj[DATABASE_QUERY_PAGE_CURSOR_ID] = dbPgCursor[PAGE_CURSOR_ID_REQUEST];
+  }
+  return obj;
 };

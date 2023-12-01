@@ -159,16 +159,17 @@ export async function GET( request, response ) {
       auth: secrets[SECRET_ID]
     });
 
-    const nDbase = await nClient.databases.retrieve({
-      [NOTION_KEY_DATABASE_ID]: requests[DATABASE_ID_REQUEST]
-    });
 
-    //collecte metadata
+    const {
+      
+    } = getNotionDbaseRelationsIds( nClient, requests[DATABASE_ID_REQUEST] );
+
     const primaryMeta = getDbMeta(
       true,
       requests[DATABASE_ID_REQUEST],
       requests[PAGE_CURSOR_REQUEST] );
-    notionUpdateDbMeta( nClient, nDbase, primaryMeta );
+    notionUpdateDbMeta( nClient, ndBase, primaryMeta );
+
 
     const nDbResult = await getPrimaryNotionDbase( nClient, primaryMeta )
 
@@ -302,8 +303,10 @@ const createResponse = (json, request) => {
   return resJson;
 };
 
-//todo - recurse through this until you've got all related dbIds
-const getNotionDbaseRelationIds = notionDbase => {
+const getNotionDbaseRelationIds = (nClient, dbId, collector) => {
+
+  
+
   // const ids = new Set();
   const lookup = {};
   if (NOTION_PROPERTIES in notionDbase) {
@@ -324,6 +327,34 @@ const getNotionDbaseRelationIds = notionDbase => {
     }
   }
   return lookup;
+};
+
+const chainNotionDbaseRelationIds = (nClient, dbId, proceed, collector) => {
+  if (proceed) {
+
+
+    return getNotionDbasePromise( nClient, dbId, collector )
+    .then( obj => {
+
+      const nextProceed = false;
+
+      return chainNotionDbaseRelationIds(
+        nClient, dbId, nextProceed, collector );
+
+    });
+  }
+  else {
+    return Promise.resolve( collector );
+  }
+};
+
+//todo - recurse through this until you've got all related dbIds
+const getNotionDbaseRelationsIds = ( nClient, dbId ) => {
+  const collector = {
+    'relMap': new Map(),
+    'dbMap': new Map()
+  };
+  return chainNotionDbaseRelationIds( nClient, dbId, true, collector );
 };
 
 //all of this nonsense because title is not in the typescript

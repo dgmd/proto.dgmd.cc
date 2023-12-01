@@ -176,8 +176,6 @@ export async function GET( request, response ) {
     const nDbResult = await getNotionDbase( 
       nClient, primaryMeta, primaryDbId, relMap.get(primaryDbId) );
 
-
-
     const qProps = nDbResult[QUERY_PROPERTIES];
     const qPages = nDbResult[QUERY_PAGES];
     const qId = primaryMeta[DATABASE_QUERY_ID];
@@ -192,6 +190,7 @@ export async function GET( request, response ) {
     const loadedPageIds = new Set();
 
     const xx = await loadRelatedDbs( nClient, relMap, qProps, unloadedPageIds, loadedPageIds );
+    console.log( 'xx', xx );
 
     // while( unloadedPageIds.length > 0 ) {
     //   const pageId = unloadedPageIds.shift();
@@ -293,75 +292,81 @@ const trackLoadedPages =
   (qProps: any[], unloadedPageIds: Map<any, Set<any>>, loadedPageIds: Set<any>) => {
 
   for (const cur of qProps) {
-  const meta = cur[EXPORT_DATA_METADATA];
-  const pageId = meta[DGMDCC_ID][EXPORT_DATA_VALUE];
-  loadedPageIds.add(pageId);
-  const props = cur[EXPORT_DATA_PROPERTIES];
-  const propKeys = Object.keys(props);
-  for (const propKey of propKeys) {
-    const prop = props[propKey];
-    if (NOTION_DATA_TYPE_RELATION === prop[EXPORT_DATA_TYPE]) {
-      const propVals = prop[EXPORT_DATA_VALUE];
-      for (const propValObj of propVals) {
-        const propRelPgId = propValObj[NOTION_RESULT_RELATION_PAGE_ID];
-        const propRelDbId = propValObj[NOTION_RESULT_RELATION_DATABASE_ID];
-        if (!loadedPageIds.has(propRelDbId)) {
-          unloadedPageIds.set(propRelDbId, new Set());
-        }
-        const unloadedSet = unloadedPageIds.get(propRelDbId);
-        unloadedSet.add(propRelPgId);
-      }
-    }
-  }
-  }
-
-};
-
-const chainLoadRelatedDbs = async (nClient, relMap, unloadedPageIds, loadedPageIds) => {
-  console.log( 'loadedPgIds', loadedPageIds );
-  console.log( 'unloadedPgIds', unloadedPageIds );
-
-  for (const [dbId, unloadedSet] of unloadedPageIds) {
-    console.log('Database ID:', dbId);
-    for (const unloadedPageId of unloadedSet) {
-      if (loadedPageIds.has(unloadedPageId)) {
-        unloadedSet.delete(unloadedPageId);
-      }
-    }
-
-    let pageCursorId = null;
-    const unloadedList = [...unloadedSet.keys()];
-    for (const unloadedPageId of unloadedList) {
-
-      let foundPg = false;
-      let allPgsChecked = false;
-      while( !foundPg && !allPgsChecked ) {
-        const meta = {
-          [DATABASE_QUERY_PAGE_CURSOR_TYPE]: PAGE_CURSOR_TYPE_SPECIFIC,
-          [DATABASE_QUERY_PAGE_CURSOR_ID]: pageCursorId
-        };
-        const dbPgs = await getNotionDbase( nClient, meta, dbId, relMap.get(dbId) );
-        const pg = dbPgs[QUERY_PROPERTIES].find( p => 
-          unloadedList[0] === p[EXPORT_DATA_METADATA][DGMDCC_ID][EXPORT_DATA_VALUE]
-        );
-        if (pg) {
-          foundPg = true;
-          unloadedSet.delete(unloadedPageId);
-          loadedPageIds.add(unloadedPageId);
-          console.log( 'foundPg', unloadedPageId );
-        }
-        else {
-          pageCursorId = dbPgs[QUERY_PAGES][NOTION_NEXT_CURSOR];
-          allPgsChecked = pageCursorId === null;
-          if (allPgsChecked) {
-            unloadedSet.delete(unloadedPageId);
-            loadedPageIds.add(unloadedPageId);
-            console.log( 'allPgsChecked', allPgsChecked );
+    const meta = cur[EXPORT_DATA_METADATA];
+    const pageId = meta[DGMDCC_ID][EXPORT_DATA_VALUE];
+    loadedPageIds.add(pageId);
+    const props = cur[EXPORT_DATA_PROPERTIES];
+    const propKeys = Object.keys(props);
+    for (const propKey of propKeys) {
+      const prop = props[propKey];
+      if (NOTION_DATA_TYPE_RELATION === prop[EXPORT_DATA_TYPE]) {
+        const propVals = prop[EXPORT_DATA_VALUE];
+        for (const propValObj of propVals) {
+          const propRelPgId = propValObj[NOTION_RESULT_RELATION_PAGE_ID];
+          const propRelDbId = propValObj[NOTION_RESULT_RELATION_DATABASE_ID];
+          if (!loadedPageIds.has(propRelDbId)) {
+            unloadedPageIds.set(propRelDbId, new Set());
+          }
+          const unloadedSet = unloadedPageIds.get(propRelDbId);
+          if (!loadedPageIds.has(propRelPgId)) {
+            unloadedSet.add(propRelPgId);
           }
         }
       }
-      console.log( 'FUCKOUTTA DODGE' );
     }
+  }
+};
+
+const chainLoadRelatedDbs = async (nClient, relMap, unloadedPageIds, loadedPageIds ) => {
+  const anyLeft = !areAllMapSetsEmpty( unloadedPageIds );
+  if (anyLeft) {
+    for (const [dbId, unloadedSet] of unloadedPageIds) {
+      for (const unloadedPageId of unloadedSet) {
+        if (loadedPageIds.has(unloadedPageId)) {
+          unloadedSet.delete(unloadedPageId);
+        }
+      }
+      let pageCursorId = null;
+      const unloadedList = [...unloadedSet.keys()];
+      for (const unloadedPageId of unloadedList) {
+        let foundPg = false;
+        let allPgsChecked = false;
+        while( !foundPg && !allPgsChecked ) {
+          const meta = {
+            [DATABASE_QUERY_PAGE_CURSOR_TYPE]: PAGE_CURSOR_TYPE_SPECIFIC,
+            [DATABASE_QUERY_PAGE_CURSOR_ID]: pageCursorId
+          };
+          const db = await getNotionDbase( nClient, meta, dbId, relMap.get(dbId) );
+          const dbProps = db[QUERY_PROPERTIES];
+          
+          trackLoadedPages( dbProps, unloadedPageIds, loadedPageIds );
+
+          const pg = dbProps.find( p => 
+            unloadedPageId === p[EXPORT_DATA_METADATA][DGMDCC_ID][EXPORT_DATA_VALUE]
+          );
+
+          if (pg) {
+            foundPg = true;
+            unloadedSet.delete(unloadedPageId);
+            loadedPageIds.add(unloadedPageId);
+            console.log( 'foundPg', unloadedPageId );
+          }
+          else {
+            pageCursorId = db[QUERY_PAGES][NOTION_NEXT_CURSOR];
+            allPgsChecked = pageCursorId === null;
+            if (allPgsChecked) {
+              unloadedSet.delete(unloadedPageId);
+              loadedPageIds.add(unloadedPageId);
+              console.log( 'allPgsChecked', allPgsChecked );
+            }
+          }
+        }
+      }
+    }
+    return chainLoadRelatedDbs( nClient, relMap, unloadedPageIds, loadedPageIds );
+  }
+  else {
+    return Promise.resolve();
   }
 };
 
@@ -374,7 +379,6 @@ const getNotionDbaseRelationPromise = async (nClient, dbId, collector) => {
   const db = await nClient.databases.retrieve({
     [NOTION_KEY_DATABASE_ID]: dbId
   });
-  console.log( 'db resolved', dbId );
 
   const dbMap = collector['dbMap'];
   const relMap = collector['relMap'];
@@ -908,3 +912,18 @@ const notionUpdateDbMeta = async(nClient, nDbase, meta) => {
     console.log( 'primary meta collection error', e );
   }
 };
+
+//
+//  UTILS
+//
+const areAllMapSetsEmpty = unloadedPgIds => {
+  // Iterate over the Map entries
+  for (const set of unloadedPgIds.values()) {
+    // Check if the Set is not empty
+    if (set.size > 0) {
+      return false; // If any set is not empty, return false
+    }
+  }
+  // If all sets are empty, return true
+  return true;
+}

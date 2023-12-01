@@ -159,18 +159,20 @@ export async function GET( request, response ) {
       auth: secrets[SECRET_ID]
     });
 
+    const primaryDbId = requests[DATABASE_ID_REQUEST];
+    const x = await getNotionDbaseRelationsIds( nClient, primaryDbId );
+    const relMap = x['relMap'];
+    const dbMap = x['dbMap'];
 
-    const {
-      
-    } = getNotionDbaseRelationsIds( nClient, requests[DATABASE_ID_REQUEST] );
-
-    const primaryMeta = getDbMeta(
-      true,
-      requests[DATABASE_ID_REQUEST],
-      requests[PAGE_CURSOR_REQUEST] );
-    notionUpdateDbMeta( nClient, ndBase, primaryMeta );
-
-
+    const metasMap = new Map();
+    for (const [dbId, db] of dbMap.entries()) {
+      const primary = dbId === primaryDbId;
+      const pageReq = primary ? requests[PAGE_CURSOR_REQUEST] : PAGE_CURSOR_TYPE_ALL;
+      const meta = getDbMeta( primary, dbId, pageReq );
+      notionUpdateDbMeta( nClient, db, meta );
+      metasMap.set( dbId, meta );
+    }
+    const primaryMeta = metasMap.get( primaryDbId );
     const nDbResult = await getPrimaryNotionDbase( nClient, primaryMeta )
 
     const qProps = nDbResult[QUERY_PROPERTIES];
@@ -303,58 +305,61 @@ const createResponse = (json, request) => {
   return resJson;
 };
 
-const getNotionDbaseRelationIds = (nClient, dbId, collector) => {
+const getNotionDbaseRelationPromise = async (nClient, dbId, collector) => {
+  const db = await nClient.databases.retrieve({
+    [NOTION_KEY_DATABASE_ID]: dbId
+  });
+  console.log( 'db resolved', dbId );
 
-  
+  const dbMap = collector['dbMap'];
+  const relMap = collector['relMap'];
+  dbMap.set( dbId, db );
 
-  // const ids = new Set();
-  const lookup = {};
-  if (NOTION_PROPERTIES in notionDbase) {
-    const ndbProperties = notionDbase[NOTION_PROPERTIES];
-    const ndbPropertiesKeys = Object.keys( ndbProperties );
-    for (const ndbPropertiesKey of ndbPropertiesKeys) {
-      //ndbPropertiesKey is the dbase property title
-      const ndpPropertyVal = ndbProperties[ndbPropertiesKey];
-      const ndpPropertyType = ndpPropertyVal[NOTION_DATA_TYPE];
-      if (ndpPropertyType === NOTION_DATA_TYPE_RELATION) {
-        const propertyValId = ndpPropertyVal[NOTION_KEY_ID];
-        const relation = ndpPropertyVal[NOTION_DATA_TYPE_RELATION];
-        const dbaseId = relation[NOTION_KEY_DATABASE_ID];
-        const dbaseIdSansHyphens = removeHyphens( dbaseId );
-        // ids.add( dbaseIdSansHyphens );
-        lookup[propertyValId] = dbaseIdSansHyphens;
+  const nextDbIds = new Set();
+
+  const ndbProperties = db[NOTION_PROPERTIES];
+  const ndbPropertiesKeys = Object.keys( ndbProperties );
+  for (const ndbPropertiesKey of ndbPropertiesKeys) {
+    //ndbPropertiesKey is the dbase property title
+    const ndpPropertyVal = ndbProperties[ndbPropertiesKey];
+    const ndpPropertyType = ndpPropertyVal[NOTION_DATA_TYPE];
+    if (ndpPropertyType === NOTION_DATA_TYPE_RELATION) {
+      const propertyValId = ndpPropertyVal[NOTION_KEY_ID];
+      const relation = ndpPropertyVal[NOTION_DATA_TYPE_RELATION];
+      const dbaseId = relation[NOTION_KEY_DATABASE_ID];
+      const dbaseIdSansHyphens = removeHyphens( dbaseId );
+      nextDbIds.add( dbaseIdSansHyphens );
+      if (!relMap.has( propertyValId )) {
+        relMap.set( propertyValId, new Map() );
       }
+      const dbRelMap = relMap.get( propertyValId );
+      dbRelMap.set( propertyValId, dbaseIdSansHyphens );
     }
   }
-  return lookup;
+  return {
+    collector,
+    nextDbIds
+  };
 };
 
-const chainNotionDbaseRelationIds = (nClient, dbId, proceed, collector) => {
-  if (proceed) {
-
-
-    return getNotionDbasePromise( nClient, dbId, collector )
-    .then( obj => {
-
-      const nextProceed = false;
-
-      return chainNotionDbaseRelationIds(
-        nClient, dbId, nextProceed, collector );
-
-    });
+const chainNotionDbaseRelationIds = async (nClient, dbId, collector) => {
+  const obj = await getNotionDbaseRelationPromise(nClient, dbId, collector);
+  const nextDbIds = Array.from(obj['nextDbIds'].keys());
+  for (const nextDbId of nextDbIds) {
+    if (!collector['dbMap'].has(nextDbId)) {
+      await chainNotionDbaseRelationIds(
+        nClient, nextDbId, collector);
+    }
   }
-  else {
-    return Promise.resolve( collector );
-  }
+  return Promise.resolve(collector);
 };
 
-//todo - recurse through this until you've got all related dbIds
 const getNotionDbaseRelationsIds = ( nClient, dbId ) => {
   const collector = {
     'relMap': new Map(),
     'dbMap': new Map()
   };
-  return chainNotionDbaseRelationIds( nClient, dbId, true, collector );
+  return chainNotionDbaseRelationIds( nClient, dbId, collector );
 };
 
 //all of this nonsense because title is not in the typescript
@@ -627,6 +632,8 @@ const getNotionDbasePromise = (nClient, queryObj, allPages, collector) => {
 
 const chainPrimaryNotionDbasePromises = 
   (nClient, dbId, allPages, startCursor, proceed, collector ) => {
+  
+  console.log( 'chainPrimaryNotionDbasePromises', dbId, startCursor, proceed );
 
   if (proceed) {
     const queryObj = {

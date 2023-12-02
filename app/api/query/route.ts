@@ -38,9 +38,11 @@ import {
   NOTION_RESULT_SUCCESS,
   URL_SEARCH_PARAM_BLOCKS_REQUEST,
   URL_SEARCH_PARAM_DATABASE,
-  // URL_SEARCH_PARAM_RELATIONS_REQUEST,
   URL_SEARCH_PARAM_PAGE_CURSOR_TYPE_REQUEST,
-  URL_SEARCH_PARAM_PAGE_CURSOR_ID_REQUEST
+  URL_SEARCH_PARAM_PAGE_CURSOR_ID_REQUEST,
+  URL_PAGE_CURSOR_TYPE_ALL,
+  URL_PAGE_CURSOR_TYPE_DEFAULT,
+  URL_PAGE_CURSOR_TYPE_SPECIFIC
 } from './keys.js';
 
 import {
@@ -105,7 +107,6 @@ const DATABASE_QUERY_PARENT_TYPE = 'DATABASE_QUERY_PARENT_TYPE';
 const DATABASE_QUERY_COVER = 'DATABASE_QUERY_COVER';
 const DATABASE_QUERY_ICON = 'DATABASE_QUERY_ICON';
 
-const QUERY_META = 'QUERY_META';
 const QUERY_PROPERTIES = 'QUERY_PROPERTIES';
 const QUERY_PAGES = 'QUERY_PAGES';
 
@@ -143,7 +144,14 @@ export async function GET( request, response ) {
   }
   if (params.has(URL_SEARCH_PARAM_PAGE_CURSOR_TYPE_REQUEST)) {
     const pcs = params.get(URL_SEARCH_PARAM_PAGE_CURSOR_TYPE_REQUEST);
-    requests[PAGE_CURSOR_REQUEST][PAGE_CURSOR_TYPE_REQUEST] = pcs;
+    const cursorReq = {
+      [URL_PAGE_CURSOR_TYPE_ALL]: PAGE_CURSOR_TYPE_ALL,
+      [URL_PAGE_CURSOR_TYPE_SPECIFIC]: PAGE_CURSOR_TYPE_SPECIFIC,
+      [URL_PAGE_CURSOR_TYPE_DEFAULT]: PAGE_CURSOR_TYPE_DEFAULT
+    }[pcs];
+    if (cursorReq) {
+      requests[PAGE_CURSOR_REQUEST][PAGE_CURSOR_TYPE_REQUEST] = cursorReq;
+    }
   }
   if (params.has(URL_SEARCH_PARAM_PAGE_CURSOR_ID_REQUEST)) {
     const pcid = params.get(URL_SEARCH_PARAM_PAGE_CURSOR_ID_REQUEST);
@@ -172,68 +180,44 @@ export async function GET( request, response ) {
       notionUpdateDbMeta( nClient, db, meta );
       metasMap.set( dbId, meta );
     }
-    const primaryMeta = metasMap.get( primaryDbId );
+    const nDbMeta = metasMap.get( primaryDbId );
     const nDbResult = await getNotionDbase( 
-      nClient, primaryMeta, primaryDbId, relMap.get(primaryDbId) );
-
-    const qProps = nDbResult[QUERY_PROPERTIES];
-    const qPages = nDbResult[QUERY_PAGES];
-    const qId = primaryMeta[DATABASE_QUERY_ID];
-    const qTitle = primaryMeta[DATABASE_QUERY_TITLE];
-    const qParentTitle = primaryMeta[DATABASE_QUERY_PARENT_TITLE];
-    const qParentId = primaryMeta[DATABASE_QUERY_PARENT_ID];
-    const qParentType = primaryMeta[DATABASE_QUERY_PARENT_TYPE];
-    const qIcon = primaryMeta[DATABASE_QUERY_ICON];
-    const qCover = primaryMeta[DATABASE_QUERY_COVER];
+      nClient, nDbMeta, primaryDbId, relMap.get(primaryDbId) );
+    const nDbProps = nDbResult[QUERY_PROPERTIES];
+    const nDbPages = nDbResult[QUERY_PAGES];
 
     const unloadedPageIds = new Map();
-    const loadedPageIds = new Set();
+    const loadedPageIds = new Map();
+    const matchedPageIds = new Map();
+    const dbPagination = new Map( );
+    //todo... if there is another related table which needs rows in primary
+    //and we started loading from a specific page... then we need to load all pages
+    //and need to skip the one we "started" from
+    const pageReqObj = requests[PAGE_CURSOR_REQUEST];
+    const primaryDbPageType= pageReqObj[PAGE_CURSOR_TYPE_REQUEST];
+    const primaryLastPageCursorId = primaryDbPageType === PAGE_CURSOR_TYPE_SPECIFIC ? null : pageReqObj[PAGE_CURSOR_ID_REQUEST];
+    dbPagination.set( primaryDbId, {
+      lastPageCursorId: primaryLastPageCursorId,
+      complete: !nDbPages[NOTION_HAS_MORE]
+    } );
 
-    const xx = await loadRelatedDbs( nClient, relMap, qProps, unloadedPageIds, loadedPageIds );
-    console.log( 'xx', xx );
+    await loadRelatedDbs(
+      nClient, relMap, primaryDbId, nDbProps, unloadedPageIds, loadedPageIds, matchedPageIds, dbPagination );
 
-    // while( unloadedPageIds.length > 0 ) {
-    //   const pageId = unloadedPageIds.shift();
-    //   const response = await nClient.pages.retrieve({ 
-    //     page_id: pageId
-    //   });
-    // }
+    const rDbResults = [];
+    const matchedPageIdsArray = Array.from(matchedPageIds.entries());
+    for (const [dbId, pgSet] of matchedPageIdsArray) {
+      const dbBlocks = Array.from(pgSet.keys()).map( 
+        pgId => loadedPageIds.get(pgId)['page'] );
+      const rDb = makeDbSerialized( dbBlocks, null, metasMap.get(dbId) );
+      rDbResults.push( rDb );
+    }
+    
 
-    // for (const qProp of qProps) {
-    //   const qqProps = qProp[EXPORT_DATA_PROPERTIES];
-    //   for (const [qPropKey, qPropObj] of Object.entries(qqProps)) {
-    //     if (qPropObj[EXPORT_DATA_TYPE] === NOTION_DATA_TYPE_RELATION) {
-    //       const qPropValues = qPropObj[EXPORT_DATA_VALUE];
-    //       for (const qPropValue of qPropValues) {
-    //         const dbId = qPropValue[NOTION_RESULT_RELATION_DATABASE_ID];
-    //         if (dbId !== primaryDbId) {
-    //           const pageId = qPropValue[NOTION_RESULT_RELATION_PAGE_ID];
-    //           const response = await nClient.pages.retrieve({ 
-    //             page_id: '1c0df1bc911242faacea7d73fbc2ec0f'
-    //           });
-    //           console.log( 'response', response['properties']['Question']['rich_text'] );
-    //           console.log( '' );
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
-
-    const dbResult = {
-      //todo -- this should be "pages"
-      [NOTION_RESULT_BLOCKS]: qProps,
-      [NOTION_RESULT_PAGE_DATA]: qPages,
-      [NOTION_RESULT_DATABASE_ID]: qId,
-      [NOTION_RESULT_DATABASE_TITLE]: qTitle,
-      [NOTION_RESULT_PARENT_ID]: qParentId,
-      [NOTION_RESULT_PARENT_TITLE]: qParentTitle,
-      [NOTION_RESULT_PARENT_TYPE]: qParentType,
-      [NOTION_RESULT_ICON]: qIcon,
-      [NOTION_RESULT_COVER]: qCover,
-    };
+    const nDbSerial = makeDbSerialized( nDbProps, nDbPages, nDbMeta );
     const orgDbResult = {
-      [NOTION_RESULT_PRIMARY_DATABASE]: dbResult,
-      [NOTION_RESULT_RELATION_DATABASES]: []
+      [NOTION_RESULT_PRIMARY_DATABASE]: nDbSerial,
+      [NOTION_RESULT_RELATION_DATABASES]: rDbResults
     };
 
     // if (requests[BLOCKS_REQUEST]) {
@@ -288,14 +272,51 @@ const createResponse = (json, request) => {
   return resJson;
 };
 
-const trackLoadedPages =
-  (qProps: any[], unloadedPageIds: Map<any, Set<any>>, loadedPageIds: Set<any>) => {
+const makeDbSerialized = (props, pages, meta) => {
+  const s = {
+    [NOTION_RESULT_BLOCKS]: props,
+    [NOTION_RESULT_DATABASE_ID]: meta[DATABASE_QUERY_ID],
+    [NOTION_RESULT_DATABASE_TITLE]: meta[DATABASE_QUERY_TITLE],
+    [NOTION_RESULT_PARENT_ID]: meta[DATABASE_QUERY_PARENT_TITLE],
+    [NOTION_RESULT_PARENT_TITLE]: meta[DATABASE_QUERY_PARENT_ID],
+    [NOTION_RESULT_PARENT_TYPE]: meta[DATABASE_QUERY_PARENT_TYPE],
+    [NOTION_RESULT_ICON]: meta[DATABASE_QUERY_ICON],
+    [NOTION_RESULT_COVER]: meta[DATABASE_QUERY_COVER],
+  };
+  if (pages) {
+    s[NOTION_RESULT_PAGE_DATA] = pages;
+  }
+  return s;
+};
 
-  for (const cur of qProps) {
-    const meta = cur[EXPORT_DATA_METADATA];
+const trackLoadedPages =
+  (dbId, propertyPages, unloadedPageIds, loadedPageIds, dbTracker) => {
+
+  for (const page of propertyPages) {
+    const meta = page[EXPORT_DATA_METADATA];
     const pageId = meta[DGMDCC_ID][EXPORT_DATA_VALUE];
-    loadedPageIds.add(pageId);
-    const props = cur[EXPORT_DATA_PROPERTIES];
+    if (!loadedPageIds.has(pageId)) {
+      loadedPageIds.set(pageId, {
+        pageId,
+        page,
+        dbId
+      });
+    }
+
+    if (unloadedPageIds.has(dbId)) {
+      const unloaded = unloadedPageIds.get(dbId).delete(pageId);
+      if (unloaded) {
+        if (!dbTracker.has(dbId)) {
+          dbTracker.set(dbId, new Set());
+        }
+        dbTracker.get(dbId).add(pageId);
+      }
+
+    }
+  }
+
+  for (const page of propertyPages) {
+    const props = page[EXPORT_DATA_PROPERTIES];
     const propKeys = Object.keys(props);
     for (const propKey of propKeys) {
       const prop = props[propKey];
@@ -304,75 +325,69 @@ const trackLoadedPages =
         for (const propValObj of propVals) {
           const propRelPgId = propValObj[NOTION_RESULT_RELATION_PAGE_ID];
           const propRelDbId = propValObj[NOTION_RESULT_RELATION_DATABASE_ID];
-          if (!loadedPageIds.has(propRelDbId)) {
-            unloadedPageIds.set(propRelDbId, new Set());
-          }
-          const unloadedSet = unloadedPageIds.get(propRelDbId);
+
           if (!loadedPageIds.has(propRelPgId)) {
-            unloadedSet.add(propRelPgId);
+            if (!unloadedPageIds.has(propRelDbId)) {
+              unloadedPageIds.set(propRelDbId, new Set());
+            }
+            unloadedPageIds.get(propRelDbId).add( propRelPgId );
           }
         }
       }
     }
   }
+
 };
 
-const chainLoadRelatedDbs = async (nClient, relMap, unloadedPageIds, loadedPageIds ) => {
+const chainLoadRelatedDbs = async (
+  nClient, relMap, unloadedPageIds, loadedPageIds, dbTracker, dbPagination ) => {
   const anyLeft = !areAllMapSetsEmpty( unloadedPageIds );
   if (anyLeft) {
     for (const [dbId, unloadedSet] of unloadedPageIds) {
-      for (const unloadedPageId of unloadedSet) {
-        if (loadedPageIds.has(unloadedPageId)) {
-          unloadedSet.delete(unloadedPageId);
-        }
+      if (!dbPagination.has(dbId)) {
+        dbPagination.set(dbId, {
+          lastPageCursorId: null,
+          complete: false
+        });
       }
-      let pageCursorId = null;
-      const unloadedList = [...unloadedSet.keys()];
-      for (const unloadedPageId of unloadedList) {
-        let foundPg = false;
-        let allPgsChecked = false;
-        while( !foundPg && !allPgsChecked ) {
-          const meta = {
-            [DATABASE_QUERY_PAGE_CURSOR_TYPE]: PAGE_CURSOR_TYPE_SPECIFIC,
-            [DATABASE_QUERY_PAGE_CURSOR_ID]: pageCursorId
-          };
-          const db = await getNotionDbase( nClient, meta, dbId, relMap.get(dbId) );
-          const dbProps = db[QUERY_PROPERTIES];
-          
-          trackLoadedPages( dbProps, unloadedPageIds, loadedPageIds );
-
-          const pg = dbProps.find( p => 
-            unloadedPageId === p[EXPORT_DATA_METADATA][DGMDCC_ID][EXPORT_DATA_VALUE]
-          );
-
-          if (pg) {
-            foundPg = true;
-            unloadedSet.delete(unloadedPageId);
-            loadedPageIds.add(unloadedPageId);
-            console.log( 'foundPg', unloadedPageId );
-          }
-          else {
-            pageCursorId = db[QUERY_PAGES][NOTION_NEXT_CURSOR];
-            allPgsChecked = pageCursorId === null;
-            if (allPgsChecked) {
-              unloadedSet.delete(unloadedPageId);
-              loadedPageIds.add(unloadedPageId);
-              console.log( 'allPgsChecked', allPgsChecked );
-            }
-          }
+      const dbPaginationObj = dbPagination.get(dbId);
+      let pageCursorId = dbPaginationObj.lastPageCursorId;
+      let keepSeaching = unloadedSet.size !== 0;
+      while( keepSeaching ) {
+        const meta = {
+          [DATABASE_QUERY_PAGE_CURSOR_TYPE]: PAGE_CURSOR_TYPE_SPECIFIC,
+          [DATABASE_QUERY_PAGE_CURSOR_ID]: pageCursorId
+        };
+        const db = await getNotionDbase(
+          nClient, meta, dbId, relMap.get(dbId) );
+        pageCursorId = db[QUERY_PAGES][NOTION_NEXT_CURSOR];
+        dbPaginationObj.lastPageCursorId = pageCursorId;
+        const lastPagination = pageCursorId === null;
+        if (lastPagination) {
+          dbPaginationObj.complete = true;
         }
+
+        const dbProps = db[QUERY_PROPERTIES];
+        trackLoadedPages( dbId, dbProps, unloadedPageIds, loadedPageIds, dbTracker );
+
+        const unloadedPagesSize = unloadedPageIds.get(dbId).size;
+
+        //do it again if... we have more pages to load
+        //or we have more result pages to load
+        keepSeaching = unloadedPagesSize !== 0 && !lastPagination;
       }
     }
-    return chainLoadRelatedDbs( nClient, relMap, unloadedPageIds, loadedPageIds );
+    return chainLoadRelatedDbs( nClient, relMap, unloadedPageIds, loadedPageIds, dbTracker, dbPagination );
   }
   else {
     return Promise.resolve();
   }
 };
 
-const loadRelatedDbs = async(nClient, relMap, dbProps, unloadedPageIds, loadedPageIds) => {
-  trackLoadedPages( dbProps, unloadedPageIds, loadedPageIds );
-  return chainLoadRelatedDbs( nClient, relMap, unloadedPageIds, loadedPageIds );
+const loadRelatedDbs = async(
+  nClient, relMap, dbId, dbProps, unloadedPageIds, loadedPageIds, dbTracker, dbPagination) => {
+  trackLoadedPages( dbId, dbProps, unloadedPageIds, loadedPageIds, dbTracker );
+  return chainLoadRelatedDbs( nClient, relMap, unloadedPageIds, loadedPageIds, dbTracker, dbPagination );
 };
 
 const getNotionDbaseRelationPromise = async (nClient, dbId, collector) => {
@@ -680,7 +695,13 @@ const getNotionDbasePromise = (nClient, allPages, relMap, collector, queryObj) =
         const next_cursor = result[NOTION_NEXT_CURSOR];
 
         if (allPages) {
-          collector[QUERY_PAGES][NOTION_NEXT_CURSOR].push( next_cursor );
+          const cursors = collector[QUERY_PAGES][NOTION_NEXT_CURSOR];
+          if (cursors.length === 0 && next_cursor === null) {
+            collector[QUERY_PAGES][NOTION_NEXT_CURSOR] = null;
+          }
+          else {
+            cursors.push( next_cursor );
+          }
         }
         else {
           collector[QUERY_PAGES][NOTION_HAS_MORE] = has_more;
@@ -702,9 +723,8 @@ const getNotionDbasePromise = (nClient, allPages, relMap, collector, queryObj) =
 const chainNotionDbasePromises = 
   (nClient, dbId, allPages, relMap, startCursor, proceed, collector ) => {
   
-  console.log( 'chainNotionDbasePromises', dbId, startCursor, proceed );
-
   if (proceed) {
+    console.log( 'chainNotionDbasePromises', dbId, startCursor );
     const queryObj = {
       [NOTION_KEY_DATABASE_ID]: dbId
     };

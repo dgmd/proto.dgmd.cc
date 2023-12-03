@@ -195,7 +195,8 @@ export async function GET( request, response ) {
     //and need to skip the one we "started" from
     const pageReqObj = requests[PAGE_CURSOR_REQUEST];
     const primaryDbPageType= pageReqObj[PAGE_CURSOR_TYPE_REQUEST];
-    const primaryLastPageCursorId = primaryDbPageType === PAGE_CURSOR_TYPE_SPECIFIC ? null : pageReqObj[PAGE_CURSOR_ID_REQUEST];
+    const specificPg = primaryDbPageType === PAGE_CURSOR_TYPE_SPECIFIC;
+    const primaryLastPageCursorId = specificPg ? null : pageReqObj[PAGE_CURSOR_ID_REQUEST];
     dbPagination.set( primaryDbId, {
       lastPageCursorId: primaryLastPageCursorId,
       complete: !nDbPages[NOTION_HAS_MORE]
@@ -213,40 +214,17 @@ export async function GET( request, response ) {
       rDbResults.push( rDb );
     }
     
-
     const nDbSerial = makeDbSerialized( nDbProps, nDbPages, nDbMeta );
     const orgDbResult = {
       [NOTION_RESULT_PRIMARY_DATABASE]: nDbSerial,
       [NOTION_RESULT_RELATION_DATABASES]: rDbResults
     };
 
-    // if (requests[BLOCKS_REQUEST]) {
-    //   const notionPagePromises = [];
-    //   allDbResults.forEach( dbResult => {
-    //     const qProps = dbResult[QUERY_PROPERTIES];
-    //     qProps.forEach( qProp => {
-    //       const qPropId = qProp[EXPORT_DATA_METADATA][DGMDCC_ID][EXPORT_DATA_VALUE];
-    //       const blocksCollector = {
-    //         [NOTION_RESULT_BLOCK_DBS]: [],
-    //         [NOTION_RESULT_COLUMN_LISTS]: []
-    //       };
-    //       const blocksResult = getNotionPageBlockPromise( nClient, qPropId, blocksCollector );
-    //       notionPagePromises.push( blocksResult );
-    //     });
-    //   });
-    //   const notionBlockResults = await Promise.all( notionPagePromises );
-    //   const notionBlockResultsIndexed = notionBlockResults.reduce((result, item) => {
-    //     if (NOTION_RESULT_BLOCK_KEY in item && NOTION_RESULT_BLOCK_DBS in item) {
-    //       result.push( {
-    //         [NOTION_RESULT_BLOCK_KEY]: item[NOTION_RESULT_BLOCK_KEY],
-    //         [NOTION_RESULT_BLOCK_DBS]: item[NOTION_RESULT_BLOCK_DBS]
-    //       } );
-    //     }
-    //     return result;
-    //   }, [] );
-      
-    //   orgDbResults[NOTION_RESULT_BLOCKS] = notionBlockResultsIndexed;
-    // }
+    if (requests[BLOCKS_REQUEST]) {
+      const allDbResults = [nDbResult, ...rDbResults];
+      const blocks = await loadBlocks( nClient, allDbResults );
+      orgDbResult[NOTION_RESULT_BLOCKS] = blocks;
+    }
 
     return createResponse( {
       [NOTION_RESULT_SUCCESS]: true,
@@ -931,6 +909,34 @@ const notionUpdateDbMeta = async(nClient, nDbase, meta) => {
   catch (e) {
     console.log( 'primary meta collection error', e );
   }
+};
+
+const loadBlocks = async ( nClient, allDbResults ) => {
+  const notionPagePromises = [];
+  allDbResults.forEach( dbResult => {
+    const qProps = dbResult[QUERY_PROPERTIES];
+    qProps.forEach( qProp => {
+      const qPropId = qProp[EXPORT_DATA_METADATA][DGMDCC_ID][EXPORT_DATA_VALUE];
+      const blocksCollector = {
+        [NOTION_RESULT_BLOCK_DBS]: [],
+        [NOTION_RESULT_COLUMN_LISTS]: []
+      };
+      const blocksResult = getNotionPageBlockPromise( nClient, qPropId, blocksCollector );
+      notionPagePromises.push( blocksResult );
+    });
+  });
+  const notionBlockResults = await Promise.all( notionPagePromises );
+  const notionBlockResultsIndexed = notionBlockResults.reduce((result, item) => {
+    if (NOTION_RESULT_BLOCK_KEY in item && NOTION_RESULT_BLOCK_DBS in item) {
+      result.push( {
+        [NOTION_RESULT_BLOCK_KEY]: item[NOTION_RESULT_BLOCK_KEY],
+        [NOTION_RESULT_BLOCK_DBS]: item[NOTION_RESULT_BLOCK_DBS]
+      } );
+    }
+    return result;
+  }, [] );
+  
+  return notionBlockResultsIndexed;
 };
 
 //

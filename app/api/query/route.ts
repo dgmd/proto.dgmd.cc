@@ -13,7 +13,6 @@ import {
 } from '../../../utils/strings.js';
 
 import {
-
   EXPORT_DATA_KEY,
   EXPORT_DATA_METADATA,
   EXPORT_DATA_PROPERTIES,
@@ -23,7 +22,7 @@ import {
   NOTION_RESULT_BLOCKS,
   NOTION_RESULT_BLOCK_DBS,
   NOTION_RESULT_COLUMN_LISTS,
-  NOTION_RESULT_PAGE_DATA,
+  NOTION_RESULT_CURSOR_DATA,
   NOTION_RESULT_BLOCK_KEY,
   NOTION_RESULT_DATABASE_ID,
   NOTION_RESULT_PARENT_ID,
@@ -187,12 +186,12 @@ export async function GET( request, response ) {
     const nDbResult = await getNotionDbase( 
       nClient, nDbMeta, primaryDbId, relMap.get(primaryDbId) );
     const nDbProps = nDbResult[QUERY_PROPERTIES];
-    const nDbPages = nDbResult[QUERY_PAGES];
+    const nDbCursors = nDbResult[QUERY_PAGES];
 
     const unloadedPageIds = new Map();
     const loadedPageIds = new Map();
     const matchedPageIds = new Map();
-    const dbPagination = new Map( );
+    const dbCursors = new Map( );
     //todo... if there is another related table which needs rows in primary
     //and we started loading from a specific page... then we need to load all pages
     //and need to skip the one we "started" from
@@ -200,24 +199,35 @@ export async function GET( request, response ) {
     const primaryDbPageType= pageReqObj[PAGE_CURSOR_TYPE_REQUEST];
     const specificPg = primaryDbPageType === PAGE_CURSOR_TYPE_SPECIFIC;
     const primaryLastPageCursorId = specificPg ? null : pageReqObj[PAGE_CURSOR_ID_REQUEST];
-    dbPagination.set( primaryDbId, {
+    dbCursors.set( primaryDbId, {
       lastPageCursorId: primaryLastPageCursorId,
-      complete: !nDbPages[NOTION_HAS_MORE]
+      complete: !nDbCursors[NOTION_HAS_MORE]
     } );
 
     await loadRelatedDbs(
-      nClient, relMap, primaryDbId, nDbProps, unloadedPageIds, loadedPageIds, matchedPageIds, dbPagination );
+      nClient, relMap, primaryDbId, nDbProps, 
+      unloadedPageIds, loadedPageIds, matchedPageIds, dbCursors );
 
     const rDbResults = [];
     const matchedPageIdsArray = Array.from(matchedPageIds.entries());
     for (const [dbId, pgSet] of matchedPageIdsArray) {
-      const dbBlocks = Array.from(pgSet.keys()).map( 
+
+      const dbPages = Array.from(pgSet.keys()).map( 
         pgId => loadedPageIds.get(pgId)['page'] );
-      const rDb = makeDbSerialized( dbBlocks, null, metasMap.get(dbId) );
-      rDbResults.push( rDb );
+      if (dbId !== primaryDbId) {
+        const rDb = makeDbSerialized( dbPages, null, metasMap.get(dbId) );
+        rDbResults.push( rDb );
+      }
+      else {
+        for (const dbPage of dbPages) {
+          if (nDbProps.indexOf(dbPage) === -1) {
+            nDbProps.push( dbPage );
+          }
+        }
+      }
     }
     
-    const nDbSerial = makeDbSerialized( nDbProps, nDbPages, nDbMeta );
+    const nDbSerial = makeDbSerialized( nDbProps, nDbCursors, nDbMeta );
     const orgDbResult = {
       [NOTION_RESULT_PRIMARY_DATABASE]: nDbSerial,
       [NOTION_RESULT_RELATION_DATABASES]: rDbResults
@@ -253,7 +263,7 @@ const createResponse = (json, request) => {
   return resJson;
 };
 
-const makeDbSerialized = (props, pages, meta) => {
+const makeDbSerialized = (props, cursors, meta) => {
   const s = {
     [NOTION_RESULT_BLOCKS]: props,
     [NOTION_RESULT_DATABASE_ID]: meta[DATABASE_QUERY_ID],
@@ -264,8 +274,8 @@ const makeDbSerialized = (props, pages, meta) => {
     [NOTION_RESULT_ICON]: meta[DATABASE_QUERY_ICON],
     [NOTION_RESULT_COVER]: meta[DATABASE_QUERY_COVER],
   };
-  if (pages) {
-    s[NOTION_RESULT_PAGE_DATA] = pages;
+  if (cursors) {
+    s[NOTION_RESULT_CURSOR_DATA] = cursors;
   }
   return s;
 };
@@ -276,6 +286,10 @@ const trackLoadedPages =
   for (const page of propertyPages) {
     const meta = page[EXPORT_DATA_METADATA];
     const pageId = meta[DGMDCC_ID][EXPORT_DATA_VALUE];
+    
+    if (unloadedPageIds.has(dbId) && unloadedPageIds.get(dbId).has(pageId)) {
+      unloadedPageIds.get(dbId).delete(pageId);
+    }
     if (!loadedPageIds.has(pageId)) {
       loadedPageIds.set(pageId, {
         pageId,
@@ -283,17 +297,10 @@ const trackLoadedPages =
         dbId
       });
     }
-
-    if (unloadedPageIds.has(dbId)) {
-      const unloaded = unloadedPageIds.get(dbId).delete(pageId);
-      if (unloaded) {
-        if (!dbTracker.has(dbId)) {
-          dbTracker.set(dbId, new Set());
-        }
-        dbTracker.get(dbId).add(pageId);
-      }
-
+    if (!dbTracker.has(dbId)) {
+      dbTracker.set(dbId, new Set());
     }
+    dbTracker.get(dbId).add(pageId);
   }
 
   for (const page of propertyPages) {
@@ -322,6 +329,7 @@ const trackLoadedPages =
 
 const chainLoadRelatedDbs = async (
   nClient, relMap, unloadedPageIds, loadedPageIds, dbTracker, dbPagination ) => {
+
   const anyLeft = !areAllMapSetsEmpty( unloadedPageIds );
   if (anyLeft) {
     for (const [dbId, unloadedSet] of unloadedPageIds) {
@@ -366,9 +374,28 @@ const chainLoadRelatedDbs = async (
 };
 
 const loadRelatedDbs = async(
-  nClient, relMap, dbId, dbProps, unloadedPageIds, loadedPageIds, dbTracker, dbPagination) => {
-  trackLoadedPages( dbId, dbProps, unloadedPageIds, loadedPageIds, dbTracker );
-  return chainLoadRelatedDbs( nClient, relMap, unloadedPageIds, loadedPageIds, dbTracker, dbPagination );
+  nClient, relMap, dbId, dbProps, 
+  unloadedPageIds, loadedPageIds,
+  dbTracker, dbPagination ) => {
+
+  for (const page of dbProps) {
+    const pageId = page[EXPORT_DATA_METADATA][DGMDCC_ID][EXPORT_DATA_VALUE];
+    loadedPageIds.set( pageId, {
+      pageId,
+      page,
+      dbId
+    } );
+    if (!dbTracker.has(dbId)) {
+      dbTracker.set(dbId, new Set());
+    }
+    dbTracker.get(dbId).add(pageId);
+  }
+
+  trackLoadedPages( 
+    dbId, dbProps, unloadedPageIds, loadedPageIds, dbTracker );
+
+  return chainLoadRelatedDbs( 
+    nClient, relMap, unloadedPageIds, loadedPageIds, dbTracker, dbPagination );
 };
 
 const getNotionDbaseRelationPromise = async (nClient, dbId, collector) => {
@@ -419,7 +446,7 @@ const chainNotionDbaseRelationIds = async (nClient, dbId, collector) => {
   return Promise.resolve(collector);
 };
 
-const getNotionDbaseRelationsIds = ( nClient, dbId ) => {
+export const getNotionDbaseRelationsIds = ( nClient, dbId ) => {
   const collector = {
     'relMap': new Map(),
     'dbMap': new Map()
@@ -457,7 +484,7 @@ const getNotionPageTitle = nPage => {
   }
 };
 
-const getNotionDbaseProperties = (notionDatas, relMap) => {
+export const getNotionDbaseProperties = (notionDatas, relMap) => {
   if (NOTION_RESULTS in notionDatas) {
     const data = notionDatas[NOTION_RESULTS].map( (resultData, index) => {
       const metadata = {};
@@ -705,7 +732,6 @@ const chainNotionDbasePromises =
   (nClient, dbId, allPages, relMap, startCursor, proceed, collector ) => {
   
   if (proceed) {
-    console.log( 'chainNotionDbasePromises', dbId, startCursor );
     const queryObj = {
       [NOTION_KEY_DATABASE_ID]: dbId
     };

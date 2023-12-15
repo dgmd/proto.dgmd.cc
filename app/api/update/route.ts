@@ -15,6 +15,12 @@
   } from '../../../utils/strings.js';
 
   import {
+    getNotionDbaseRelationsIds,
+    getNotionDbaseProperties
+  } from '../query/route.js';
+
+  import {
+    CRUD_RESPONSE_SUCCESS,
     CRUD_RESPONSE_RESULT,
     CRUD_RESPONSE_DELETE,
     CRUD_RESPONSE_DELETE_ID,
@@ -28,6 +34,7 @@
     CRUD_RESPONSE_UPDATE_ID,
     CRUD_RESPONSE_UPDATE_BLOCKS,
     CRUD_RESPONSE_UPDATE_METAS,
+    URL_SEARCH_PARAM_PRIMARY_DATABASE_ID,
     URL_SEARCH_PARAM_ACTION,
     URL_SEARCH_VALUE_ACTION_DELETE,
     URL_SEARCH_PARAM_DELETE_BLOCK_ID,
@@ -56,9 +63,21 @@
       [SECRET_ID]: process.env.NOTION_SECRET,
       [DATABASE_ID]: null
     };
+
     const nClient = new Client({ 
       auth: secrets[SECRET_ID]
     });
+
+
+    try {
+      secrets[DATABASE_ID] = params.get( URL_SEARCH_PARAM_PRIMARY_DATABASE_ID );
+      await getNotionDbaseRelationsIds( nClient, secrets[DATABASE_ID] );
+    }
+    catch (e) {
+      return createResponse( {
+        [CRUD_RESPONSE_RESULT]: false
+      }, request );
+    }
 
     if (paramAction === URL_SEARCH_VALUE_ACTION_DELETE) {
       const rObj = {
@@ -117,6 +136,9 @@
             await updateMeta( nClient, createPageId, key, value, rMetas );
           }
         }
+
+        // const response = await nClient.pages.retrieve({ page_id: createPageId });
+        // rObj['huh'] = response
 
       }
       catch (error) {

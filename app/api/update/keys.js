@@ -12,7 +12,9 @@ export const URL_SEARCH_VALUE_ACTION_UPDATE = 'u';
 export const URL_SEARCH_PARAM_UPDATE_BLOCK_ID = 'ubi';
 export const URL_SEARCH_PARAM_UPDATE_BLOCK = 'ub';
 export const URL_SEARCH_PARAM_UPDATE_META = 'um';
+export const URL_SEARCH_PARAM_PRIMARY_DATABASE_ID = 'db';
 
+export const CRUD_RESPONSE_SUCCESS = 'success';
 export const CRUD_RESPONSE_RESULT = 'result';
 export const CRUD_RESPONSE_DELETE = 'delete';
 export const CRUD_RESPONSE_DELETE_ID = 'deleteId';

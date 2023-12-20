@@ -16,8 +16,8 @@
 
   import {
     getNotionDbaseRelationsIds,
-    getNotionDbaseProperties
-  } from '../query/route.js';
+    getNotionPageData
+  } from '../query/route';
 
   import {
     CRUD_RESPONSE_SUCCESS,
@@ -31,7 +31,8 @@
     CRUD_RESPONSE_META,
     CRUD_RESPONSE_META_KEY,
     CRUD_RESPONSE_META_ID,
-    CRUD_RESPONSE_UPDATE_ID,
+    CRUD_RESPONSE_UPDATE,
+    CRUD_RESPONSE_UPDATE_PAGE_ID,
     CRUD_RESPONSE_UPDATE_BLOCKS,
     CRUD_RESPONSE_UPDATE_METAS,
     URL_SEARCH_PARAM_PRIMARY_DATABASE_ID,
@@ -52,7 +53,6 @@
   } from './keys.js';
   
   const SECRET_ID = 'SECRET_ID';
-  const DATABASE_ID = 'DATABASE_ID';
 
   export async function GET( request, response ) {
 
@@ -60,31 +60,21 @@
     const paramAction = params.get( URL_SEARCH_PARAM_ACTION );
 
     const secrets = {
-      [SECRET_ID]: process.env.NOTION_SECRET,
-      [DATABASE_ID]: null
+      [SECRET_ID]: process.env.NOTION_SECRET
     };
 
     const nClient = new Client({ 
       auth: secrets[SECRET_ID]
     });
 
-
-    try {
-      secrets[DATABASE_ID] = params.get( URL_SEARCH_PARAM_PRIMARY_DATABASE_ID );
-      await getNotionDbaseRelationsIds( nClient, secrets[DATABASE_ID] );
-    }
-    catch (e) {
-      return createResponse( {
-        [CRUD_RESPONSE_RESULT]: false
-      }, request );
-    }
-
     if (paramAction === URL_SEARCH_VALUE_ACTION_DELETE) {
+
       const rObj = {
         [CRUD_RESPONSE_RESULT]: {
           [CRUD_RESPONSE_DELETE]: false
         }
       };
+
       try {
         const deleteBlockId = removeHyphens( params.get(URL_SEARCH_PARAM_DELETE_BLOCK_ID) );
         rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_DELETE_ID] = deleteBlockId;
@@ -96,9 +86,11 @@
       catch (error) {
         console.log( 'delete error', error );
       }
+
       return createResponse( rObj, request );
     }
     else if (paramAction === URL_SEARCH_VALUE_ACTION_CREATE) {
+  
       const rObj = {
         [CRUD_RESPONSE_RESULT]: {
           [CRUD_RESPONSE_CREATE]: false
@@ -137,8 +129,12 @@
           }
         }
 
-        // const response = await nClient.pages.retrieve({ page_id: createPageId });
-        // rObj['huh'] = response
+        const createdPg = await nClient.pages.retrieve({ page_id: createPageId });
+        const x = await getNotionDbaseRelationsIds( nClient, appendBlockId );
+        const relMap = x['relMap'];
+        const pg = getNotionPageData( createdPg, relMap );
+        rObj[CRUD_RESPONSE_RESULT]['page'] = pg;
+        rObj[CRUD_RESPONSE_RESULT]['dbId'] = appendBlockId;
 
       }
       catch (error) {
@@ -148,11 +144,14 @@
     }
     else if (paramAction === URL_SEARCH_VALUE_ACTION_UPDATE) {
       const rObj = {
-        [CRUD_RESPONSE_RESULT]: {}
+        [CRUD_RESPONSE_RESULT]: {
+          [CRUD_RESPONSE_UPDATE]: false
+        }
       };
       try {
         const updatePageId = removeHyphens( params.get(URL_SEARCH_PARAM_UPDATE_BLOCK_ID) );
-        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_UPDATE_ID] = updatePageId;
+        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_UPDATE] = true;
+        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_UPDATE_PAGE_ID] = updatePageId;
         const updateBlockParam = params.get( URL_SEARCH_PARAM_UPDATE_BLOCK );
         const updateBlockObj = JSON.parse( decodeURIComponent(updateBlockParam) );
         const updateMetaParam = params.get( URL_SEARCH_PARAM_UPDATE_META );
@@ -172,6 +171,14 @@
             await updateMeta( nClient, updatePageId, key, value, rMetas );
           }
         }
+
+        const createdPg = await nClient.pages.retrieve({ page_id: updatePageId });
+        const parentId = removeHyphens( createdPg['parent']['database_id'] );
+        const x = await getNotionDbaseRelationsIds( nClient, parentId );
+        const relMap = x['relMap'];
+        const pg = getNotionPageData( createdPg, relMap );
+        rObj[CRUD_RESPONSE_RESULT]['dbId'] = parentId;
+        rObj[CRUD_RESPONSE_RESULT]['page'] = pg;
       }
       catch (error) {
       }

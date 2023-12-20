@@ -484,209 +484,213 @@ const getNotionPageTitle = nPage => {
   }
 };
 
-export const getNotionDbaseProperties = (notionDatas, relMap) => {
+const getNotionDbaseProperties = (notionDatas, relMap) => {
   if (NOTION_RESULTS in notionDatas) {
     const data = notionDatas[NOTION_RESULTS].map( (resultData, index) => {
-      const metadata = {};
-      const propdata = {};
-      const somedata = {
-        [EXPORT_DATA_METADATA]: metadata,
-        [EXPORT_DATA_PROPERTIES]: propdata
-      };
-      const keys = Object.keys( resultData );
-      for (const key of keys) {
-        if (key === NOTION_ID) {
-
-          const id = resultData[key];
-          const idSansHyphens = removeHyphens( id );
-
-          metadata[DGMDCC_ID] = {
-            [EXPORT_DATA_TYPE]: DGMDCC_ID,
-            [EXPORT_DATA_VALUE]: idSansHyphens
-          };
-        }
-        else if (key === NOTION_URL) {
-          metadata[DGMDCC_URL] = {
-            [EXPORT_DATA_TYPE]: DGMDCC_URL,
-            [EXPORT_DATA_VALUE]: resultData[key]
-          };
-        }
-        else if (key === NOTION_DATA_TYPE_ICON) {
-          const iconObj = getIcon( resultData[key] );
-          metadata[NOTION_DATA_TYPE_ICON] = {
-            [EXPORT_DATA_TYPE]: iconObj['type'],
-            [EXPORT_DATA_VALUE]: iconObj['value']
-          };
-        }
-        else if (key === NOTION_DATA_TYPE_COVER) {
-          const coverObj = getCover( resultData[key] );
-          metadata[NOTION_DATA_TYPE_COVER] = {
-            [EXPORT_DATA_TYPE]: coverObj['type'],
-            [EXPORT_DATA_VALUE]: coverObj['value']
-          };
-        }
-        else if (key === NOTION_PROPERTIES) {
-          const properties = resultData[key];
-          const propertyKeys = Object.keys( properties );
-          for (const propertyKey of propertyKeys) {
-
-            const propertyObj = properties[propertyKey];
-            const propertyType = propertyObj[NOTION_DATA_TYPE];
-            const propertyVal = propertyObj[propertyType];
-            const gotPropertyVal = propertyVal !== null && propertyVal !== undefined;
-
-            if (gotPropertyVal) {
-              if (propertyType === NOTION_DATA_TYPE_SELECT) {
-
-                propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_SELECT,
-                  [EXPORT_DATA_VALUE]: propertyVal[NOTION_KEY_NAME]
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_MULTI_SELECT) {
-                
-                const multis = propertyVal.map( m => m[NOTION_KEY_NAME] );
-                propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_MULTI_SELECT,
-                  [EXPORT_DATA_VALUE]: multis
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_FILES) {
-                const files = propertyVal.reduce( (acc, cur) => {
-                  if (NOTION_KEY_EXTERNAL in cur) {
-                    acc.push( cur[NOTION_KEY_EXTERNAL][NOTION_KEY_URL] );
-                  }
-                  else if (NOTION_KEY_FILE in cur) {
-                    acc.push( cur[NOTION_KEY_FILE][NOTION_KEY_URL] );
-                  }
-                  return acc;
-                 }, [] );
-                const file = files.length > 0 ? files[0] : null;
-                propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_FILES,
-                  [EXPORT_DATA_VALUE]: file
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_NUMBER) {
-                propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_NUMBER,
-                  [EXPORT_DATA_VALUE]: propertyVal
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_CHECKBOX) {
-                propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_CHECKBOX,
-                  [EXPORT_DATA_VALUE]: propertyVal
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_URL) {
-                propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_URL,
-                  [EXPORT_DATA_VALUE]: propertyVal
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_EMAIL) {
-                propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_EMAIL,
-                  [EXPORT_DATA_VALUE]: propertyVal
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_PHONE_NUMBER) {
-                propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_PHONE_NUMBER,
-                  [EXPORT_DATA_VALUE]: propertyVal
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_STATUS) {
-                propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_STATUS,
-                  [EXPORT_DATA_VALUE]: propertyVal[NOTION_KEY_NAME]
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_TITLE || propertyType == NOTION_DATA_TYPE_RICH_TEXT) {
-                const titles = propertyVal.map( m => m[NOTION_KEY_PLAIN_TEXT] );
-                const val = titles.length > 0 ? titles.join('') : null;
-
-                propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: propertyType,
-                  [EXPORT_DATA_VALUE]: val
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_RELATION) {
-                const notionPropertyId = propertyObj[NOTION_KEY_ID];
-                const dbId = relMap.get( notionPropertyId );
-                const val = propertyVal.map( m => {
-                  return {
-                    [NOTION_RESULT_RELATION_DATABASE_ID]: dbId,
-                    [NOTION_RESULT_RELATION_PAGE_ID]: removeHyphens( m[NOTION_KEY_ID] )
-                  } }
-                );
-                propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: propertyType,
-                  [EXPORT_DATA_VALUE]: val
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_DATE) {
-                propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: propertyType,
-                  [EXPORT_DATA_VALUE]: propertyVal
-                };
-              }
-              else if (propertyType == NOTION_DATA_LAST_EDITED_TIME) {
-                propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: propertyType,
-                  [EXPORT_DATA_VALUE]: propertyVal
-                };
-              }
-              else if (propertyType == NOTION_DATA_CREATED_TIME) {
-                propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: propertyType,
-                  [EXPORT_DATA_VALUE]: propertyVal
-                };
-              }
-              else {
-                // todo... handle other types
-                // console.log(
-                //   '***',
-                //   'propertyType', propertyType,
-                //   'prototypeKey', propertyKey
-                // );
-              }
-            }
-            else {
-              if ([
-                NOTION_DATA_TYPE_SELECT,
-                NOTION_DATA_TYPE_MULTI_SELECT,
-                NOTION_DATA_TYPE_FILES,
-                NOTION_DATA_TYPE_NUMBER,
-                NOTION_DATA_TYPE_TITLE,
-                NOTION_DATA_TYPE_CHECKBOX,
-                NOTION_DATA_TYPE_RICH_TEXT,
-                NOTION_DATA_TYPE_RELATION,
-                NOTION_DATA_TYPE_DATE,
-                NOTION_DATA_TYPE_EMAIL,
-                NOTION_DATA_TYPE_PHONE_NUMBER,
-                NOTION_DATA_TYPE_STATUS,
-                NOTION_DATA_TYPE_URL,
-                NOTION_DATA_LAST_EDITED_TIME,
-                NOTION_DATA_CREATED_TIME
-              ].includes( propertyType )) {
-
-                propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: propertyType,
-                  [EXPORT_DATA_VALUE]: null
-                };
-
-              };
-            }
-          }
-        }
-      }
-      return somedata;
+      return getNotionPageData( resultData, relMap );
     } );
     return data;
   }
   return {};
+};
+
+export const getNotionPageData = ( resultData, relMap ) => {
+  const metadata = {};
+  const propdata = {};
+  const somedata = {
+    [EXPORT_DATA_METADATA]: metadata,
+    [EXPORT_DATA_PROPERTIES]: propdata
+  };
+  const keys = Object.keys( resultData );
+  for (const key of keys) {
+    if (key === NOTION_ID) {
+
+      const id = resultData[key];
+      const idSansHyphens = removeHyphens( id );
+
+      metadata[DGMDCC_ID] = {
+        [EXPORT_DATA_TYPE]: DGMDCC_ID,
+        [EXPORT_DATA_VALUE]: idSansHyphens
+      };
+    }
+    else if (key === NOTION_URL) {
+      metadata[DGMDCC_URL] = {
+        [EXPORT_DATA_TYPE]: DGMDCC_URL,
+        [EXPORT_DATA_VALUE]: resultData[key]
+      };
+    }
+    else if (key === NOTION_DATA_TYPE_ICON) {
+      const iconObj = getIcon( resultData[key] );
+      metadata[NOTION_DATA_TYPE_ICON] = {
+        [EXPORT_DATA_TYPE]: iconObj['type'],
+        [EXPORT_DATA_VALUE]: iconObj['value']
+      };
+    }
+    else if (key === NOTION_DATA_TYPE_COVER) {
+      const coverObj = getCover( resultData[key] );
+      metadata[NOTION_DATA_TYPE_COVER] = {
+        [EXPORT_DATA_TYPE]: coverObj['type'],
+        [EXPORT_DATA_VALUE]: coverObj['value']
+      };
+    }
+    else if (key === NOTION_PROPERTIES) {
+      const properties = resultData[key];
+      const propertyKeys = Object.keys( properties );
+      for (const propertyKey of propertyKeys) {
+
+        const propertyObj = properties[propertyKey];
+        const propertyType = propertyObj[NOTION_DATA_TYPE];
+        const propertyVal = propertyObj[propertyType];
+        const gotPropertyVal = propertyVal !== null && propertyVal !== undefined;
+
+        if (gotPropertyVal) {
+          if (propertyType === NOTION_DATA_TYPE_SELECT) {
+
+            propdata[propertyKey] = {
+              [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_SELECT,
+              [EXPORT_DATA_VALUE]: propertyVal[NOTION_KEY_NAME]
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_MULTI_SELECT) {
+            
+            const multis = propertyVal.map( m => m[NOTION_KEY_NAME] );
+            propdata[propertyKey] = {
+              [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_MULTI_SELECT,
+              [EXPORT_DATA_VALUE]: multis
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_FILES) {
+            const files = propertyVal.reduce( (acc, cur) => {
+              if (NOTION_KEY_EXTERNAL in cur) {
+                acc.push( cur[NOTION_KEY_EXTERNAL][NOTION_KEY_URL] );
+              }
+              else if (NOTION_KEY_FILE in cur) {
+                acc.push( cur[NOTION_KEY_FILE][NOTION_KEY_URL] );
+              }
+              return acc;
+             }, [] );
+            const file = files.length > 0 ? files[0] : null;
+            propdata[propertyKey] = {
+              [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_FILES,
+              [EXPORT_DATA_VALUE]: file
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_NUMBER) {
+            propdata[propertyKey] = {
+              [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_NUMBER,
+              [EXPORT_DATA_VALUE]: propertyVal
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_CHECKBOX) {
+            propdata[propertyKey] = {
+              [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_CHECKBOX,
+              [EXPORT_DATA_VALUE]: propertyVal
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_URL) {
+            propdata[propertyKey] = {
+              [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_URL,
+              [EXPORT_DATA_VALUE]: propertyVal
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_EMAIL) {
+            propdata[propertyKey] = {
+              [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_EMAIL,
+              [EXPORT_DATA_VALUE]: propertyVal
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_PHONE_NUMBER) {
+            propdata[propertyKey] = {
+              [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_PHONE_NUMBER,
+              [EXPORT_DATA_VALUE]: propertyVal
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_STATUS) {
+            propdata[propertyKey] = {
+              [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_STATUS,
+              [EXPORT_DATA_VALUE]: propertyVal[NOTION_KEY_NAME]
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_TITLE || propertyType == NOTION_DATA_TYPE_RICH_TEXT) {
+            const titles = propertyVal.map( m => m[NOTION_KEY_PLAIN_TEXT] );
+            const val = titles.length > 0 ? titles.join('') : null;
+
+            propdata[propertyKey] = {
+              [EXPORT_DATA_TYPE]: propertyType,
+              [EXPORT_DATA_VALUE]: val
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_RELATION) {
+            const notionPropertyId = propertyObj[NOTION_KEY_ID];
+            const dbId = relMap.get( notionPropertyId );
+            const val = propertyVal.map( m => {
+              return {
+                [NOTION_RESULT_RELATION_DATABASE_ID]: dbId,
+                [NOTION_RESULT_RELATION_PAGE_ID]: removeHyphens( m[NOTION_KEY_ID] )
+              } }
+            );
+            propdata[propertyKey] = {
+              [EXPORT_DATA_TYPE]: propertyType,
+              [EXPORT_DATA_VALUE]: val
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_DATE) {
+            propdata[propertyKey] = {
+              [EXPORT_DATA_TYPE]: propertyType,
+              [EXPORT_DATA_VALUE]: propertyVal
+            };
+          }
+          else if (propertyType == NOTION_DATA_LAST_EDITED_TIME) {
+            propdata[propertyKey] = {
+              [EXPORT_DATA_TYPE]: propertyType,
+              [EXPORT_DATA_VALUE]: propertyVal
+            };
+          }
+          else if (propertyType == NOTION_DATA_CREATED_TIME) {
+            propdata[propertyKey] = {
+              [EXPORT_DATA_TYPE]: propertyType,
+              [EXPORT_DATA_VALUE]: propertyVal
+            };
+          }
+          else {
+            // todo... handle other types
+            // console.log(
+            //   '***',
+            //   'propertyType', propertyType,
+            //   'prototypeKey', propertyKey
+            // );
+          }
+        }
+        else {
+          if ([
+            NOTION_DATA_TYPE_SELECT,
+            NOTION_DATA_TYPE_MULTI_SELECT,
+            NOTION_DATA_TYPE_FILES,
+            NOTION_DATA_TYPE_NUMBER,
+            NOTION_DATA_TYPE_TITLE,
+            NOTION_DATA_TYPE_CHECKBOX,
+            NOTION_DATA_TYPE_RICH_TEXT,
+            NOTION_DATA_TYPE_RELATION,
+            NOTION_DATA_TYPE_DATE,
+            NOTION_DATA_TYPE_EMAIL,
+            NOTION_DATA_TYPE_PHONE_NUMBER,
+            NOTION_DATA_TYPE_STATUS,
+            NOTION_DATA_TYPE_URL,
+            NOTION_DATA_LAST_EDITED_TIME,
+            NOTION_DATA_CREATED_TIME
+          ].includes( propertyType )) {
+
+            propdata[propertyKey] = {
+              [EXPORT_DATA_TYPE]: propertyType,
+              [EXPORT_DATA_VALUE]: null
+            };
+
+          };
+        }
+      }
+    }
+  }
+  return somedata;
 };
 
 const KEY_NDBP_COLLECTOR = 'KEY_NDBP_COLLECTOR';
@@ -724,6 +728,7 @@ const getNotionDbasePromise = (nClient, allPages, relMap, collector, queryObj) =
       .catch( error => {
         reject( error );
       });
+  
   });
   return p;
 };

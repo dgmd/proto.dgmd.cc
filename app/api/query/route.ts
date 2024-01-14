@@ -652,6 +652,13 @@ export const getNotionPageData = ( resultData, relMap ) => {
               [EXPORT_DATA_VALUE]: propertyVal
             };
           }
+          else if (propertyType == NOTION_DATA_TYPE_FORMULA) {
+            propdata[propertyKey] = {
+              [EXPORT_DATA_TYPE]: propertyType,
+              [EXPORT_DATA_VALUE]: propertyVal
+            };
+          }
+          }
           else {
             // todo... handle other types
             // console.log(

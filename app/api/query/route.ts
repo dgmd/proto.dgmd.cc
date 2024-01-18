@@ -38,10 +38,10 @@ import {
   NOTION_RESULT_RELATION_DATABASES,
   NOTION_RESULT_RELATION_DATABASE_ID,
   NOTION_RESULT_SUCCESS,
-  URL_SEARCH_PARAM_BLOCKS_REQUEST,
-  URL_SEARCH_PARAM_DATABASE,
-  URL_SEARCH_PARAM_PAGE_CURSOR_TYPE_REQUEST,
-  URL_SEARCH_PARAM_PAGE_CURSOR_ID_REQUEST,
+  PARAM_BLOCKS_REQUEST,
+  PARAM_DATABASE,
+  PARAM_PAGE_CURSOR_TYPE_REQUEST,
+  PARAM_PAGE_CURSOR_ID_REQUEST,
   URL_PAGE_CURSOR_TYPE_ALL,
   URL_PAGE_CURSOR_TYPE_DEFAULT,
   URL_PAGE_CURSOR_TYPE_SPECIFIC
@@ -140,12 +140,12 @@ export async function GET( request, response ) {
   };
 
   const params = request.nextUrl.searchParams;
-  if (params.has(URL_SEARCH_PARAM_DATABASE)) {
-    const dbId = params.get(URL_SEARCH_PARAM_DATABASE);
+  if (params.has(PARAM_DATABASE)) {
+    const dbId = params.get(PARAM_DATABASE);
     requests[DATABASE_ID_REQUEST] = dbId;
   }
-  if (params.has(URL_SEARCH_PARAM_PAGE_CURSOR_TYPE_REQUEST)) {
-    const pcs = params.get(URL_SEARCH_PARAM_PAGE_CURSOR_TYPE_REQUEST);
+  if (params.has(PARAM_PAGE_CURSOR_TYPE_REQUEST)) {
+    const pcs = params.get(PARAM_PAGE_CURSOR_TYPE_REQUEST);
     const cursorReq = {
       [URL_PAGE_CURSOR_TYPE_ALL]: PAGE_CURSOR_TYPE_ALL,
       [URL_PAGE_CURSOR_TYPE_SPECIFIC]: PAGE_CURSOR_TYPE_SPECIFIC,
@@ -155,12 +155,12 @@ export async function GET( request, response ) {
       requests[PAGE_CURSOR_REQUEST][PAGE_CURSOR_TYPE_REQUEST] = cursorReq;
     }
   }
-  if (params.has(URL_SEARCH_PARAM_PAGE_CURSOR_ID_REQUEST)) {
-    const pcid = params.get(URL_SEARCH_PARAM_PAGE_CURSOR_ID_REQUEST);
+  if (params.has(PARAM_PAGE_CURSOR_ID_REQUEST)) {
+    const pcid = params.get(PARAM_PAGE_CURSOR_ID_REQUEST);
     requests[PAGE_CURSOR_REQUEST][PAGE_CURSOR_ID_REQUEST] = pcid;
   }
-  if (params.has(URL_SEARCH_PARAM_BLOCKS_REQUEST)) {
-    const blocks = params.get(URL_SEARCH_PARAM_BLOCKS_REQUEST);
+  if (params.has(PARAM_BLOCKS_REQUEST)) {
+    const blocks = params.get(PARAM_BLOCKS_REQUEST);
     requests[BLOCKS_REQUEST] = stringToBoolean(blocks);
   }
   try {

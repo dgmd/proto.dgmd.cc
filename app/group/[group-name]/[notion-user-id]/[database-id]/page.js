@@ -25,9 +25,9 @@ import {
 import {
   EXPORT_DATA_KEY,
   EXPORT_DATA_VALUE,
-  URL_SEARCH_PARAM_BLOCKS_REQUEST,
-  URL_SEARCH_PARAM_DATABASE,
-  URL_SEARCH_PARAM_RELATIONS_REQUEST,
+  PARAM_BLOCKS_REQUEST,
+  PARAM_DATABASE,
+  PARAM_RELATIONS_REQUEST,
   NOTION_RESULT_BLOCKS,
   NOTION_RESULT_BLOCK_DBS,
   NOTION_RESULT_BLOCK_KEY,
@@ -293,9 +293,9 @@ const getRows = ( rows, liveDataLink ) => {
 
 const getLiveDataLink = dbId => {
   const paramsObj = {
-    [URL_SEARCH_PARAM_DATABASE]: dbId,
-    [URL_SEARCH_PARAM_BLOCKS_REQUEST]: false,
-    [URL_SEARCH_PARAM_RELATIONS_REQUEST]: true
+    [PARAM_DATABASE]: dbId,
+    [PARAM_BLOCKS_REQUEST]: false,
+    [PARAM_RELATIONS_REQUEST]: true
   };
   const params = new URLSearchParams( paramsObj );
   return `/api/query?${ params.toString() }`;

@@ -20,7 +20,6 @@
   } from '../query/route';
 
   import {
-    CRUD_RESPONSE_SUCCESS,
     CRUD_RESPONSE_RESULT,
     CRUD_RESPONSE_DELETE,
     CRUD_RESPONSE_DELETE_ID,
@@ -35,29 +34,29 @@
     CRUD_RESPONSE_UPDATE_PAGE_ID,
     CRUD_RESPONSE_UPDATE_BLOCKS,
     CRUD_RESPONSE_UPDATE_METAS,
-    URL_SEARCH_PARAM_PRIMARY_DATABASE_ID,
-    URL_SEARCH_PARAM_ACTION,
-    URL_SEARCH_VALUE_ACTION_DELETE,
-    URL_SEARCH_PARAM_DELETE_BLOCK_ID,
-    URL_SEARCH_VALUE_ACTION_CREATE,
-    URL_SEARCH_PARAM_CREATE_BLOCK_ID,
-    URL_SEARCH_PARAM_CREATE_CHILDREN,
-    URL_SEARCH_PARAM_CREATE_META,
-    URL_SEARCH_VALUE_ACTION_UPDATE,
-    URL_SEARCH_PARAM_UPDATE_BLOCK_ID,
-    URL_SEARCH_PARAM_UPDATE_BLOCK,
-    URL_SEARCH_PARAM_UPDATE_META,
     CRUD_RESPONSE_BLOCK,
     CRUD_RESPONSE_BLOCK_KEY,
-    CRUD_RESPONSE_BLOCK_ID
-  } from './keys.js';
-  
+    CRUD_RESPONSE_BLOCK_ID,
+
+    CRUD_PARAM_ACTION,
+    CRUD_VALUE_ACTION_DELETE,
+    CRUD_PARAM_DELETE_BLOCK_ID,
+    CRUD_VALUE_ACTION_CREATE,
+    CRUD_PARAM_CREATE_BLOCK_ID,
+    CRUD_PARAM_CREATE_CHILDREN,
+    CRUD_PARAM_CREATE_META,
+    CRUD_VALUE_ACTION_UPDATE,
+    CRUD_PARAM_UPDATE_BLOCK_ID,
+    CRUD_PARAM_UPDATE_BLOCK,
+    CRUD_PARAM_UPDATE_META,
+  } from "constants.dgmd.cc";
+
   const SECRET_ID = 'SECRET_ID';
 
   export async function GET( request, response ) {
 
     const params = request.nextUrl.searchParams;
-    const paramAction = params.get( URL_SEARCH_PARAM_ACTION );
+    const paramAction = params.get( CRUD_PARAM_ACTION );
 
     const secrets = {
       [SECRET_ID]: process.env.NOTION_SECRET
@@ -67,8 +66,7 @@
       auth: secrets[SECRET_ID]
     });
 
-    if (paramAction === URL_SEARCH_VALUE_ACTION_DELETE) {
-
+    if (paramAction === CRUD_VALUE_ACTION_DELETE) {
       const rObj = {
         [CRUD_RESPONSE_RESULT]: {
           [CRUD_RESPONSE_DELETE]: false
@@ -76,7 +74,7 @@
       };
 
       try {
-        const deleteBlockId = removeHyphens( params.get(URL_SEARCH_PARAM_DELETE_BLOCK_ID) );
+        const deleteBlockId = removeHyphens( params.get(CRUD_PARAM_DELETE_BLOCK_ID) );
         rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_DELETE_ID] = deleteBlockId;
         await nClient.blocks.delete( {
           block_id: deleteBlockId
@@ -89,18 +87,17 @@
 
       return createResponse( rObj, request );
     }
-    else if (paramAction === URL_SEARCH_VALUE_ACTION_CREATE) {
-  
+    else if (paramAction === CRUD_VALUE_ACTION_CREATE) {
       const rObj = {
         [CRUD_RESPONSE_RESULT]: {
           [CRUD_RESPONSE_CREATE]: false
         }
       };
       try {
-        const appendBlockId = removeHyphens( params.get( URL_SEARCH_PARAM_CREATE_BLOCK_ID ) );
-        const appendChildrenParam = params.get( URL_SEARCH_PARAM_CREATE_CHILDREN );
+        const appendBlockId = removeHyphens( params.get( CRUD_PARAM_CREATE_BLOCK_ID ) );
+        const appendChildrenParam = params.get( CRUD_PARAM_CREATE_CHILDREN );
         const appendChildrenObj = JSON.parse( decodeURIComponent(appendChildrenParam) );
-        const appendMetaParam = params.get( URL_SEARCH_PARAM_CREATE_META );
+        const appendMetaParam = params.get( CRUD_PARAM_CREATE_META );
         const appendMetaObj = JSON.parse( decodeURIComponent(appendMetaParam) );
 
         const createObj = await nClient.pages.create({
@@ -142,19 +139,18 @@
       }
       return createResponse( rObj, request );
     }
-    else if (paramAction === URL_SEARCH_VALUE_ACTION_UPDATE) {
+    else if (paramAction === CRUD_VALUE_ACTION_UPDATE) {
       const rObj = {
         [CRUD_RESPONSE_RESULT]: {
           [CRUD_RESPONSE_UPDATE]: false
         }
       };
       try {
-        const updatePageId = removeHyphens( params.get(URL_SEARCH_PARAM_UPDATE_BLOCK_ID) );
-        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_UPDATE] = true;
-        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_UPDATE_PAGE_ID] = updatePageId;
-        const updateBlockParam = params.get( URL_SEARCH_PARAM_UPDATE_BLOCK );
+        const updatePageId = removeHyphens( params.get( CRUD_PARAM_UPDATE_BLOCK_ID ) );
+        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_UPDATE_ID] = updatePageId;
+        const updateBlockParam = params.get( CRUD_PARAM_UPDATE_BLOCK );
         const updateBlockObj = JSON.parse( decodeURIComponent(updateBlockParam) );
-        const updateMetaParam = params.get( URL_SEARCH_PARAM_UPDATE_META );
+        const updateMetaParam = params.get( CRUD_PARAM_UPDATE_META );
         const updateMetaObj = JSON.parse( decodeURIComponent(updateMetaParam) );
 
         const rBlocks = [];

@@ -17,9 +17,16 @@
   import {
     getNotionDbaseRelationsIds,
     getNotionPageData
-  } from '../query/route';
+  } from '../query/route.js';
 
   import {
+    NOTION_DATA_TYPE_COVER,
+    NOTION_DATA_TYPE_ICON,
+    NOTION_KEY_DATABASE_ID
+  } from '../notion_constants.js';
+
+  import {
+    CRUD_RESPONSE_SUCCESS,
     CRUD_RESPONSE_RESULT,
     CRUD_RESPONSE_DELETE,
     CRUD_RESPONSE_DELETE_ID,
@@ -37,6 +44,8 @@
     CRUD_RESPONSE_BLOCK,
     CRUD_RESPONSE_BLOCK_KEY,
     CRUD_RESPONSE_BLOCK_ID,
+    CRUD_RESPONSE_UPDATE_ID,
+    CRUD_RESPONSE_PAGE,
 
     CRUD_PARAM_ACTION,
     CRUD_VALUE_ACTION_DELETE,
@@ -49,7 +58,12 @@
     CRUD_PARAM_UPDATE_BLOCK_ID,
     CRUD_PARAM_UPDATE_BLOCK,
     CRUD_PARAM_UPDATE_META,
+    CRUD_RESPONSE_DB_ID
   } from "constants.dgmd.cc";
+
+  import {
+    NOTION_RESULT_DATA_RELATIONS_MAP
+  } from '../query/keys.js';
 
   const SECRET_ID = 'SECRET_ID';
 
@@ -90,27 +104,10 @@
     else if (paramAction === CRUD_VALUE_ACTION_CREATE) {
       const rObj = {
         [CRUD_RESPONSE_RESULT]: {
-          [CRUD_RESPONSE_CREATE]: false
+          [CRUD_RESPONSE_CREATE]: false,
         }
       };
       try {
-        const appendBlockId = removeHyphens( params.get( CRUD_PARAM_CREATE_BLOCK_ID ) );
-        const appendChildrenParam = params.get( CRUD_PARAM_CREATE_CHILDREN );
-        const appendChildrenObj = JSON.parse( decodeURIComponent(appendChildrenParam) );
-        const appendMetaParam = params.get( CRUD_PARAM_CREATE_META );
-        const appendMetaObj = JSON.parse( decodeURIComponent(appendMetaParam) );
-
-        const createObj = await nClient.pages.create({
-          parent: {
-            type: 'database_id',
-            database_id: appendBlockId
-          },
-          properties: {},
-          children: [],
-        });
-        const createPageId = removeHyphens( createObj.id );
-        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_CREATE] = true;
-        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_CREATE_ID] = createPageId;
         const rBlocks = [];
         rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_CREATE_BLOCKS] = rBlocks;
 
@@ -121,7 +118,7 @@
         const rMetas = [];
         rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_CREATE_METAS] = rMetas;
         for (const [key, value] of Object.entries(appendMetaObj)) {
-          if (key === 'icon' || key === 'cover') {
+          if (key === NOTION_DATA_TYPE_ICON || key === NOTION_DATA_TYPE_COVER) {
             await updateMeta( nClient, createPageId, key, value, rMetas );
           }
         }
@@ -130,8 +127,8 @@
         const x = await getNotionDbaseRelationsIds( nClient, appendBlockId );
         const relMap = x['relMap'];
         const pg = getNotionPageData( createdPg, relMap );
-        rObj[CRUD_RESPONSE_RESULT]['page'] = pg;
-        rObj[CRUD_RESPONSE_RESULT]['dbId'] = appendBlockId;
+        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_PAGE] = pg;
+        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_DB_ID] = appendBlockId;
 
       }
       catch (error) {
@@ -163,18 +160,18 @@
         const rMetas = [];
         rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_UPDATE_METAS] = rMetas;
         for (const [key, value] of Object.entries(updateMetaObj)) {
-          if (key === 'icon' || key === 'cover') {
+          if (key === NOTION_DATA_TYPE_ICON || key === NOTION_DATA_TYPE_COVER) {
             await updateMeta( nClient, updatePageId, key, value, rMetas );
           }
         }
 
         const createdPg = await nClient.pages.retrieve({ page_id: updatePageId });
-        const parentId = removeHyphens( createdPg['parent']['database_id'] );
+        const parentId = removeHyphens( createdPg[NOTION_KEY_PARENT][NOTION_KEY_DATABASE_ID] );
         const x = await getNotionDbaseRelationsIds( nClient, parentId );
-        const relMap = x['relMap'];
+        const relMap = x[NOTION_RESULT_DATA_RELATIONS_MAP];
         const pg = getNotionPageData( createdPg, relMap );
-        rObj[CRUD_RESPONSE_RESULT]['dbId'] = parentId;
-        rObj[CRUD_RESPONSE_RESULT]['page'] = pg;
+        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_DB_ID] = parentId;
+        rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_PAGE] = pg;
       }
       catch (error) {
       }

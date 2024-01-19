@@ -61,11 +61,8 @@
     CRUD_RESPONSE_DB_ID
   } from "constants.dgmd.cc";
 
-  import {
-    NOTION_RESULT_DATA_RELATIONS_MAP
-  } from '../query/keys.js';
-
   const SECRET_ID = 'SECRET_ID';
+
 
   export async function GET( request, response ) {
 
@@ -168,7 +165,7 @@
         const createdPg = await nClient.pages.retrieve({ page_id: updatePageId });
         const parentId = removeHyphens( createdPg[NOTION_KEY_PARENT][NOTION_KEY_DATABASE_ID] );
         const x = await getNotionDbaseRelationsIds( nClient, parentId );
-        const relMap = x[NOTION_RESULT_DATA_RELATIONS_MAP];
+        const relMap = x[UPDATE_KEY_DATA_RELATIONS_MAP];
         const pg = getNotionPageData( createdPg, relMap );
         rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_DB_ID] = parentId;
         rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_PAGE] = pg;

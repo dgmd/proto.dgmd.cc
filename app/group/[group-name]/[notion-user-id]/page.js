@@ -41,13 +41,11 @@ import {
   EXPORT_DATA_PROPERTIES,
   EXPORT_DATA_KEY,
   EXPORT_DATA_VALUE,
-  NOTION_RESULT_BLOCKS,
   NOTION_RESULT_BLOCK_DBS,
   NOTION_RESULT_BLOCK_KEY,
-  NOTION_RESULT_PRIMARY_DATABASE,
+  QUERY_RESPONSE_KEY_PRIMARY_DATABASE,
 
-  NOTION_RESULT,
-  NOTION_RESULT_SUCCESS
+  NOTION_RESULT
 } from 'app/api/query/keys.js';
 
 import {
@@ -61,6 +59,11 @@ import {
 import {
   queryApiForRoom
 } from 'hooks/FetchNotionDataHook.js';
+
+import {
+  QUERY_RESPONSE_KEY_BLOCKS,
+  QUERY_RESPONSE_KEY_SUCCESS
+} from 'constants.dgmd.cc';
 
 
 const PROJECT_TYPE = 'PROJECT_TYPE';
@@ -108,14 +111,14 @@ export default function Page() {
       .eq( 'notion_table', roomSupa.data[0].id );
       
       const json = roomDataSupa.data[0].data;
-      const data = json[NOTION_RESULT_PRIMARY_DATABASE][NOTION_RESULT_BLOCKS];
+      const data = json[QUERY_RESPONSE_KEY_PRIMARY_DATABASE][QUERY_RESPONSE_KEY_BLOCKS];
       const datum = data.find( x => {
         return x[EXPORT_DATA_METADATA]['id'][EXPORT_DATA_VALUE] === pNotionUserId;
       } );
       const name = datum[EXPORT_DATA_PROPERTIES]['Name'][EXPORT_DATA_VALUE];
       setNotionUserName( x => name );
 
-      const blocks = json[NOTION_RESULT_BLOCKS];
+      const blocks = json[QUERY_RESPONSE_KEY_BLOCKS];
       const block = blocks.find(
         block => block[NOTION_RESULT_BLOCK_KEY] === pNotionUserId );
       const blockDbs = block[NOTION_RESULT_BLOCK_DBS];
@@ -171,7 +174,7 @@ export default function Page() {
 
       const js = await queryApiForRoom( roomNotionDbId );
       console.log( 'js', js );
-      if (js && js[NOTION_RESULT_SUCCESS]) {
+      if (js && js[QUERY_RESPONSE_KEY_SUCCESS]) {
         const result = js[NOTION_RESULT];
 
         const insertDataSupa = 

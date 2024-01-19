@@ -17,28 +17,7 @@ import {
   EXPORT_DATA_METADATA,
   EXPORT_DATA_PROPERTIES,
   EXPORT_DATA_TYPE,
-  EXPORT_DATA_VALUE,
-  NOTION_RESULT,
-  NOTION_RESULT_BLOCKS,
-  NOTION_RESULT_BLOCK_DBS,
-  NOTION_RESULT_BLOCK_KEY,
-  NOTION_RESULT_COLUMN_LISTS,
-  NOTION_RESULT_COVER,
-  NOTION_RESULT_DATABASE_ID,
-  NOTION_RESULT_DATABASE_TITLE,
-  NOTION_RESULT_DATA_DB_MAP,
-  NOTION_RESULT_DATA_RELATIONS_MAP,
-  NOTION_RESULT_ERROR,
-  NOTION_RESULT_ICON,
-  NOTION_RESULT_PAGE_DATA,
-  NOTION_RESULT_PARENT_ID,
-  NOTION_RESULT_PARENT_TITLE,
-  NOTION_RESULT_PARENT_TYPE,
-  NOTION_RESULT_PRIMARY_DATABASE,
-  NOTION_RESULT_RELATION_DATABASES,
-  NOTION_RESULT_RELATION_DATABASE_ID,
-  NOTION_RESULT_RELATION_PAGE_ID,
-  NOTION_RESULT_SUCCESS
+  EXPORT_DATA_VALUE
 } from './keys.js';
 
 import {
@@ -81,32 +60,35 @@ import {
 } from '../notion_constants.js';
 
 import {
+  NOTION_WRANGLE_KEY_DATA_DB_MAP,
+  NOTION_WRANGLE_KEY_RELATIONS_MAP
+} from '../notion_wrangler_constants.js';
+
+import {
   getApiCoriHeaders
 } from '../../../utils/coriHeaders.js';
 
 import {
-  SEARCH_PARAM_BLOCKS_REQUEST,
-  SEARCH_PARAM_DATABASE,
-  SEARCH_PARAM_PAGE_CURSOR_ID_REQUEST,
-  SEARCH_PARAM_PAGE_CURSOR_TYPE_REQUEST
+  QUERY_PARAM_BLOCKS_REQUEST,
+  QUERY_PARAM_DATABASE,
+  QUERY_PARAM_PAGE_CURSOR_ID_REQUEST,
+  QUERY_PARAM_PAGE_CURSOR_TYPE_REQUEST,
+  QUERY_RESPONSE_KEY_DATABASE_ID,
+  QUERY_RESPONSE_KEY_DATABASE_TITLE,
+  QUERY_RESPONSE_KEY_ICON,
+  QUERY_RESPONSE_KEY_COVER,
+  QUERY_RESPONSE_KEY_PAGE_DATA,
+  QUERY_RESPONSE_KEY_PARENT_ID,
+  QUERY_RESPONSE_KEY_PARENT_TITLE,
+  QUERY_RESPONSE_KEY_PARENT_TYPE,
+  QUERY_RESPONSE_KEY_PRIMARY_DATABASE,
+  QUERY_RESPONSE_KEY_RELATION_DATABASES,
+  QUERY_RESPONSE_KEY_BLOCKS,
+  QUERY_RESPONSE_KEY_SUCCESS,
+  QUERY_RESPONSE_KEY_RESULT
 } from 'constants.dgmd.cc';
 
-const NOTION_ID = 'id';
 const DGMDCC_ID = 'id';
-
-const NOTION_URL = 'url';
-const DGMDCC_URL = 'url';
-
-const DATABASE_QUERY_PRIMARY = 'DATABASE_QUERY_PRIMARY';
-const DATABASE_QUERY_ID = 'DATABASE_QUERY_ID';
-const DATABASE_QUERY_TITLE = 'DATABASE_QUERY_TITLE';
-const DATABASE_QUERY_PARENT_ID = 'DATABASE_QUERY_PARENT_ID';
-const DATABASE_QUERY_PAGE_CURSOR_TYPE = 'DATABASE_QUERY_PAGE_CURSOR_TYPE';
-const DATABASE_QUERY_PAGE_CURSOR_ID = 'DATABASE_QUERY_PAGE_CURSOR_ID';
-const DATABASE_QUERY_PARENT_TITLE = 'DATABASE_QUERY_PARENT_TITLE';
-const DATABASE_QUERY_PARENT_TYPE = 'DATABASE_QUERY_PARENT_TYPE';
-const DATABASE_QUERY_COVER = 'DATABASE_QUERY_COVER';
-const DATABASE_QUERY_ICON = 'DATABASE_QUERY_ICON';
 
 const QUERY_PROPERTIES = 'QUERY_PROPERTIES';
 const QUERY_PAGES = 'QUERY_PAGES';
@@ -121,6 +103,23 @@ const PAGE_CURSOR_ID_REQUEST = 'PAGE_CURSOR_ID_REQUEST';
 const PAGE_CURSOR_TYPE_DEFAULT = 'PAGE_CURSOR_TYPE_DEFAULT';
 const PAGE_CURSOR_TYPE_SPECIFIC = 'PAGE_CURSOR_TYPE_SPECIFIC';
 const PAGE_CURSOR_TYPE_ALL = 'PAGE_CURSOR_TYPE_ALL';
+
+const DATABASE_QUERY_PRIMARY = 'DATABASE_QUERY_PRIMARY';
+const DATABASE_QUERY_ID = 'DATABASE_QUERY_ID';
+const DATABASE_QUERY_TITLE = 'DATABASE_QUERY_TITLE';
+const DATABASE_QUERY_PARENT_ID = 'DATABASE_QUERY_PARENT_ID';
+const DATABASE_QUERY_PAGE_CURSOR_TYPE = 'DATABASE_QUERY_PAGE_CURSOR_TYPE';
+const DATABASE_QUERY_PAGE_CURSOR_ID = 'DATABASE_QUERY_PAGE_CURSOR_ID';
+const DATABASE_QUERY_PARENT_TITLE = 'DATABASE_QUERY_PARENT_TITLE';
+const DATABASE_QUERY_PARENT_TYPE = 'DATABASE_QUERY_PARENT_TYPE';
+const DATABASE_QUERY_COVER = 'DATABASE_QUERY_COVER';
+const DATABASE_QUERY_ICON = 'DATABASE_QUERY_ICON';
+
+const NOTION_WRANGLE_LOCAL_LOADED_PAGE_ID = 'NOTION_WRANGLE_LOCAL_LOADED_PAGE_ID';
+const NOTION_WRANGLE_LOCAL_LOADED_PAGE = 'NOTION_WRANGLE_LOCAL_LOADED_PAGE';
+const NOTION_WRANGLE_LOCAL_LOADED_DB_ID = 'NOTION_WRANGLE_LOCAL_LOADED_DB_ID';
+const NOTION_WRANGLE_LOCAL_RELATION_PAGE_ID = 'NOTION_WRANGLE_LOCAL_RELATION_PAGE_ID';
+const NOTION_WRANGLE_LOCAL_RELATION_DATABASE_ID = 'NOTION_WRANGLE_LOCAL_RELATION_DATABASE_ID';
 
 export async function GET( request, response ) {
 
@@ -139,12 +138,12 @@ export async function GET( request, response ) {
   };
 
   const params = request.nextUrl.searchParams;
-  if (params.has(SEARCH_PARAM_DATABASE)) {
-    const dbId = params.get(SEARCH_PARAM_DATABASE);
+  if (params.has(QUERY_PARAM_DATABASE)) {
+    const dbId = params.get(QUERY_PARAM_DATABASE);
     requests[DATABASE_ID_REQUEST] = dbId;
   }
-  if (params.has(SEARCH_PARAM_PAGE_CURSOR_TYPE_REQUEST)) {
-    const pcs = params.get(SEARCH_PARAM_PAGE_CURSOR_TYPE_REQUEST);
+  if (params.has(QUERY_PARAM_PAGE_CURSOR_TYPE_REQUEST)) {
+    const pcs = params.get(QUERY_PARAM_PAGE_CURSOR_TYPE_REQUEST);
     const cursorReq = {
       [SEARCH_VALUE_PAGE_CURSOR_TYPE_ALL]: PAGE_CURSOR_TYPE_ALL,
       [SEARCH_VALUE_PAGE_CURSOR_TYPE_SPECIFIC]: PAGE_CURSOR_TYPE_SPECIFIC,
@@ -155,13 +154,13 @@ export async function GET( request, response ) {
     }
   }
 
-  if (params.has(SEARCH_PARAM_PAGE_CURSOR_ID_REQUEST)) {
-    const pcid = params.get(SEARCH_PARAM_PAGE_CURSOR_ID_REQUEST);
+  if (params.has(QUERY_PARAM_PAGE_CURSOR_ID_REQUEST)) {
+    const pcid = params.get(QUERY_PARAM_PAGE_CURSOR_ID_REQUEST);
     requests[PAGE_CURSOR_REQUEST][PAGE_CURSOR_ID_REQUEST] = pcid;
   }
 
-  if (params.has(SEARCH_PARAM_BLOCKS_REQUEST)) {
-    const blocks = params.get(SEARCH_PARAM_BLOCKS_REQUEST);
+  if (params.has(QUERY_PARAM_BLOCKS_REQUEST)) {
+    const blocks = params.get(QUERY_PARAM_BLOCKS_REQUEST);
     requests[BLOCKS_REQUEST] = stringToBoolean(blocks);
   }
   try {
@@ -173,8 +172,8 @@ export async function GET( request, response ) {
     const primaryDbId = requests[DATABASE_ID_REQUEST];
     const x = await getNotionDbaseRelationsIds( nClient, primaryDbId );
 
-    const dbMap = x[NOTION_RESULT_DATA_DB_MAP];
-    const relMap = x[NOTION_RESULT_DATA_RELATIONS_MAP];
+    const dbMap = x[NOTION_WRANGLE_KEY_DATA_DB_MAP];
+    const relMap = x[NOTION_WRANGLE_KEY_RELATIONS_MAP];
 
     const metasMap = new Map();
     for (const [dbId, db] of dbMap.entries()) {
@@ -206,8 +205,6 @@ export async function GET( request, response ) {
       complete: !nDbPages[NOTION_HAS_MORE]
     } );
 
-    console.log( 'loadRelatedDbs', dbPagination );
-
     await loadRelatedDbs(
       nClient, relMap, primaryDbId, nDbProps, unloadedPageIds, loadedPageIds, matchedPageIds, dbPagination );
 
@@ -215,34 +212,34 @@ export async function GET( request, response ) {
     const matchedPageIdsArray = Array.from(matchedPageIds.entries());
     for (const [dbId, pgSet] of matchedPageIdsArray) {
       const dbBlocks = Array.from(pgSet.keys()).map( 
-        pgId => loadedPageIds.get(pgId)['page'] );
+        pgId => loadedPageIds.get(pgId)[NOTION_WRANGLE_LOCAL_LOADED_PAGE] );
       const rDb = makeDbSerialized( dbBlocks, null, metasMap.get(dbId) );
       rDbResults.push( rDb );
     }
     
     const nDbSerial = makeDbSerialized( nDbProps, nDbPages, nDbMeta );
     const orgDbResult = {
-      [NOTION_RESULT_PRIMARY_DATABASE]: nDbSerial,
-      [NOTION_RESULT_RELATION_DATABASES]: rDbResults
+      [QUERY_RESPONSE_KEY_PRIMARY_DATABASE]: nDbSerial,
+      [QUERY_RESPONSE_KEY_RELATION_DATABASES]: rDbResults
     };
 
     if (requests[BLOCKS_REQUEST]) {
       const allDbResults = [nDbResult, ...rDbResults];
       const blocks = await loadBlocks( nClient, allDbResults );
-      orgDbResult[NOTION_RESULT_BLOCKS] = blocks;
+      orgDbResult[QUERY_RESPONSE_KEY_BLOCKS] = blocks;
     }
 
     return createResponse( {
-      [NOTION_RESULT_SUCCESS]: true,
-      [NOTION_RESULT]: orgDbResult
+      [QUERY_RESPONSE_KEY_SUCCESS]: true,
+      [QUERY_RESPONSE_KEY_RESULT]: orgDbResult
     }, request );
 
   }
   catch ( e ) {
     console.log( e );
     return createResponse( {
-      [NOTION_RESULT_SUCCESS]: false,
-      [NOTION_RESULT_ERROR]: 'invalid credentials'
+      [QUERY_RESPONSE_KEY_SUCCESS]: false,
+      [QUERY_RESPONSE_KEY_ERROR]: 'invalid credentials'
     }, request );
   }
 };
@@ -258,20 +255,21 @@ const createResponse = (json, request) => {
 
 const makeDbSerialized = (props, pages, meta) => {
   const s = {
-    [NOTION_RESULT_BLOCKS]: props,
-    [NOTION_RESULT_DATABASE_ID]: meta[DATABASE_QUERY_ID],
-    [NOTION_RESULT_DATABASE_TITLE]: meta[DATABASE_QUERY_TITLE],
-    [NOTION_RESULT_PARENT_ID]: meta[DATABASE_QUERY_PARENT_TITLE],
-    [NOTION_RESULT_PARENT_TITLE]: meta[DATABASE_QUERY_PARENT_ID],
-    [NOTION_RESULT_PARENT_TYPE]: meta[DATABASE_QUERY_PARENT_TYPE],
-    [NOTION_RESULT_ICON]: meta[DATABASE_QUERY_ICON],
-    [NOTION_RESULT_COVER]: meta[DATABASE_QUERY_COVER],
+    [QUERY_RESPONSE_KEY_BLOCKS]: props,
+    [QUERY_RESPONSE_KEY_DATABASE_ID]: meta[DATABASE_QUERY_ID],
+    [QUERY_RESPONSE_KEY_DATABASE_TITLE]: meta[DATABASE_QUERY_TITLE],
+    [QUERY_RESPONSE_KEY_PARENT_ID]: meta[DATABASE_QUERY_PARENT_TITLE],
+    [QUERY_RESPONSE_KEY_PARENT_TITLE]: meta[DATABASE_QUERY_PARENT_ID],
+    [QUERY_RESPONSE_KEY_PARENT_TYPE]: meta[DATABASE_QUERY_PARENT_TYPE],
+    [QUERY_RESPONSE_KEY_ICON]: meta[DATABASE_QUERY_ICON],
+    [QUERY_RESPONSE_KEY_COVER]: meta[DATABASE_QUERY_COVER],
   };
   if (pages) {
-    s[NOTION_RESULT_PAGE_DATA] = pages;
+    s[QUERY_RESPONSE_KEY_PAGE_DATA] = pages;
   }
   return s;
 };
+
 
 const trackLoadedPages =
   (dbId, propertyPages, unloadedPageIds, loadedPageIds, dbTracker) => {
@@ -281,9 +279,9 @@ const trackLoadedPages =
     const pageId = meta[DGMDCC_ID][EXPORT_DATA_VALUE];
     if (!loadedPageIds.has(pageId)) {
       loadedPageIds.set(pageId, {
-        pageId,
-        page,
-        dbId
+        [NOTION_WRANGLE_LOCAL_LOADED_PAGE_ID]: pageId,
+        [NOTION_WRANGLE_LOCAL_LOADED_PAGE]: page,
+        [NOTION_WRANGLE_LOCAL_LOADED_DB_ID]: dbId
       });
     }
 
@@ -307,8 +305,8 @@ const trackLoadedPages =
       if (NOTION_DATA_TYPE_RELATION === prop[EXPORT_DATA_TYPE]) {
         const propVals = prop[EXPORT_DATA_VALUE];
         for (const propValObj of propVals) {
-          const propRelPgId = propValObj[NOTION_RESULT_RELATION_PAGE_ID];
-          const propRelDbId = propValObj[NOTION_RESULT_RELATION_DATABASE_ID];
+          const propRelPgId = propValObj[NOTION_WRANGLE_LOCAL_RELATION_PAGE_ID];
+          const propRelDbId = propValObj[NOTION_WRANGLE_LOCAL_RELATION_DATABASE_ID];
 
           if (!loadedPageIds.has(propRelPgId)) {
             if (!unloadedPageIds.has(propRelDbId)) {
@@ -379,8 +377,8 @@ const getNotionDbaseRelationPromise = async (nClient, dbId, collector) => {
     [NOTION_KEY_DATABASE_ID]: dbId
   });
 
-  const relMap = collector[NOTION_RESULT_DATA_RELATIONS_MAP];
-  const dbMap = collector[NOTION_RESULT_DATA_DB_MAP];
+  const relMap = collector[NOTION_WRANGLE_KEY_RELATIONS_MAP];
+  const dbMap = collector[NOTION_WRANGLE_KEY_DATA_DB_MAP];
   dbMap.set( dbId, db );
 
   const nextDbIds = new Set();
@@ -410,7 +408,7 @@ const getNotionDbaseRelationPromise = async (nClient, dbId, collector) => {
 const chainNotionDbaseRelationIds = async (nClient, dbId, collector) => {
   const nextDbIds = await getNotionDbaseRelationPromise(nClient, dbId, collector);
   for (const nextDbId of nextDbIds) {
-    if (!collector[NOTION_RESULT_DATA_DB_MAP].has(nextDbId)) {
+    if (!collector[NOTION_WRANGLE_KEY_DATA_DB_MAP].has(nextDbId)) {
       await chainNotionDbaseRelationIds(
         nClient, nextDbId, collector);
     }
@@ -420,8 +418,8 @@ const chainNotionDbaseRelationIds = async (nClient, dbId, collector) => {
 
 const getNotionDbaseRelationsIds = ( nClient, dbId ) => {
   const collector = {
-    [NOTION_RESULT_DATA_RELATIONS_MAP]: new Map(),
-    [NOTION_RESULT_DATA_DB_MAP]: new Map()
+    [NOTION_WRANGLE_KEY_RELATIONS_MAP]: new Map(),
+    [NOTION_WRANGLE_KEY_DATA_DB_MAP]: new Map()
   };
   return chainNotionDbaseRelationIds( nClient, dbId, collector );
 };
@@ -467,7 +465,7 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
       };
       const keys = Object.keys( resultData );
       for (const key of keys) {
-        if (key === NOTION_ID) {
+        if (key === NOTION_KEY_ID) {
 
           const id = resultData[key];
           const idSansHyphens = removeHyphens( id );
@@ -475,12 +473,6 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
           metadata[DGMDCC_ID] = {
             [EXPORT_DATA_TYPE]: DGMDCC_ID,
             [EXPORT_DATA_VALUE]: idSansHyphens
-          };
-        }
-        else if (key === NOTION_URL) {
-          metadata[DGMDCC_URL] = {
-            [EXPORT_DATA_TYPE]: DGMDCC_URL,
-            [EXPORT_DATA_VALUE]: resultData[key]
           };
         }
         else if (key === NOTION_DATA_TYPE_ICON) {
@@ -589,8 +581,8 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
                 const dbId = relMap.get( notionPropertyId );
                 const val = propertyVal.map( m => {
                   return {
-                    [NOTION_RESULT_RELATION_DATABASE_ID]: dbId,
-                    [NOTION_RESULT_RELATION_PAGE_ID]: removeHyphens( m[NOTION_KEY_ID] )
+                    [NOTION_WRANGLE_LOCAL_RELATION_DATABASE_ID]: dbId,
+                    [NOTION_WRANGLE_LOCAL_RELATION_PAGE_ID]: removeHyphens( m[NOTION_KEY_ID] )
                   } }
                 );
                 propdata[propertyKey] = {

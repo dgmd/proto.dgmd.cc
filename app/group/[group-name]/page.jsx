@@ -37,9 +37,8 @@ import {
 
 import {
   EXPORT_DATA_VALUE,
-  NOTION_RESULT_BLOCKS,
   NOTION_RESULT_BLOCK_KEY,
-  NOTION_RESULT_PRIMARY_DATABASE
+  QUERY_RESPONSE_KEY_PRIMARY_DATABASE
 } from 'app/api/query/keys.js';
 
 import {
@@ -50,6 +49,10 @@ import {
   LinkButton
 } from 'components/link-button.jsx';
 import { EXPORT_DATA_METADATA, EXPORT_DATA_PROPERTIES } from '../../api/query/keys';
+
+import {
+  QUERY_RESPONSE_KEY_BLOCKS,
+} from 'constants.dgmd.cc';
 
 const USER_ID = 'USER_ID';
 const USER_NAME = 'USER_NAME';
@@ -104,8 +107,8 @@ export default function List() {
 
         if (dataResultSupa.data && dataResultSupa.data.length > 0) {
           const room = dataResultSupa.data[0].data;
-          const students = room[NOTION_RESULT_PRIMARY_DATABASE][NOTION_RESULT_BLOCKS];
-          const blocks = room[NOTION_RESULT_BLOCKS];
+          const students = room[QUERY_RESPONSE_KEY_PRIMARY_DATABASE][QUERY_RESPONSE_KEY_BLOCKS];
+          const blocks = room[QUERY_RESPONSE_KEY_BLOCKS];
           for (const student of students) {
             const studentId = student[EXPORT_DATA_METADATA]['id'][EXPORT_DATA_VALUE];
             const studentBlocks = blocks.find(

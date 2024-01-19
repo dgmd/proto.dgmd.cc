@@ -28,14 +28,16 @@ import {
   PARAM_BLOCKS_REQUEST,
   PARAM_DATABASE,
   PARAM_RELATIONS_REQUEST,
-  NOTION_RESULT_BLOCKS,
   NOTION_RESULT_BLOCK_DBS,
   NOTION_RESULT_BLOCK_KEY,
-  NOTION_RESULT_PRIMARY_DATABASE,
+  QUERY_RESPONSE_KEY_PRIMARY_DATABASE,
 
   NOTION_RESULT
 } from 'app/api/query/keys.js';
 
+import {
+  QUERY_RESPONSE_KEY_BLOCKS,
+} from 'constants.dgmd.cc';
 
 import {
   URL_PROTOTYPE_PARAM_ID
@@ -112,7 +114,7 @@ export default function Page() {
     .eq( 'notion_table', roomSupa.data[0].id );
 
     const json = roomDataSupa.data[0].data;
-    const blocks = json[NOTION_RESULT_BLOCKS];
+    const blocks = json[QUERY_RESPONSE_KEY_BLOCKS];
     const block = blocks.find(
       block => block[NOTION_RESULT_BLOCK_KEY] === pNotionUserId );
     const blockDbs = block[NOTION_RESULT_BLOCK_DBS];
@@ -120,7 +122,7 @@ export default function Page() {
     const blockVal = blockDbs[blockIdx][EXPORT_DATA_VALUE];
     setDatabaseName( x => blockVal );
 
-    const userBlock = json[NOTION_RESULT_PRIMARY_DATABASE][NOTION_RESULT_BLOCKS].find( x => {
+    const userBlock = json[QUERY_RESPONSE_KEY_PRIMARY_DATABASE][QUERY_RESPONSE_KEY_BLOCKS].find( x => {
       return x[EXPORT_DATA_METADATA]['id'][EXPORT_DATA_VALUE] === pNotionUserId;
     } );
     const title = userBlock[EXPORT_DATA_PROPERTIES]['Name'][EXPORT_DATA_VALUE];

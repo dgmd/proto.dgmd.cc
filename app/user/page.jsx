@@ -36,8 +36,7 @@ import {
 } from '/components/look.js';
 
 import {
-  NOTION_RESULT,
-  NOTION_RESULT_SUCCESS
+  NOTION_RESULT
 } from 'app/api/query/keys.js';
 
 import {
@@ -72,6 +71,10 @@ import {
   addListItem,
   removeListItem
 } from '/utils/lists.js';
+
+import {
+  QUERY_RESPONSE_KEY_SUCCESS
+} from 'constants.dgmd.cc';
 
 const User = ( ) => {
 
@@ -153,7 +156,7 @@ const User = ( ) => {
 
     try {
       const js = await queryApiForRoom( dbId );
-      if (js[NOTION_RESULT_SUCCESS]) {
+      if (js[QUERY_RESPONSE_KEY_SUCCESS]) {
         const result = js[NOTION_RESULT];
 
         const insertRoomSupa = await supabase
@@ -254,7 +257,7 @@ const User = ( ) => {
     rRefreshing.current = addListItem( rRefreshing.current, dbId );
 
     const js = await queryApiForRoom( dbId );
-    if (js && js[NOTION_RESULT_SUCCESS]) {
+    if (js && js[QUERY_RESPONSE_KEY_SUCCESS]) {
       const result = js[NOTION_RESULT];
       
       const insertRoomSupa = await supabase

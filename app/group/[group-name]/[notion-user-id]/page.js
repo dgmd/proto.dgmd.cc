@@ -37,10 +37,10 @@ import {
 } from '@heroicons/react/20/solid';
 
 import {
-  EXPORT_DATA_METADATA,
-  EXPORT_DATA_PROPERTIES,
-  EXPORT_DATA_KEY,
-  EXPORT_DATA_VALUE,
+  QUERY_RESPONSE_KEY_DATA_METADATA,
+  QUERY_RESPONSE_KEY_DATA_PROPERTIES,
+  QUERY_RESPONSE_KEY_DATA_KEY,
+  QUERY_RESPONSE_KEY_DATA_VALUE,
   NOTION_RESULT_BLOCK_DBS,
   NOTION_RESULT_BLOCK_KEY,
   QUERY_RESPONSE_KEY_PRIMARY_DATABASE,
@@ -113,9 +113,9 @@ export default function Page() {
       const json = roomDataSupa.data[0].data;
       const data = json[QUERY_RESPONSE_KEY_PRIMARY_DATABASE][QUERY_RESPONSE_KEY_BLOCKS];
       const datum = data.find( x => {
-        return x[EXPORT_DATA_METADATA]['id'][EXPORT_DATA_VALUE] === pNotionUserId;
+        return x[QUERY_RESPONSE_KEY_DATA_METADATA]['id'][QUERY_RESPONSE_KEY_DATA_VALUE] === pNotionUserId;
       } );
-      const name = datum[EXPORT_DATA_PROPERTIES]['Name'][EXPORT_DATA_VALUE];
+      const name = datum[QUERY_RESPONSE_KEY_DATA_PROPERTIES]['Name'][QUERY_RESPONSE_KEY_DATA_VALUE];
       setNotionUserName( x => name );
 
       const blocks = json[QUERY_RESPONSE_KEY_BLOCKS];
@@ -127,11 +127,11 @@ export default function Page() {
         acc.push(
           {
             [PROJECT_TYPE]: PROJECT_NAME,
-            [PROJECT_VAL]: cur[EXPORT_DATA_VALUE]
+            [PROJECT_VAL]: cur[QUERY_RESPONSE_KEY_DATA_VALUE]
           },
           {
             [PROJECT_TYPE]: PROJECT_ID,
-            [PROJECT_VAL]: cur[EXPORT_DATA_KEY]
+            [PROJECT_VAL]: cur[QUERY_RESPONSE_KEY_DATA_KEY]
           }
         );
         return acc;

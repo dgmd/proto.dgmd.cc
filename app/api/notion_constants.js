@@ -39,6 +39,8 @@ export const NOTION_KEY_DATABASE_ID = 'database_id';
 export const NOTION_KEY_ID = 'id';
 export const NOTION_KEY_PARENT = 'parent';
 
+export const NOTION_KEY_PAGE_ID = 'page_id';
+
 export const NOTION_HAS_MORE = 'has_more';
 export const NOTION_NEXT_CURSOR = 'next_cursor';
 export const NOTION_KEY_START_CURSOR = 'start_cursor';

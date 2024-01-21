@@ -23,8 +23,8 @@ import {
 } from 'components/table.jsx';
 
 import {
-  EXPORT_DATA_KEY,
-  EXPORT_DATA_VALUE,
+  QUERY_RESPONSE_KEY_DATA_KEY,
+  QUERY_RESPONSE_KEY_DATA_VALUE,
   PARAM_BLOCKS_REQUEST,
   PARAM_DATABASE,
   PARAM_RELATIONS_REQUEST,
@@ -67,7 +67,7 @@ import {
 import {
   LinkButton
 } from 'components/link-button.jsx';
-import { EXPORT_DATA_METADATA, EXPORT_DATA_PROPERTIES } from '../../../../api/query/keys';
+import { QUERY_RESPONSE_KEY_DATA_METADATA, QUERY_RESPONSE_KEY_DATA_PROPERTIES } from '../../../../api/query/keys';
 
 const PROTO_TYPE = 'PROTO_TYPE';
 const PROTO_VAL = 'PROTO_VAL';
@@ -118,14 +118,14 @@ export default function Page() {
     const block = blocks.find(
       block => block[NOTION_RESULT_BLOCK_KEY] === pNotionUserId );
     const blockDbs = block[NOTION_RESULT_BLOCK_DBS];
-    const blockIdx = blockDbs.findIndex( x => x[EXPORT_DATA_KEY] === pDatabaseId );
-    const blockVal = blockDbs[blockIdx][EXPORT_DATA_VALUE];
+    const blockIdx = blockDbs.findIndex( x => x[QUERY_RESPONSE_KEY_DATA_KEY] === pDatabaseId );
+    const blockVal = blockDbs[blockIdx][QUERY_RESPONSE_KEY_DATA_VALUE];
     setDatabaseName( x => blockVal );
 
     const userBlock = json[QUERY_RESPONSE_KEY_PRIMARY_DATABASE][QUERY_RESPONSE_KEY_BLOCKS].find( x => {
-      return x[EXPORT_DATA_METADATA]['id'][EXPORT_DATA_VALUE] === pNotionUserId;
+      return x[QUERY_RESPONSE_KEY_DATA_METADATA]['id'][QUERY_RESPONSE_KEY_DATA_VALUE] === pNotionUserId;
     } );
-    const title = userBlock[EXPORT_DATA_PROPERTIES]['Name'][EXPORT_DATA_VALUE];
+    const title = userBlock[QUERY_RESPONSE_KEY_DATA_PROPERTIES]['Name'][QUERY_RESPONSE_KEY_DATA_VALUE];
     setNotionUserName( x => title );
   };
 

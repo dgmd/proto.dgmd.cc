@@ -36,7 +36,7 @@ import {
 } from '/components/look.js';
 
 import {
-  EXPORT_DATA_VALUE,
+  QUERY_RESPONSE_KEY_DATA_VALUE,
   NOTION_RESULT_BLOCK_KEY,
   QUERY_RESPONSE_KEY_PRIMARY_DATABASE
 } from 'app/api/query/keys.js';
@@ -48,7 +48,7 @@ import {
 import {
   LinkButton
 } from 'components/link-button.jsx';
-import { EXPORT_DATA_METADATA, EXPORT_DATA_PROPERTIES } from '../../api/query/keys';
+import { QUERY_RESPONSE_KEY_DATA_METADATA, QUERY_RESPONSE_KEY_DATA_PROPERTIES } from '../../api/query/keys';
 
 import {
   QUERY_RESPONSE_KEY_BLOCKS,
@@ -110,12 +110,12 @@ export default function List() {
           const students = room[QUERY_RESPONSE_KEY_PRIMARY_DATABASE][QUERY_RESPONSE_KEY_BLOCKS];
           const blocks = room[QUERY_RESPONSE_KEY_BLOCKS];
           for (const student of students) {
-            const studentId = student[EXPORT_DATA_METADATA]['id'][EXPORT_DATA_VALUE];
+            const studentId = student[QUERY_RESPONSE_KEY_DATA_METADATA]['id'][QUERY_RESPONSE_KEY_DATA_VALUE];
             const studentBlocks = blocks.find(
               block => block[NOTION_RESULT_BLOCK_KEY] == studentId );
             const keys = Object.keys(studentBlocks);
             if (keys.length > 0) {
-              const studentName = student[EXPORT_DATA_PROPERTIES]['Name'][EXPORT_DATA_VALUE];
+              const studentName = student[QUERY_RESPONSE_KEY_DATA_PROPERTIES]['Name'][QUERY_RESPONSE_KEY_DATA_VALUE];
               frows.push( {
                 [USER_NAME]: studentName,
                 [USER_ID]: studentId

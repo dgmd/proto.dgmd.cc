@@ -13,14 +13,6 @@ import {
 } from '../../../utils/strings.js';
 
 import {
-  EXPORT_DATA_KEY,
-  EXPORT_DATA_METADATA,
-  EXPORT_DATA_PROPERTIES,
-  EXPORT_DATA_TYPE,
-  EXPORT_DATA_VALUE
-} from './keys.js';
-
-import {
   NOTION_DATA_CREATED_TIME,
   NOTION_DATA_LAST_EDITED_TIME,
   NOTION_DATA_TYPE_CHECKBOX,
@@ -49,6 +41,7 @@ import {
   NOTION_KEY_DATABASE_ID,
   NOTION_KEY_ID,
   NOTION_KEY_NAME,
+  NOTION_KEY_PAGE_ID,
   NOTION_KEY_PARENT,
   NOTION_KEY_PLAIN_TEXT,
   NOTION_KEY_START_CURSOR,
@@ -69,23 +62,32 @@ import {
 } from '../../../utils/coriHeaders.js';
 
 import {
+  areAllMapSetsEmpty
+} from '../../../utils/lists.js';
+
+import {
   QUERY_PARAM_BLOCKS_REQUEST,
   QUERY_PARAM_DATABASE,
   QUERY_PARAM_PAGE_CURSOR_ID_REQUEST,
   QUERY_PARAM_PAGE_CURSOR_TYPE_REQUEST,
+  QUERY_RESPONSE_KEY_BLOCKS,
+  QUERY_RESPONSE_KEY_COVER,
   QUERY_RESPONSE_KEY_DATABASE_ID,
   QUERY_RESPONSE_KEY_DATABASE_TITLE,
+  QUERY_RESPONSE_KEY_DATA_KEY,
+  QUERY_RESPONSE_KEY_DATA_METADATA,
+  QUERY_RESPONSE_KEY_DATA_PROPERTIES,
+  QUERY_RESPONSE_KEY_DATA_TYPE,
+  QUERY_RESPONSE_KEY_DATA_VALUE,
   QUERY_RESPONSE_KEY_ICON,
-  QUERY_RESPONSE_KEY_COVER,
   QUERY_RESPONSE_KEY_PAGE_DATA,
   QUERY_RESPONSE_KEY_PARENT_ID,
   QUERY_RESPONSE_KEY_PARENT_TITLE,
   QUERY_RESPONSE_KEY_PARENT_TYPE,
   QUERY_RESPONSE_KEY_PRIMARY_DATABASE,
   QUERY_RESPONSE_KEY_RELATION_DATABASES,
-  QUERY_RESPONSE_KEY_BLOCKS,
-  QUERY_RESPONSE_KEY_SUCCESS,
-  QUERY_RESPONSE_KEY_RESULT
+  QUERY_RESPONSE_KEY_RESULT,
+  QUERY_RESPONSE_KEY_SUCCESS
 } from 'constants.dgmd.cc';
 
 const DGMDCC_ID = 'id';
@@ -120,6 +122,8 @@ const NOTION_WRANGLE_LOCAL_LOADED_PAGE = 'NOTION_WRANGLE_LOCAL_LOADED_PAGE';
 const NOTION_WRANGLE_LOCAL_LOADED_DB_ID = 'NOTION_WRANGLE_LOCAL_LOADED_DB_ID';
 const NOTION_WRANGLE_LOCAL_RELATION_PAGE_ID = 'NOTION_WRANGLE_LOCAL_RELATION_PAGE_ID';
 const NOTION_WRANGLE_LOCAL_RELATION_DATABASE_ID = 'NOTION_WRANGLE_LOCAL_RELATION_DATABASE_ID';
+const NOTION_WRANGLE_LOCAL_NDBP_COLLECTOR = 'NOTION_WRANGLE_LOCAL_NDBP_COLLECTOR';
+const NOTION_WRANGLE_LOCAL_NDBP_NEXT = 'NOTION_WRANGLE_LOCAL_NDBP_NEXT';
 
 export async function GET( request, response ) {
 
@@ -160,8 +164,8 @@ export async function GET( request, response ) {
   }
 
   if (params.has(QUERY_PARAM_BLOCKS_REQUEST)) {
-    const blocks = params.get(QUERY_PARAM_BLOCKS_REQUEST);
-    requests[BLOCKS_REQUEST] = stringToBoolean(blocks);
+    const blocksReq = params.get(QUERY_PARAM_BLOCKS_REQUEST);
+    requests[BLOCKS_REQUEST] = deriveBoolean(blocksReq);
   }
   try {
 
@@ -275,8 +279,8 @@ const trackLoadedPages =
   (dbId, propertyPages, unloadedPageIds, loadedPageIds, dbTracker) => {
 
   for (const page of propertyPages) {
-    const meta = page[EXPORT_DATA_METADATA];
-    const pageId = meta[DGMDCC_ID][EXPORT_DATA_VALUE];
+    const meta = page[QUERY_RESPONSE_KEY_DATA_METADATA];
+    const pageId = meta[DGMDCC_ID][QUERY_RESPONSE_KEY_DATA_VALUE];
     if (!loadedPageIds.has(pageId)) {
       loadedPageIds.set(pageId, {
         [NOTION_WRANGLE_LOCAL_LOADED_PAGE_ID]: pageId,
@@ -298,12 +302,12 @@ const trackLoadedPages =
   }
 
   for (const page of propertyPages) {
-    const props = page[EXPORT_DATA_PROPERTIES];
+    const props = page[QUERY_RESPONSE_KEY_DATA_PROPERTIES];
     const propKeys = Object.keys(props);
     for (const propKey of propKeys) {
       const prop = props[propKey];
-      if (NOTION_DATA_TYPE_RELATION === prop[EXPORT_DATA_TYPE]) {
-        const propVals = prop[EXPORT_DATA_VALUE];
+      if (NOTION_DATA_TYPE_RELATION === prop[QUERY_RESPONSE_KEY_DATA_TYPE]) {
+        const propVals = prop[QUERY_RESPONSE_KEY_DATA_VALUE];
         for (const propValObj of propVals) {
           const propRelPgId = propValObj[NOTION_WRANGLE_LOCAL_RELATION_PAGE_ID];
           const propRelDbId = propValObj[NOTION_WRANGLE_LOCAL_RELATION_DATABASE_ID];
@@ -460,8 +464,8 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
       const metadata = {};
       const propdata = {};
       const somedata = {
-        [EXPORT_DATA_METADATA]: metadata,
-        [EXPORT_DATA_PROPERTIES]: propdata
+        [QUERY_RESPONSE_KEY_DATA_METADATA]: metadata,
+        [QUERY_RESPONSE_KEY_DATA_PROPERTIES]: propdata
       };
       const keys = Object.keys( resultData );
       for (const key of keys) {
@@ -471,22 +475,22 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
           const idSansHyphens = removeHyphens( id );
 
           metadata[DGMDCC_ID] = {
-            [EXPORT_DATA_TYPE]: DGMDCC_ID,
-            [EXPORT_DATA_VALUE]: idSansHyphens
+            [QUERY_RESPONSE_KEY_DATA_TYPE]: DGMDCC_ID,
+            [QUERY_RESPONSE_KEY_DATA_VALUE]: idSansHyphens
           };
         }
         else if (key === NOTION_DATA_TYPE_ICON) {
           const iconObj = getIcon( resultData[key] );
           metadata[NOTION_DATA_TYPE_ICON] = {
-            [EXPORT_DATA_TYPE]: iconObj[NOTION_KEY_TYPE],
-            [EXPORT_DATA_VALUE]: iconObj[NOTION_KEY_VALUE]
+            [QUERY_RESPONSE_KEY_DATA_TYPE]: iconObj[NOTION_KEY_TYPE],
+            [QUERY_RESPONSE_KEY_DATA_VALUE]: iconObj[NOTION_KEY_VALUE]
           };
         }
         else if (key === NOTION_DATA_TYPE_COVER) {
           const coverObj = getCover( resultData[key] );
           metadata[NOTION_DATA_TYPE_COVER] = {
-            [EXPORT_DATA_TYPE]: coverObj[NOTION_KEY_TYPE],
-            [EXPORT_DATA_VALUE]: coverObj[NOTION_KEY_VALUE]
+            [QUERY_RESPONSE_KEY_DATA_TYPE]: coverObj[NOTION_KEY_TYPE],
+            [QUERY_RESPONSE_KEY_DATA_VALUE]: coverObj[NOTION_KEY_VALUE]
           };
         }
         else if (key === NOTION_PROPERTIES) {
@@ -503,16 +507,16 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
               if (propertyType === NOTION_DATA_TYPE_SELECT) {
 
                 propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_SELECT,
-                  [EXPORT_DATA_VALUE]: propertyVal[NOTION_KEY_NAME]
+                  [QUERY_RESPONSE_KEY_DATA_TYPE]: NOTION_DATA_TYPE_SELECT,
+                  [QUERY_RESPONSE_KEY_DATA_VALUE]: propertyVal[NOTION_KEY_NAME]
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_MULTI_SELECT) {
                 
                 const multis = propertyVal.map( m => m[NOTION_KEY_NAME] );
                 propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_MULTI_SELECT,
-                  [EXPORT_DATA_VALUE]: multis
+                  [QUERY_RESPONSE_KEY_DATA_TYPE]: NOTION_DATA_TYPE_MULTI_SELECT,
+                  [QUERY_RESPONSE_KEY_DATA_VALUE]: multis
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_FILES) {
@@ -527,44 +531,44 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
                  }, [] );
                 const file = files.length > 0 ? files[0] : null;
                 propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_FILES,
-                  [EXPORT_DATA_VALUE]: file
+                  [QUERY_RESPONSE_KEY_DATA_TYPE]: NOTION_DATA_TYPE_FILES,
+                  [QUERY_RESPONSE_KEY_DATA_VALUE]: file
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_NUMBER) {
                 propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_NUMBER,
-                  [EXPORT_DATA_VALUE]: propertyVal
+                  [QUERY_RESPONSE_KEY_DATA_TYPE]: NOTION_DATA_TYPE_NUMBER,
+                  [QUERY_RESPONSE_KEY_DATA_VALUE]: propertyVal
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_CHECKBOX) {
                 propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_CHECKBOX,
-                  [EXPORT_DATA_VALUE]: propertyVal
+                  [QUERY_RESPONSE_KEY_DATA_TYPE]: NOTION_DATA_TYPE_CHECKBOX,
+                  [QUERY_RESPONSE_KEY_DATA_VALUE]: propertyVal
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_URL) {
                 propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_URL,
-                  [EXPORT_DATA_VALUE]: propertyVal
+                  [QUERY_RESPONSE_KEY_DATA_TYPE]: NOTION_DATA_TYPE_URL,
+                  [QUERY_RESPONSE_KEY_DATA_VALUE]: propertyVal
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_EMAIL) {
                 propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_EMAIL,
-                  [EXPORT_DATA_VALUE]: propertyVal
+                  [QUERY_RESPONSE_KEY_DATA_TYPE]: NOTION_DATA_TYPE_EMAIL,
+                  [QUERY_RESPONSE_KEY_DATA_VALUE]: propertyVal
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_PHONE_NUMBER) {
                 propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_PHONE_NUMBER,
-                  [EXPORT_DATA_VALUE]: propertyVal
+                  [QUERY_RESPONSE_KEY_DATA_TYPE]: NOTION_DATA_TYPE_PHONE_NUMBER,
+                  [QUERY_RESPONSE_KEY_DATA_VALUE]: propertyVal
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_STATUS) {
                 propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_STATUS,
-                  [EXPORT_DATA_VALUE]: propertyVal[NOTION_KEY_NAME]
+                  [QUERY_RESPONSE_KEY_DATA_TYPE]: NOTION_DATA_TYPE_STATUS,
+                  [QUERY_RESPONSE_KEY_DATA_VALUE]: propertyVal[NOTION_KEY_NAME]
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_TITLE || propertyType == NOTION_DATA_TYPE_RICH_TEXT) {
@@ -572,8 +576,8 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
                 const val = titles.length > 0 ? titles.join('') : null;
 
                 propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: propertyType,
-                  [EXPORT_DATA_VALUE]: val
+                  [QUERY_RESPONSE_KEY_DATA_TYPE]: propertyType,
+                  [QUERY_RESPONSE_KEY_DATA_VALUE]: val
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_RELATION) {
@@ -586,32 +590,32 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
                   } }
                 );
                 propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: propertyType,
-                  [EXPORT_DATA_VALUE]: val
+                  [QUERY_RESPONSE_KEY_DATA_TYPE]: propertyType,
+                  [QUERY_RESPONSE_KEY_DATA_VALUE]: val
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_DATE) {
                 propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: propertyType,
-                  [EXPORT_DATA_VALUE]: propertyVal
+                  [QUERY_RESPONSE_KEY_DATA_TYPE]: propertyType,
+                  [QUERY_RESPONSE_KEY_DATA_VALUE]: propertyVal
                 };
               }
               else if (propertyType == NOTION_DATA_LAST_EDITED_TIME) {
                 propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: propertyType,
-                  [EXPORT_DATA_VALUE]: propertyVal
+                  [QUERY_RESPONSE_KEY_DATA_TYPE]: propertyType,
+                  [QUERY_RESPONSE_KEY_DATA_VALUE]: propertyVal
                 };
               }
               else if (propertyType == NOTION_DATA_CREATED_TIME) {
                 propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: propertyType,
-                  [EXPORT_DATA_VALUE]: propertyVal
+                  [QUERY_RESPONSE_KEY_DATA_TYPE]: propertyType,
+                  [QUERY_RESPONSE_KEY_DATA_VALUE]: propertyVal
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_FORMULA) {
                 propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: propertyType,
-                  [EXPORT_DATA_VALUE]: propertyVal
+                  [QUERY_RESPONSE_KEY_DATA_TYPE]: propertyType,
+                  [QUERY_RESPONSE_KEY_DATA_VALUE]: propertyVal
                 };
               }
               else {
@@ -643,8 +647,8 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
               ].includes( propertyType )) {
 
                 propdata[propertyKey] = {
-                  [EXPORT_DATA_TYPE]: propertyType,
-                  [EXPORT_DATA_VALUE]: null
+                  [QUERY_RESPONSE_KEY_DATA_TYPE]: propertyType,
+                  [QUERY_RESPONSE_KEY_DATA_VALUE]: null
                 };
 
               };
@@ -659,8 +663,7 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
   return {};
 };
 
-const KEY_NDBP_COLLECTOR = 'KEY_NDBP_COLLECTOR';
-const KEY_NDBP_NEXT = 'KEY_NDBP_NEXT';
+
 const getNotionDbasePromise = (nClient, allPages, relMap, collector, queryObj) => {
   const p = new Promise((resolve, reject) => {
 
@@ -687,8 +690,8 @@ const getNotionDbasePromise = (nClient, allPages, relMap, collector, queryObj) =
         }
         const next = allPages ? next_cursor : null;
         resolve( {
-          [KEY_NDBP_COLLECTOR]:collector, 
-          [KEY_NDBP_NEXT]: next
+          [NOTION_WRANGLE_LOCAL_NDBP_COLLECTOR]:collector, 
+          [NOTION_WRANGLE_LOCAL_NDBP_NEXT]: next
         } );
       })
       .catch( error => {
@@ -712,8 +715,8 @@ const chainNotionDbasePromises =
     return getNotionDbasePromise( nClient, allPages, relMap, collector, queryObj )
     .then( obj => {
 
-      const collector = obj[KEY_NDBP_COLLECTOR];
-      const next = obj[KEY_NDBP_NEXT];
+      const collector = obj[NOTION_WRANGLE_LOCAL_NDBP_COLLECTOR];
+      const next = obj[NOTION_WRANGLE_LOCAL_NDBP_NEXT];
       const nextProceed = next !== null;
 
       return chainNotionDbasePromises(
@@ -757,8 +760,8 @@ const getNotionBlockKeyedDatabases = (blockDatas, collector) => {
         const propertyValTitle = propertyVal[NOTION_DATA_TYPE_TITLE];
         if (propertyType === NOTION_DATA_TYPE_CHILD_DATABASE) {
           const obj = {
-            [EXPORT_DATA_KEY]: idSansHyphens,
-            [EXPORT_DATA_VALUE]: propertyValTitle
+            [QUERY_RESPONSE_KEY_DATA_KEY]: idSansHyphens,
+            [QUERY_RESPONSE_KEY_DATA_VALUE]: propertyValTitle
           };
           acc[NOTION_RESULT_BLOCK_DBS].push( obj );
         }
@@ -858,15 +861,16 @@ const getNotionPageBlockPromise = async(nClient, blockId, collector) => {
   return p;
 };
 
-function stringToBoolean(str) {
-  if (typeof str !== 'string') {
-    // If the input is not a string, return false or handle it as needed
-    return false;
-  }
-
-  str = str.toLowerCase().trim();
-
-  return str === 'true' || str === '1' || str === 'yes' || str === 'y' || str === 'on';
+const deriveBoolean = ( value ) => {
+  const str = String( value );
+  const strLowTrim = str.toLowerCase().trim();
+  return [
+    'true',
+    '1',
+    'yes',
+    'y',
+    'on'
+  ].includes( strLowTrim );
 };
 
 
@@ -893,13 +897,13 @@ const notionUpdateDbMeta = async(nClient, nDbase, meta) => {
     const primaryTitle = getNotionDbaseTitle( nDbase );
     meta[DATABASE_QUERY_TITLE] = primaryTitle;
     const primaryCover = getCover( nDbase[NOTION_DATA_TYPE_COVER] );
-    meta[DATABASE_QUERY_COVER] = primaryCover['value'];
+    meta[DATABASE_QUERY_COVER] = primaryCover[NOTION_KEY_VALUE];
     const primaryIcon = getIcon( nDbase[NOTION_DATA_TYPE_ICON] );
-    meta[DATABASE_QUERY_ICON] = primaryIcon['value'];
+    meta[DATABASE_QUERY_ICON] = primaryIcon[NOTION_KEY_VALUE];
     const [primaryParentId, primaryParentType] = getNotionDbaseParentId( nDbase );
     meta[DATABASE_QUERY_PARENT_ID] = primaryParentId;
-    if (primaryParentType === 'page_id') {
-      const primaryPageParent = await nClient.pages.retrieve({ page_id: primaryParentId });
+    if (primaryParentType === NOTION_KEY_PAGE_ID) {
+      const primaryPageParent = await nClient.pages.retrieve({ [NOTION_KEY_PAGE_ID]: primaryParentId });
       const primaryPageParentTitle = getNotionPageTitle( primaryPageParent );
       meta[DATABASE_QUERY_PARENT_TITLE] = primaryPageParentTitle;
       meta[DATABASE_QUERY_PARENT_TYPE] = primaryParentType;
@@ -915,7 +919,7 @@ const loadBlocks = async ( nClient, allDbResults ) => {
   allDbResults.forEach( dbResult => {
     const qProps = dbResult[QUERY_PROPERTIES];
     qProps.forEach( qProp => {
-      const qPropId = qProp[EXPORT_DATA_METADATA][DGMDCC_ID][EXPORT_DATA_VALUE];
+      const qPropId = qProp[QUERY_RESPONSE_KEY_DATA_METADATA][DGMDCC_ID][QUERY_RESPONSE_KEY_DATA_VALUE];
       const blocksCollector = {
         [NOTION_RESULT_BLOCK_DBS]: [],
         [NOTION_RESULT_COLUMN_LISTS]: []
@@ -937,18 +941,3 @@ const loadBlocks = async ( nClient, allDbResults ) => {
   
   return notionBlockResultsIndexed;
 };
-
-//
-//  UTILS
-//
-const areAllMapSetsEmpty = unloadedPgIds => {
-  // Iterate over the Map entries
-  for (const set of unloadedPgIds.values()) {
-    // Check if the Set is not empty
-    if (set.size > 0) {
-      return false; // If any set is not empty, return false
-    }
-  }
-  // If all sets are empty, return true
-  return true;
-}

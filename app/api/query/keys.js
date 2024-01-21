@@ -1,10 +1,3 @@
-
-export const EXPORT_DATA_TYPE = 'TYPE';
-export const EXPORT_DATA_VALUE = 'VALUE';
-export const EXPORT_DATA_KEY = 'KEY';
-export const EXPORT_DATA_PROPERTIES = 'PROPERTIES';
-export const EXPORT_DATA_METADATA = 'METADATA';
-
 export const PARAM_DATABASE = 'd';
 export const PARAM_BLOCKS_REQUEST = 'b';
 export const PARAM_RELATIONS_REQUEST = 'r';

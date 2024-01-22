@@ -33,8 +33,7 @@
     "import-sort-config": "^6.0.0",
     "import-sort-parser-babylon": "^6.0.0",
     "import-sort-style-module": "^6.0.0",
-    "typescript": "5.2.2",
-    "yalc": "^1.0.0-pre.53"
+    "typescript": "5.2.2"
   },
   "packageManager": "yarn@4.0.2",
   "importSort": {
@@ -43,7 +42,7 @@
     },
     ".ts, .tsx": {
       "parser": "typescript",
-      "style": "eslint",
+      "style": "module",
       "options": {}
     }
   }

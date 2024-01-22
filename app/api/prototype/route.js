@@ -20,7 +20,6 @@ import {
 
 const PROTOTYPE_ID = 'PROTOTYPE_ID';
 
-const SNAPSHOT_TIMESTAMP = 'SNAPSHOT_TIMESTAMP';
 
 export async function GET( request, response ) {
 

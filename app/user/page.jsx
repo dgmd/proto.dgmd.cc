@@ -1,48 +1,18 @@
 "use client"
 
 import {
-  createRef,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
-
-import {
-  useRouter
-} from "next/navigation";
-
-import {
-  AUTH_STATE_SIGNED_IN,
-  AUTH_STATE_SIGNED_OUT,
-  useAuthentication
-} from 'hooks/AuthenticationHook.js';
-
-import {
   ArrowPathIcon,
   MinusIcon
 } from '@heroicons/react/20/solid';
-
-import {
-  queryApiForRoom
-} from 'hooks/FetchNotionDataHook.js';
-
-import {
-  buttonClassNames,
-  cellClassNames,
-  getRoundButtonClasses,
-  getRoundButtonIconClasses
-} from '/components/look.js';
-
 import {
   NOTION_RESULT
 } from 'app/api/query/keys.js';
-
 import {
-  getUserId
-} from 'hooks/AuthenticationHook.js';
-
+  ClipboardButton
+} from 'components/clipboard-button.jsx';
+import {
+  LinkButton
+} from 'components/link-button.jsx';
 import {
   TABLE_COL_HIDE_MD,
   TABLE_COL_HIDE_SM,
@@ -50,31 +20,45 @@ import {
   TABLE_HEADER_NAME,
   Table
 } from 'components/table.jsx';
-
 import {
-  ClipboardButton
-} from 'components/clipboard-button.jsx';
-
+  QUERY_RESPONSE_KEY_SUCCESS
+} from 'constants.dgmd.cc';
 import {
-  LinkButton
-} from 'components/link-button.jsx';
-
+  AUTH_STATE_SIGNED_IN,
+  AUTH_STATE_SIGNED_OUT,
+  getUserId,
+  useAuthentication
+} from 'hooks/AuthenticationHook.js';
 import {
-  Title
-} from '/components/title.jsx';
-
+  queryApiForRoom
+} from 'hooks/FetchNotionDataHook.js';
+import {
+  useRouter
+} from "next/navigation";
+import {
+  createRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
+import {
+  buttonClassNames,
+  cellClassNames,
+  getRoundButtonClasses,
+  getRoundButtonIconClasses
+} from '/components/look.js';
 import {
   SidePanel
 } from '/components/side-panel.jsx';
-
+import {
+  Title
+} from '/components/title.jsx';
 import {
   addListItem,
   removeListItem
 } from '/utils/lists.js';
-
-import {
-  QUERY_RESPONSE_KEY_SUCCESS
-} from 'constants.dgmd.cc';
 
 const User = ( ) => {
 

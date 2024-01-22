@@ -3,70 +3,58 @@
 import 'app/globals.css';
 
 import {
-  useEffect,
-  useRef,
-  useState
-} from "react";
-
+  ArrowPathIcon
+} from '@heroicons/react/20/solid';
 import {
-  useParams
-} from 'next/navigation';
-
+  URL_PROTOTYPE_PARAM_ID
+} from 'app/api/prototype/keys.js';
 import {
-  Title
-} from 'components/title';
-
+  NOTION_RESULT,
+  NOTION_RESULT_BLOCK_DBS,
+  NOTION_RESULT_BLOCK_KEY,
+  PARAM_BLOCKS_REQUEST,
+  PARAM_DATABASE,
+  PARAM_RELATIONS_REQUEST,
+  QUERY_RESPONSE_KEY_DATA_KEY,
+  QUERY_RESPONSE_KEY_DATA_VALUE,
+  QUERY_RESPONSE_KEY_PRIMARY_DATABASE
+} from 'app/api/query/keys.js';
+import {
+  ClipboardButton
+} from 'components/clipboard-button.jsx';
+import {
+  LinkButton
+} from 'components/link-button.jsx';
 import {
   TABLE_HEADER_HIDE,
   TABLE_HEADER_NAME,
   Table
 } from 'components/table.jsx';
-
 import {
-  QUERY_RESPONSE_KEY_DATA_KEY,
-  QUERY_RESPONSE_KEY_DATA_VALUE,
-  PARAM_BLOCKS_REQUEST,
-  PARAM_DATABASE,
-  PARAM_RELATIONS_REQUEST,
-  NOTION_RESULT_BLOCK_DBS,
-  NOTION_RESULT_BLOCK_KEY,
-  QUERY_RESPONSE_KEY_PRIMARY_DATABASE,
-
-  NOTION_RESULT
-} from 'app/api/query/keys.js';
-
+  Title
+} from 'components/title';
 import {
   QUERY_RESPONSE_KEY_BLOCKS,
 } from 'constants.dgmd.cc';
-
-import {
-  URL_PROTOTYPE_PARAM_ID
-} from 'app/api/prototype/keys.js';
-
-import {
-  getTextFromReadableStream
-} from 'utils/network.js';
-
 import {
   useAuthentication
 } from 'hooks/AuthenticationHook.js';
-
+import {
+  useParams
+} from 'next/navigation';
+import {
+  useEffect,
+  useRef,
+  useState
+} from "react";
+import {
+  getTextFromReadableStream
+} from 'utils/network.js';
 import {
   buttonClassNames,
   cellClassNames
 } from '/components/look.js';
 
-import {
-  ArrowPathIcon
-} from '@heroicons/react/20/solid';
-
-import {
-  ClipboardButton
-} from 'components/clipboard-button.jsx';
-
-import {
-  LinkButton
-} from 'components/link-button.jsx';
 import { QUERY_RESPONSE_KEY_DATA_METADATA, QUERY_RESPONSE_KEY_DATA_PROPERTIES } from '../../../../api/query/keys';
 
 const PROTO_TYPE = 'PROTO_TYPE';

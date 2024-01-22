@@ -3,12 +3,11 @@
 import 'app/globals.css';
 
 import {
-  usePathname
-} from 'next/navigation';
-
-import {
   Header
 } from "components/header.jsx";
+import {
+  usePathname
+} from 'next/navigation';
 
 export default function Layout({ 
   children,

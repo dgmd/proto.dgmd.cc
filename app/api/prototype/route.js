@@ -3,17 +3,14 @@ import {
 } from 'next/server';
 
 import {
+  getApiCoriHeaders
+} from '../../../utils/coriHeaders.js';
+import {
   supabase
 } from '../../../utils/supa.js';
-
 import {
   URL_PROTOTYPE_PARAM_ID
 } from './keys.js';
-
-import {
-  getApiCoriHeaders
-} from '../../../utils/coriHeaders.js';
-
 
 //
 //https://github.com/vercel/next.js/discussions/47933#discussioncomment-6197807

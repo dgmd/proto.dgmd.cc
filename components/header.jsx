@@ -1,34 +1,26 @@
-
-import Link from 'next/link';
-
-import {
-  buttonClassNames
-} from 'components/look.js';
-
-import {
-  UserCircleIcon
-} from '@heroicons/react/20/solid';
-
-import {
-  NotionToFramerLogo
-} from '/components/logo.jsx';
-
-import {
-  Fragment
-} from 'react'
-
 import {
   Menu,
   Transition
 } from '@headlessui/react'
-
+import {
+  UserCircleIcon
+} from '@heroicons/react/20/solid';
+import {
+  NotionToFramerLogo
+} from '/components/logo.jsx';
+import {
+  buttonClassNames
+} from 'components/look.js';
 import {
   AUTH_STATE_SIGNED_IN,
   AUTH_STATE_SIGNED_OUT,
   getUserEmail,
   useAuthentication
 } from 'hooks/AuthenticationHook.js';
-
+import Link from 'next/link';
+import {
+  Fragment
+} from 'react'
 import {
   classNames
 } from 'utils/jsx.js';

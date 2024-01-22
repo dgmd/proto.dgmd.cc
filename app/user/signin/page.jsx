@@ -3,17 +3,14 @@
 import {
   buttonClassNames
 } from 'components/look.js';
-
 import {
   AUTH_STATE_SIGNED_IN,
   AUTH_STATE_SIGNED_OUT,
   useAuthentication
 } from 'hooks/AuthenticationHook.js';
-
 import {
   useRouter
 } from "next/navigation";
-
 import {
   useCallback,
   useEffect,

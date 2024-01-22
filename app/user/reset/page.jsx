@@ -1,21 +1,18 @@
 "use client"
 
 import {
-  useEffect
-} from "react";
-
-import {
   Auth
 } from "@supabase/auth-ui-react";
-
+import {
+  AUTH_EVENT_PASSWORD_RECOVERY,
+  useAuthentication
+} from 'hooks/AuthenticationHook.js';
 import {
   useRouter
 } from "next/navigation";
-
 import {
-  useAuthentication,
-  AUTH_EVENT_PASSWORD_RECOVERY
-} from 'hooks/AuthenticationHook.js';
+  useEffect
+} from "react";
 
 function Reset( ) {
 

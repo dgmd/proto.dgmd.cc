@@ -1,19 +1,16 @@
 "use client"
 
 import {
-  Fragment,
-} from 'react';
-
+  Dialog,
+  Transition
+} from '@headlessui/react';
 import {
   PlusIcon,
   XMarkIcon
 } from '@heroicons/react/20/solid';
-
 import {
-  Dialog,
-  Transition
-} from '@headlessui/react'
-
+  Fragment,
+} from 'react';
 import {
   buttonCancelClassNames,
   buttonClassNames

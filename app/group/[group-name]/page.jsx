@@ -3,56 +3,45 @@
 import 'app/globals.css';
 
 import {
-  useParams
-} from 'next/navigation';
-
+  NOTION_RESULT_BLOCK_KEY,
+  QUERY_RESPONSE_KEY_DATA_VALUE,
+  QUERY_RESPONSE_KEY_PRIMARY_DATABASE
+} from 'app/api/query/keys.js';
 import {
-  useEffect,
-  useState
-} from 'react';
-
+  ClipboardButton
+} from 'components/clipboard-button.jsx';
 import {
-  useRouter
-} from "next/navigation";
-
+  LinkButton
+} from 'components/link-button.jsx';
 import {
   TABLE_HEADER_HIDE,
   TABLE_HEADER_NAME,
   Table
 } from 'components/table.jsx';
-
+import {
+  QUERY_RESPONSE_KEY_BLOCKS,
+} from 'constants.dgmd.cc';
 import {
   AUTH_STATE_SIGNED_IN,
   AUTH_STATE_SIGNED_OUT,
   useAuthentication
 } from 'hooks/AuthenticationHook.js';
-
+import {
+  useParams,
+  useRouter
+} from 'next/navigation';
+import {
+  useEffect,
+  useState
+} from 'react';
+import {
+  cellClassNames
+} from '/components/look.js';
 import {
   Title
 } from '/components/title.jsx';
 
-import {
-  cellClassNames
-} from '/components/look.js';
-
-import {
-  QUERY_RESPONSE_KEY_DATA_VALUE,
-  NOTION_RESULT_BLOCK_KEY,
-  QUERY_RESPONSE_KEY_PRIMARY_DATABASE
-} from 'app/api/query/keys.js';
-
-import {
-  ClipboardButton
-} from 'components/clipboard-button.jsx';
-
-import {
-  LinkButton
-} from 'components/link-button.jsx';
 import { QUERY_RESPONSE_KEY_DATA_METADATA, QUERY_RESPONSE_KEY_DATA_PROPERTIES } from '../../api/query/keys';
-
-import {
-  QUERY_RESPONSE_KEY_BLOCKS,
-} from 'constants.dgmd.cc';
 
 const USER_ID = 'USER_ID';
 const USER_NAME = 'USER_NAME';

@@ -38,6 +38,9 @@ export const NOTION_KEY_PLAIN_TEXT = 'plain_text';
 export const NOTION_KEY_DATABASE_ID = 'database_id';
 export const NOTION_KEY_ID = 'id';
 export const NOTION_KEY_PARENT = 'parent';
+export const NOTION_KEY_START_DATE = 'start';
+export const NOTION_KEY_END_DATE = 'end';
+export const NOTION_KEY_TIME_ZONE = 'time_zone';
 
 export const NOTION_KEY_PAGE_ID = 'page_id';
 

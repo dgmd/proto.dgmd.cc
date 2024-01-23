@@ -17,6 +17,7 @@ import {
   QUERY_RESPONSE_KEY_DATA_PROPERTIES,
   QUERY_RESPONSE_KEY_DATA_TYPE,
   QUERY_RESPONSE_KEY_DATA_VALUE,
+  QUERY_RESPONSE_KEY_END_DATE,
   QUERY_RESPONSE_KEY_ICON,
   QUERY_RESPONSE_KEY_PAGE_DATA,
   QUERY_RESPONSE_KEY_PARENT_ID,
@@ -25,7 +26,9 @@ import {
   QUERY_RESPONSE_KEY_PRIMARY_DATABASE,
   QUERY_RESPONSE_KEY_RELATION_DATABASES,
   QUERY_RESPONSE_KEY_RESULT,
-  QUERY_RESPONSE_KEY_SUCCESS
+  QUERY_RESPONSE_KEY_START_DATE,
+  QUERY_RESPONSE_KEY_SUCCESS,
+  QUERY_RESPONSE_KEY_TIME_ZONE,
 } from 'constants.dgmd.cc';
 import {
   NextResponse
@@ -67,17 +70,20 @@ import {
   NOTION_DATA_TYPE_URL,
   NOTION_HAS_MORE,
   NOTION_KEY_DATABASE_ID,
+  NOTION_KEY_END_DATE,
   NOTION_KEY_ID,
   NOTION_KEY_NAME,
   NOTION_KEY_PAGE_ID,
   NOTION_KEY_PARENT,
   NOTION_KEY_PLAIN_TEXT,
   NOTION_KEY_START_CURSOR,
+  NOTION_KEY_START_DATE,
+  NOTION_KEY_TIME_ZONE,
   NOTION_KEY_TYPE,
   NOTION_KEY_VALUE,
   NOTION_NEXT_CURSOR,
   NOTION_PROPERTIES,
-  NOTION_RESULTS
+  NOTION_RESULTS,
 } from '../notion_constants.js';
 import {
   NOTION_WRANGLE_KEY_DATA_DB_MAP,
@@ -589,9 +595,10 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_DATE) {
+                const dateVal = convertDateFromNotionToDGMD( propertyVal );
                 propdata[propertyKey] = {
                   [QUERY_RESPONSE_KEY_DATA_TYPE]: propertyType,
-                  [QUERY_RESPONSE_KEY_DATA_VALUE]: propertyVal
+                  [QUERY_RESPONSE_KEY_DATA_VALUE]: dateVal
                 };
               }
               else if (propertyType == NOTION_DATA_LAST_EDITED_TIME) {
@@ -607,10 +614,23 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_FORMULA) {
-                propdata[propertyKey] = {
-                  [QUERY_RESPONSE_KEY_DATA_TYPE]: propertyType,
-                  [QUERY_RESPONSE_KEY_DATA_VALUE]: propertyVal
-                };
+                const formulaType = propertyVal[NOTION_KEY_TYPE];
+                if (formulaType === NOTION_DATA_TYPE_DATE) {
+                  console.log( 'propertyVal', propertyVal );
+                  console.log( 'propertyVal[propertyType]', propertyVal[formulaType] );
+                  const dgmdDateVal = convertDateFromNotionToDGMD( propertyVal[formulaType] );
+                  console.log( 'dgmdDateVal', dgmdDateVal );
+                  propdata[propertyKey] = {
+                    [QUERY_RESPONSE_KEY_DATA_TYPE]: propertyType,
+                    [QUERY_RESPONSE_KEY_DATA_VALUE]: dgmdDateVal
+                  };
+                }
+                else {
+                  propdata[propertyKey] = {
+                    [QUERY_RESPONSE_KEY_DATA_TYPE]: propertyType,
+                    [QUERY_RESPONSE_KEY_DATA_VALUE]: propertyVal
+                  };
+                }
               }
               else {
                 // todo... handle other types
@@ -934,4 +954,16 @@ const loadBlocks = async ( nClient, allDbResults ) => {
   }, [] );
   
   return notionBlockResultsIndexed;
+};
+
+
+const convertDateFromNotionToDGMD = dateObj => {
+  const startDate = dateObj[NOTION_KEY_START_DATE];
+  const endDate = dateObj[NOTION_KEY_END_DATE];
+  const timeZone = dateObj[NOTION_KEY_TIME_ZONE];
+  return {
+    [QUERY_RESPONSE_KEY_START_DATE]: startDate,
+    [QUERY_RESPONSE_KEY_END_DATE]: endDate,
+    [QUERY_RESPONSE_KEY_TIME_ZONE]: timeZone
+  };
 };

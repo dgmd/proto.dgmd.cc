@@ -5,8 +5,24 @@ import {
 } from "@notionhq/client";
 import {
   DGMD_BLOCKS,
+  DGMD_BLOCK_TYPE_CHECKBOX,
   DGMD_BLOCK_TYPE_COVER,
+  DGMD_BLOCK_TYPE_CREATED_TIME,
+  DGMD_BLOCK_TYPE_DATE,
+  DGMD_BLOCK_TYPE_EMAIL,
+  DGMD_BLOCK_TYPE_FILE_EXTERNAL,
+  DGMD_BLOCK_TYPE_FORMULA,
   DGMD_BLOCK_TYPE_ICON,
+  DGMD_BLOCK_TYPE_LAST_EDITED_TIME,
+  DGMD_BLOCK_TYPE_MULTI_SELECT,
+  DGMD_BLOCK_TYPE_NUMBER,
+  DGMD_BLOCK_TYPE_PHONE_NUMBER,
+  DGMD_BLOCK_TYPE_RELATION,
+  DGMD_BLOCK_TYPE_RICH_TEXT,
+  DGMD_BLOCK_TYPE_SELECT,
+  DGMD_BLOCK_TYPE_STATUS,
+  DGMD_BLOCK_TYPE_TITLE,
+  DGMD_BLOCK_TYPE_URL,
   DGMD_DATABASE_ID,
   DGMD_DATABASE_TITLE,
   DGMD_END_DATE,
@@ -26,9 +42,9 @@ import {
   QUERY_PARAM_DATABASE,
   QUERY_PARAM_PAGE_CURSOR_ID_REQUEST,
   QUERY_PARAM_PAGE_CURSOR_TYPE_REQUEST,
-  QUERY_RESPONSE_KEY_PAGE_DATA,
+  QUERY_RESPONSE_KEY_ERROR,
   QUERY_RESPONSE_KEY_RESULT,
-  QUERY_RESPONSE_KEY_SUCCESS,
+  QUERY_RESPONSE_KEY_SUCCESS
 } from 'constants.dgmd.cc';
 import {
   NextResponse
@@ -44,13 +60,12 @@ import {
   removeHyphens
 } from '../../../utils/strings.js';
 import {
-  NOTION_DATA_CREATED_TIME,
-  NOTION_DATA_LAST_EDITED_TIME,
   NOTION_DATA_TYPE_CHECKBOX,
   NOTION_DATA_TYPE_CHILD_DATABASE,
   NOTION_DATA_TYPE_COLUMN,
   NOTION_DATA_TYPE_COLUMN_LIST,
   NOTION_DATA_TYPE_COVER,
+  NOTION_DATA_TYPE_CREATED_TIME,
   NOTION_DATA_TYPE_DATE,
   NOTION_DATA_TYPE_EMAIL,
   NOTION_DATA_TYPE_EMOJI,
@@ -59,6 +74,7 @@ import {
   NOTION_DATA_TYPE_FILES,
   NOTION_DATA_TYPE_FORMULA,
   NOTION_DATA_TYPE_ICON,
+  NOTION_DATA_TYPE_LAST_EDITED_TIME,
   NOTION_DATA_TYPE_MULTI_SELECT,
   NOTION_DATA_TYPE_NUMBER,
   NOTION_DATA_TYPE_PHONE_NUMBER,
@@ -71,6 +87,7 @@ import {
   NOTION_HAS_MORE,
   NOTION_KEY_DATABASE_ID,
   NOTION_KEY_END_DATE,
+  NOTION_KEY_FILE,
   NOTION_KEY_ID,
   NOTION_KEY_NAME,
   NOTION_KEY_PAGE_ID,
@@ -269,7 +286,7 @@ const makeDbSerialized = (props, pages, meta) => {
     [DGMD_BLOCK_TYPE_COVER]: meta[DATABASE_QUERY_COVER],
   };
   if (pages) {
-    s[QUERY_RESPONSE_KEY_PAGE_DATA] = pages;
+    s[DGMD_PAGE_DATA] = pages;
   }
   return s;
 };
@@ -480,6 +497,7 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
           };
         }
         else if (key === NOTION_DATA_TYPE_ICON) {
+          //todo: handle type here correctly
           const iconObj = getIcon( resultData[key] );
           metadata[NOTION_DATA_TYPE_ICON] = {
             [DGMD_TYPE]: iconObj[NOTION_KEY_TYPE],
@@ -487,6 +505,7 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
           };
         }
         else if (key === NOTION_DATA_TYPE_COVER) {
+          //todo: handle type here correctly
           const coverObj = getCover( resultData[key] );
           metadata[NOTION_DATA_TYPE_COVER] = {
             [DGMD_TYPE]: coverObj[NOTION_KEY_TYPE],
@@ -507,7 +526,7 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
               if (propertyType === NOTION_DATA_TYPE_SELECT) {
 
                 propdata[propertyKey] = {
-                  [DGMD_TYPE]: NOTION_DATA_TYPE_SELECT,
+                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_SELECT,
                   [DGMD_VALUE]: propertyVal[NOTION_KEY_NAME]
                 };
               }
@@ -515,7 +534,7 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
                 
                 const multis = propertyVal.map( m => m[NOTION_KEY_NAME] );
                 propdata[propertyKey] = {
-                  [DGMD_TYPE]: NOTION_DATA_TYPE_MULTI_SELECT,
+                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_MULTI_SELECT,
                   [DGMD_VALUE]: multis
                 };
               }
@@ -531,52 +550,54 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
                  }, [] );
                 const file = files.length > 0 ? files[0] : null;
                 propdata[propertyKey] = {
-                  [DGMD_TYPE]: NOTION_DATA_TYPE_FILES,
+                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_FILE_EXTERNAL,
                   [DGMD_VALUE]: file
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_NUMBER) {
                 propdata[propertyKey] = {
-                  [DGMD_TYPE]: NOTION_DATA_TYPE_NUMBER,
+                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_NUMBER,
                   [DGMD_VALUE]: propertyVal
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_CHECKBOX) {
                 propdata[propertyKey] = {
-                  [DGMD_TYPE]: NOTION_DATA_TYPE_CHECKBOX,
+                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_CHECKBOX,
                   [DGMD_VALUE]: propertyVal
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_URL) {
                 propdata[propertyKey] = {
-                  [DGMD_TYPE]: NOTION_DATA_TYPE_URL,
+                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_URL,
                   [DGMD_VALUE]: propertyVal
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_EMAIL) {
                 propdata[propertyKey] = {
-                  [DGMD_TYPE]: NOTION_DATA_TYPE_EMAIL,
+                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_EMAIL,
                   [DGMD_VALUE]: propertyVal
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_PHONE_NUMBER) {
                 propdata[propertyKey] = {
-                  [DGMD_TYPE]: NOTION_DATA_TYPE_PHONE_NUMBER,
+                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_PHONE_NUMBER,
                   [DGMD_VALUE]: propertyVal
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_STATUS) {
                 propdata[propertyKey] = {
-                  [DGMD_TYPE]: NOTION_DATA_TYPE_STATUS,
+                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_STATUS,
                   [DGMD_VALUE]: propertyVal[NOTION_KEY_NAME]
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_TITLE || propertyType == NOTION_DATA_TYPE_RICH_TEXT) {
                 const titles = propertyVal.map( m => m[NOTION_KEY_PLAIN_TEXT] );
                 const val = titles.length > 0 ? titles.join('') : null;
+                const type = propertyType == NOTION_DATA_TYPE_TITLE ? 
+                  DGMD_BLOCK_TYPE_TITLE : DGMD_BLOCK_TYPE_RICH_TEXT;
 
                 propdata[propertyKey] = {
-                  [DGMD_TYPE]: propertyType,
+                  [DGMD_TYPE]: type,
                   [DGMD_VALUE]: val
                 };
               }
@@ -590,26 +611,26 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
                   } }
                 );
                 propdata[propertyKey] = {
-                  [DGMD_TYPE]: propertyType,
+                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_RELATION,
                   [DGMD_VALUE]: val
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_DATE) {
                 const dateVal = convertDateFromNotionToDGMD( propertyVal );
                 propdata[propertyKey] = {
-                  [DGMD_TYPE]: propertyType,
+                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_DATE,
                   [DGMD_VALUE]: dateVal
                 };
               }
-              else if (propertyType == NOTION_DATA_LAST_EDITED_TIME) {
+              else if (propertyType == NOTION_DATA_TYPE_LAST_EDITED_TIME) {
                 propdata[propertyKey] = {
-                  [DGMD_TYPE]: propertyType,
+                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_LAST_EDITED_TIME,
                   [DGMD_VALUE]: propertyVal
                 };
               }
-              else if (propertyType == NOTION_DATA_CREATED_TIME) {
+              else if (propertyType == NOTION_DATA_TYPE_CREATED_TIME) {
                 propdata[propertyKey] = {
-                  [DGMD_TYPE]: propertyType,
+                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_CREATED_TIME,
                   [DGMD_VALUE]: propertyVal
                 };
               }
@@ -618,11 +639,12 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
                 if (formulaType === NOTION_DATA_TYPE_DATE) {
                   const dgmdDateVal = convertDateFromNotionToDGMD( propertyVal[formulaType] );
                   propdata[propertyKey] = {
-                    [DGMD_TYPE]: propertyType,
+                    [DGMD_TYPE]: DGMD_BLOCK_TYPE_FORMULA,
                     [DGMD_VALUE]: dgmdDateVal
                   };
                 }
                 else {
+                  //todo: lookup table here for correct typing
                   propdata[propertyKey] = {
                     [DGMD_TYPE]: propertyType,
                     [DGMD_VALUE]: propertyVal
@@ -653,8 +675,8 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
                 NOTION_DATA_TYPE_PHONE_NUMBER,
                 NOTION_DATA_TYPE_STATUS,
                 NOTION_DATA_TYPE_URL,
-                NOTION_DATA_LAST_EDITED_TIME,
-                NOTION_DATA_CREATED_TIME
+                NOTION_DATA_TYPE_LAST_EDITED_TIME,
+                NOTION_DATA_TYPE_CREATED_TIME
               ].includes( propertyType )) {
 
                 propdata[propertyKey] = {

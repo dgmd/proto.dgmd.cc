@@ -1,55 +1,55 @@
 import {
-  Client
+    Client
 } from "@notionhq/client";
 import {
-  CRUD_PARAM_ACTION,
-  CRUD_PARAM_DELETE_BLOCK_ID,
-  CRUD_PARAM_UPDATE_BLOCK,
-  CRUD_PARAM_UPDATE_BLOCK_ID,
-  CRUD_PARAM_UPDATE_META,
-  CRUD_RESPONSE_BLOCK,
-  CRUD_RESPONSE_BLOCK_ID,
-  CRUD_RESPONSE_BLOCK_KEY,
-  CRUD_RESPONSE_CREATE,
-  CRUD_RESPONSE_CREATE_BLOCKS,
-  CRUD_RESPONSE_CREATE_METAS,
-  CRUD_RESPONSE_DB_ID,
-  CRUD_RESPONSE_DELETE,
-  CRUD_RESPONSE_DELETE_ID,
-  CRUD_RESPONSE_META,
-  CRUD_RESPONSE_META_ID,
-  CRUD_RESPONSE_META_KEY,
-  CRUD_RESPONSE_PAGE,
-  CRUD_RESPONSE_RESULT,
-  CRUD_RESPONSE_UPDATE,
-  CRUD_RESPONSE_UPDATE_BLOCKS,
-  CRUD_RESPONSE_UPDATE_ID,
-  CRUD_RESPONSE_UPDATE_METAS,
-  CRUD_VALUE_ACTION_CREATE,
-  CRUD_VALUE_ACTION_DELETE,
-  CRUD_VALUE_ACTION_UPDATE
+    CRUD_PARAM_ACTION,
+    CRUD_PARAM_DELETE_BLOCK_ID,
+    CRUD_PARAM_UPDATE_BLOCK,
+    CRUD_PARAM_UPDATE_BLOCK_ID,
+    CRUD_PARAM_UPDATE_META,
+    CRUD_RESPONSE_BLOCK,
+    CRUD_RESPONSE_BLOCK_ID,
+    CRUD_RESPONSE_BLOCK_KEY,
+    CRUD_RESPONSE_CREATE,
+    CRUD_RESPONSE_CREATE_BLOCKS,
+    CRUD_RESPONSE_CREATE_METAS,
+    CRUD_RESPONSE_DB_ID,
+    CRUD_RESPONSE_DELETE,
+    CRUD_RESPONSE_DELETE_ID,
+    CRUD_RESPONSE_META,
+    CRUD_RESPONSE_META_ID,
+    CRUD_RESPONSE_META_KEY,
+    CRUD_RESPONSE_PAGE,
+    CRUD_RESPONSE_RESULT,
+    CRUD_RESPONSE_UPDATE,
+    CRUD_RESPONSE_UPDATE_BLOCKS,
+    CRUD_RESPONSE_UPDATE_ID,
+    CRUD_RESPONSE_UPDATE_METAS,
+    CRUD_VALUE_ACTION_CREATE,
+    CRUD_VALUE_ACTION_DELETE,
+    CRUD_VALUE_ACTION_UPDATE
 } from "constants.dgmd.cc";
 import {
-  NextResponse
+    NextResponse
 } from 'next/server';
 
 import {
-  getApiCoriHeaders
+    getApiCoriHeaders
 } from '../../../utils/coriHeaders.js';
 import {
-  removeHyphens
+    removeHyphens
 } from '../../../utils/strings.js';
 import {
-  NOTION_DATA_TYPE_COVER,
-  NOTION_DATA_TYPE_ICON,
-  NOTION_KEY_DATABASE_ID
+    DGMD_BLOCK_TYPE_COVER,
+    DGMD_BLOCK_TYPE_ICON,
+    NOTION_KEY_DATABASE_ID
 } from '../notion_constants.js';
 import {
-  NOTION_WRANGLE_KEY_RELATIONS_MAP
+    NOTION_WRANGLE_KEY_RELATIONS_MAP
 } from '../notion_wrangler_constants.js';
 import {
-  getNotionDbaseRelationsIds,
-  getNotionPageData
+    getNotionDbaseRelationsIds,
+    getNotionPageData
 } from '../query/route.js';
 
 const SECRET_ID = 'SECRET_ID';
@@ -105,7 +105,7 @@ export async function GET( request, response ) {
       const rMetas = [];
       rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_CREATE_METAS] = rMetas;
       for (const [key, value] of Object.entries(appendMetaObj)) {
-        if (key === NOTION_DATA_TYPE_ICON || key === NOTION_DATA_TYPE_COVER) {
+        if (key === DGMD_BLOCK_TYPE_ICON || key === DGMD_BLOCK_TYPE_COVER) {
           await updateMeta( nClient, createPageId, key, value, rMetas );
         }
       }
@@ -147,7 +147,7 @@ export async function GET( request, response ) {
       const rMetas = [];
       rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_UPDATE_METAS] = rMetas;
       for (const [key, value] of Object.entries(updateMetaObj)) {
-        if (key === NOTION_DATA_TYPE_ICON || key === NOTION_DATA_TYPE_COVER) {
+        if (key === DGMD_BLOCK_TYPE_ICON || key === DGMD_BLOCK_TYPE_COVER) {
           await updateMeta( nClient, updatePageId, key, value, rMetas );
         }
       }

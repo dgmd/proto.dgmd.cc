@@ -13,6 +13,7 @@ import {
   DGMD_BLOCK_TYPE_FILE_EXTERNAL,
   DGMD_BLOCK_TYPE_FORMULA,
   DGMD_BLOCK_TYPE_ICON,
+  DGMD_BLOCK_TYPE_ID,
   DGMD_BLOCK_TYPE_LAST_EDITED_TIME,
   DGMD_BLOCK_TYPE_MULTI_SELECT,
   DGMD_BLOCK_TYPE_NUMBER,
@@ -106,8 +107,6 @@ import {
   NOTION_WRANGLE_KEY_DATA_DB_MAP,
   NOTION_WRANGLE_KEY_RELATIONS_MAP
 } from '../notion_wrangler_constants.js';
-
-const DGMDCC_ID = 'id';
 
 const QUERY_PROPERTIES = 'QUERY_PROPERTIES';
 const QUERY_PAGES = 'QUERY_PAGES';
@@ -297,7 +296,7 @@ const trackLoadedPages =
 
   for (const page of propertyPages) {
     const meta = page[DGMD_METADATA];
-    const pageId = meta[DGMDCC_ID][DGMD_VALUE];
+    const pageId = meta[DGMD_BLOCK_TYPE_ID][DGMD_VALUE];
     if (!loadedPageIds.has(pageId)) {
       loadedPageIds.set(pageId, {
         [NOTION_WRANGLE_LOCAL_LOADED_PAGE_ID]: pageId,
@@ -491,15 +490,15 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
           const id = resultData[key];
           const idSansHyphens = removeHyphens( id );
 
-          metadata[DGMDCC_ID] = {
-            [DGMD_TYPE]: DGMDCC_ID,
+          metadata[DGMD_BLOCK_TYPE_ID] = {
+            [DGMD_TYPE]: DGMD_BLOCK_TYPE_ID,
             [DGMD_VALUE]: idSansHyphens
           };
         }
         else if (key === NOTION_DATA_TYPE_ICON) {
           //todo: handle type here correctly
           const iconObj = getIcon( resultData[key] );
-          metadata[NOTION_DATA_TYPE_ICON] = {
+          metadata[DGMD_BLOCK_TYPE_ICON] = {
             [DGMD_TYPE]: iconObj[NOTION_KEY_TYPE],
             [DGMD_VALUE]: iconObj[NOTION_KEY_VALUE]
           };
@@ -507,7 +506,7 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
         else if (key === NOTION_DATA_TYPE_COVER) {
           //todo: handle type here correctly
           const coverObj = getCover( resultData[key] );
-          metadata[NOTION_DATA_TYPE_COVER] = {
+          metadata[DGMD_BLOCK_TYPE_COVER] = {
             [DGMD_TYPE]: coverObj[NOTION_KEY_TYPE],
             [DGMD_VALUE]: coverObj[NOTION_KEY_VALUE]
           };
@@ -952,7 +951,7 @@ const loadBlocks = async ( nClient, allDbResults ) => {
   allDbResults.forEach( dbResult => {
     const qProps = dbResult[QUERY_PROPERTIES];
     qProps.forEach( qProp => {
-      const qPropId = qProp[DGMD_METADATA][DGMDCC_ID][DGMD_VALUE];
+      const qPropId = qProp[DGMD_METADATA][DGMD_BLOCK_TYPE_ID][DGMD_VALUE];
       const blocksCollector = {
         [NOTION_RESULT_BLOCK_DBS]: [],
         [NOTION_RESULT_COLUMN_LISTS]: []

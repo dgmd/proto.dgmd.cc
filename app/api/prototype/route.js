@@ -1,4 +1,7 @@
 import {
+  PROTO_RESPONSE_KEY_SNAPSHOT_TIMESTAMP
+} from 'constants.dgmd.cc';
+import {
   NextResponse
 } from 'next/server';
 
@@ -40,7 +43,7 @@ export async function GET( request, response ) {
   .limit( 1 );
 
   const proto = protoSupa.data[0];
-  proto.snapshot[SNAPSHOT_TIMESTAMP] = proto['created_at'];
+  proto.snapshot[PROTO_RESPONSE_KEY_SNAPSHOT_TIMESTAMP] = proto['created_at'];
 
   const resJson = NextResponse.json(
     proto.snapshot

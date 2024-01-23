@@ -3,55 +3,55 @@
 import 'app/globals.css';
 
 import {
-  ArrowPathIcon
+    ArrowPathIcon
 } from '@heroicons/react/20/solid';
 import {
-  NOTION_RESULT,
-  NOTION_RESULT_BLOCK_DBS,
-  NOTION_RESULT_BLOCK_KEY,
-  QUERY_RESPONSE_KEY_DATA_KEY,
-  QUERY_RESPONSE_KEY_DATA_METADATA,
-  QUERY_RESPONSE_KEY_DATA_PROPERTIES,
-  QUERY_RESPONSE_KEY_DATA_VALUE,
-  QUERY_RESPONSE_KEY_PRIMARY_DATABASE
+    buttonClassNames,
+    cellClassNames
+} from '/components/look.js';
+import {
+    DGMD_METADATA,
+    DGMD_PAGE_DATA,
+    DGMD_PRIMARY_DATABASE,
+    DGMD_PROPERTIES,
+    DGMD_VALUE,
+    NOTION_RESULT,
+    NOTION_RESULT_BLOCK_DBS,
+    NOTION_RESULT_BLOCK_KEY
 } from 'app/api/query/keys.js';
 import {
-  ClipboardButton
+    ClipboardButton
 } from 'components/clipboard-button.jsx';
 import {
-  LinkButton
+    LinkButton
 } from 'components/link-button.jsx';
 import {
-  TABLE_HEADER_HIDE,
-  TABLE_HEADER_NAME,
-  Table
+    TABLE_HEADER_HIDE,
+    TABLE_HEADER_NAME,
+    Table
 } from 'components/table.jsx';
 import {
-  Title
+    Title
 } from 'components/title';
 import {
-  QUERY_RESPONSE_KEY_BLOCKS,
-  QUERY_RESPONSE_KEY_SUCCESS
+    DGMD_BLOCKS,
+    QUERY_RESPONSE_KEY_SUCCESS
 } from 'constants.dgmd.cc';
 import {
-  useAuthentication
+    useAuthentication
 } from 'hooks/AuthenticationHook.js';
 import {
-  queryApiForRoom
+    queryApiForRoom
 } from 'hooks/FetchNotionDataHook.js';
 import {
-  useParams
+    useParams
 } from 'next/navigation';
 import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState
+    useCallback,
+    useEffect,
+    useRef,
+    useState
 } from "react";
-import {
-  buttonClassNames,
-  cellClassNames
-} from '/components/look.js';
 
 const PROJECT_TYPE = 'PROJECT_TYPE';
 const PROJECT_VAL = 'PROJECT_VAL';
@@ -98,14 +98,14 @@ export default function Page() {
       .eq( 'notion_table', roomSupa.data[0].id );
       
       const json = roomDataSupa.data[0].data;
-      const data = json[QUERY_RESPONSE_KEY_PRIMARY_DATABASE][QUERY_RESPONSE_KEY_BLOCKS];
+      const data = json[DGMD_PRIMARY_DATABASE][DGMD_BLOCKS];
       const datum = data.find( x => {
-        return x[QUERY_RESPONSE_KEY_DATA_METADATA]['id'][QUERY_RESPONSE_KEY_DATA_VALUE] === pNotionUserId;
+        return x[DGMD_METADATA]['id'][DGMD_VALUE] === pNotionUserId;
       } );
-      const name = datum[QUERY_RESPONSE_KEY_DATA_PROPERTIES]['Name'][QUERY_RESPONSE_KEY_DATA_VALUE];
+      const name = datum[DGMD_PROPERTIES]['Name'][DGMD_VALUE];
       setNotionUserName( x => name );
 
-      const blocks = json[QUERY_RESPONSE_KEY_BLOCKS];
+      const blocks = json[DGMD_BLOCKS];
       const block = blocks.find(
         block => block[NOTION_RESULT_BLOCK_KEY] === pNotionUserId );
       const blockDbs = block[NOTION_RESULT_BLOCK_DBS];
@@ -114,11 +114,11 @@ export default function Page() {
         acc.push(
           {
             [PROJECT_TYPE]: PROJECT_NAME,
-            [PROJECT_VAL]: cur[QUERY_RESPONSE_KEY_DATA_VALUE]
+            [PROJECT_VAL]: cur[DGMD_VALUE]
           },
           {
             [PROJECT_TYPE]: PROJECT_ID,
-            [PROJECT_VAL]: cur[QUERY_RESPONSE_KEY_DATA_KEY]
+            [PROJECT_VAL]: cur[DGMD_PAGE_DATA]
           }
         );
         return acc;

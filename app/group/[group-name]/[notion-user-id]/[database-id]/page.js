@@ -3,59 +3,59 @@
 import 'app/globals.css';
 
 import {
-  ArrowPathIcon
+    ArrowPathIcon
 } from '@heroicons/react/20/solid';
 import {
-  URL_PROTOTYPE_PARAM_ID
+    buttonClassNames,
+    cellClassNames
+} from '/components/look.js';
+import {
+    URL_PROTOTYPE_PARAM_ID
 } from 'app/api/prototype/keys.js';
 import {
-  NOTION_RESULT,
-  NOTION_RESULT_BLOCK_DBS,
-  NOTION_RESULT_BLOCK_KEY,
-  PARAM_BLOCKS_REQUEST,
-  PARAM_DATABASE,
-  PARAM_RELATIONS_REQUEST,
-  QUERY_RESPONSE_KEY_DATA_KEY,
-  QUERY_RESPONSE_KEY_DATA_VALUE,
-  QUERY_RESPONSE_KEY_PRIMARY_DATABASE
+    DGMD_PAGE_DATA,
+    DGMD_PRIMARY_DATABASE,
+    DGMD_VALUE,
+    NOTION_RESULT,
+    NOTION_RESULT_BLOCK_DBS,
+    NOTION_RESULT_BLOCK_KEY,
+    PARAM_BLOCKS_REQUEST,
+    PARAM_DATABASE,
+    PARAM_RELATIONS_REQUEST
 } from 'app/api/query/keys.js';
 import {
-  ClipboardButton
+    ClipboardButton
 } from 'components/clipboard-button.jsx';
 import {
-  LinkButton
+    LinkButton
 } from 'components/link-button.jsx';
 import {
-  TABLE_HEADER_HIDE,
-  TABLE_HEADER_NAME,
-  Table
+    TABLE_HEADER_HIDE,
+    TABLE_HEADER_NAME,
+    Table
 } from 'components/table.jsx';
 import {
-  Title
+    Title
 } from 'components/title';
 import {
-  QUERY_RESPONSE_KEY_BLOCKS,
+    DGMD_BLOCKS,
 } from 'constants.dgmd.cc';
 import {
-  useAuthentication
+    useAuthentication
 } from 'hooks/AuthenticationHook.js';
 import {
-  useParams
+    useParams
 } from 'next/navigation';
 import {
-  useEffect,
-  useRef,
-  useState
+    useEffect,
+    useRef,
+    useState
 } from "react";
 import {
-  getTextFromReadableStream
+    getTextFromReadableStream
 } from 'utils/network.js';
-import {
-  buttonClassNames,
-  cellClassNames
-} from '/components/look.js';
 
-import { QUERY_RESPONSE_KEY_DATA_METADATA, QUERY_RESPONSE_KEY_DATA_PROPERTIES } from '../../../../api/query/keys';
+import { DGMD_METADATA, DGMD_PROPERTIES } from '../../../../api/query/keys';
 
 const PROTO_TYPE = 'PROTO_TYPE';
 const PROTO_VAL = 'PROTO_VAL';
@@ -102,18 +102,18 @@ export default function Page() {
     .eq( 'notion_table', roomSupa.data[0].id );
 
     const json = roomDataSupa.data[0].data;
-    const blocks = json[QUERY_RESPONSE_KEY_BLOCKS];
+    const blocks = json[DGMD_BLOCKS];
     const block = blocks.find(
       block => block[NOTION_RESULT_BLOCK_KEY] === pNotionUserId );
     const blockDbs = block[NOTION_RESULT_BLOCK_DBS];
-    const blockIdx = blockDbs.findIndex( x => x[QUERY_RESPONSE_KEY_DATA_KEY] === pDatabaseId );
-    const blockVal = blockDbs[blockIdx][QUERY_RESPONSE_KEY_DATA_VALUE];
+    const blockIdx = blockDbs.findIndex( x => x[DGMD_PAGE_DATA] === pDatabaseId );
+    const blockVal = blockDbs[blockIdx][DGMD_VALUE];
     setDatabaseName( x => blockVal );
 
-    const userBlock = json[QUERY_RESPONSE_KEY_PRIMARY_DATABASE][QUERY_RESPONSE_KEY_BLOCKS].find( x => {
-      return x[QUERY_RESPONSE_KEY_DATA_METADATA]['id'][QUERY_RESPONSE_KEY_DATA_VALUE] === pNotionUserId;
+    const userBlock = json[DGMD_PRIMARY_DATABASE][DGMD_BLOCKS].find( x => {
+      return x[DGMD_METADATA]['id'][DGMD_VALUE] === pNotionUserId;
     } );
-    const title = userBlock[QUERY_RESPONSE_KEY_DATA_PROPERTIES]['Name'][QUERY_RESPONSE_KEY_DATA_VALUE];
+    const title = userBlock[DGMD_PROPERTIES]['Name'][DGMD_VALUE];
     setNotionUserName( x => title );
   };
 

@@ -3,45 +3,45 @@
 import 'app/globals.css';
 
 import {
-  NOTION_RESULT_BLOCK_KEY,
-  QUERY_RESPONSE_KEY_DATA_VALUE,
-  QUERY_RESPONSE_KEY_PRIMARY_DATABASE
-} from 'app/api/query/keys.js';
-import {
-  ClipboardButton
-} from 'components/clipboard-button.jsx';
-import {
-  LinkButton
-} from 'components/link-button.jsx';
-import {
-  TABLE_HEADER_HIDE,
-  TABLE_HEADER_NAME,
-  Table
-} from 'components/table.jsx';
-import {
-  QUERY_RESPONSE_KEY_BLOCKS,
-} from 'constants.dgmd.cc';
-import {
-  AUTH_STATE_SIGNED_IN,
-  AUTH_STATE_SIGNED_OUT,
-  useAuthentication
-} from 'hooks/AuthenticationHook.js';
-import {
-  useParams,
-  useRouter
-} from 'next/navigation';
-import {
-  useEffect,
-  useState
-} from 'react';
-import {
-  cellClassNames
+    cellClassNames
 } from '/components/look.js';
 import {
-  Title
+    Title
 } from '/components/title.jsx';
+import {
+    DGMD_PRIMARY_DATABASE,
+    DGMD_VALUE,
+    NOTION_RESULT_BLOCK_KEY
+} from 'app/api/query/keys.js';
+import {
+    ClipboardButton
+} from 'components/clipboard-button.jsx';
+import {
+    LinkButton
+} from 'components/link-button.jsx';
+import {
+    TABLE_HEADER_HIDE,
+    TABLE_HEADER_NAME,
+    Table
+} from 'components/table.jsx';
+import {
+    DGMD_BLOCKS,
+} from 'constants.dgmd.cc';
+import {
+    AUTH_STATE_SIGNED_IN,
+    AUTH_STATE_SIGNED_OUT,
+    useAuthentication
+} from 'hooks/AuthenticationHook.js';
+import {
+    useParams,
+    useRouter
+} from 'next/navigation';
+import {
+    useEffect,
+    useState
+} from 'react';
 
-import { QUERY_RESPONSE_KEY_DATA_METADATA, QUERY_RESPONSE_KEY_DATA_PROPERTIES } from '../../api/query/keys';
+import { DGMD_METADATA, DGMD_PROPERTIES } from '../../api/query/keys';
 
 const USER_ID = 'USER_ID';
 const USER_NAME = 'USER_NAME';
@@ -96,15 +96,15 @@ export default function List() {
 
         if (dataResultSupa.data && dataResultSupa.data.length > 0) {
           const room = dataResultSupa.data[0].data;
-          const students = room[QUERY_RESPONSE_KEY_PRIMARY_DATABASE][QUERY_RESPONSE_KEY_BLOCKS];
-          const blocks = room[QUERY_RESPONSE_KEY_BLOCKS];
+          const students = room[DGMD_PRIMARY_DATABASE][DGMD_BLOCKS];
+          const blocks = room[DGMD_BLOCKS];
           for (const student of students) {
-            const studentId = student[QUERY_RESPONSE_KEY_DATA_METADATA]['id'][QUERY_RESPONSE_KEY_DATA_VALUE];
+            const studentId = student[DGMD_METADATA]['id'][DGMD_VALUE];
             const studentBlocks = blocks.find(
               block => block[NOTION_RESULT_BLOCK_KEY] == studentId );
             const keys = Object.keys(studentBlocks);
             if (keys.length > 0) {
-              const studentName = student[QUERY_RESPONSE_KEY_DATA_PROPERTIES]['Name'][QUERY_RESPONSE_KEY_DATA_VALUE];
+              const studentName = student[DGMD_PROPERTIES]['Name'][DGMD_VALUE];
               frows.push( {
                 [USER_NAME]: studentName,
                 [USER_ID]: studentId

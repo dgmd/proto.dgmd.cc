@@ -35,6 +35,8 @@ import {
   DGMD_PRIMARY_DATABASE,
   DGMD_PROPERTIES,
   DGMD_RELATION_DATABASES,
+  DGMD_RELATION_DATABASE_ID,
+  DGMD_RELATION_PAGE_ID,
   DGMD_START_DATE,
   DGMD_TIME_ZONE,
   DGMD_TYPE,
@@ -136,12 +138,12 @@ const DATABASE_QUERY_ICON = 'DATABASE_QUERY_ICON';
 const NOTION_WRANGLE_LOCAL_LOADED_PAGE_ID = 'NOTION_WRANGLE_LOCAL_LOADED_PAGE_ID';
 const NOTION_WRANGLE_LOCAL_LOADED_PAGE = 'NOTION_WRANGLE_LOCAL_LOADED_PAGE';
 const NOTION_WRANGLE_LOCAL_LOADED_DB_ID = 'NOTION_WRANGLE_LOCAL_LOADED_DB_ID';
-const NOTION_WRANGLE_LOCAL_RELATION_PAGE_ID = 'NOTION_WRANGLE_LOCAL_RELATION_PAGE_ID';
-const NOTION_WRANGLE_LOCAL_RELATION_DATABASE_ID = 'NOTION_WRANGLE_LOCAL_RELATION_DATABASE_ID';
 const NOTION_WRANGLE_LOCAL_NDBP_COLLECTOR = 'NOTION_WRANGLE_LOCAL_NDBP_COLLECTOR';
 const NOTION_WRANGLE_LOCAL_NDBP_NEXT = 'NOTION_WRANGLE_LOCAL_NDBP_NEXT';
 
 export async function GET( request, response ) {
+
+  console.log( 'DGMD_RELATION_DATABASE_ID', DGMD_RELATION_DATABASE_ID );
 
   const secrets = {
     [SECRET_ID]: process.env.NOTION_SECRET
@@ -325,8 +327,8 @@ const trackLoadedPages =
       if (NOTION_DATA_TYPE_RELATION === prop[DGMD_TYPE]) {
         const propVals = prop[DGMD_VALUE];
         for (const propValObj of propVals) {
-          const propRelPgId = propValObj[NOTION_WRANGLE_LOCAL_RELATION_PAGE_ID];
-          const propRelDbId = propValObj[NOTION_WRANGLE_LOCAL_RELATION_DATABASE_ID];
+          const propRelPgId = propValObj[DGMD_RELATION_PAGE_ID];
+          const propRelDbId = propValObj[DGMD_RELATION_DATABASE_ID];
 
           if (!loadedPageIds.has(propRelPgId)) {
             if (!unloadedPageIds.has(propRelDbId)) {
@@ -437,6 +439,7 @@ const chainNotionDbaseRelationIds = async (nClient, dbId, collector) => {
 };
 
 const getNotionDbaseRelationsIds = ( nClient, dbId ) => {
+  console.log( 'dbId', dbId );
   const collector = {
     [NOTION_WRANGLE_KEY_RELATIONS_MAP]: new Map(),
     [NOTION_WRANGLE_KEY_DATA_DB_MAP]: new Map()
@@ -605,8 +608,8 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
                 const dbId = relMap.get( notionPropertyId );
                 const val = propertyVal.map( m => {
                   return {
-                    [NOTION_WRANGLE_LOCAL_RELATION_DATABASE_ID]: dbId,
-                    [NOTION_WRANGLE_LOCAL_RELATION_PAGE_ID]: removeHyphens( m[NOTION_KEY_ID] )
+                    [DGMD_RELATION_DATABASE_ID]: dbId,
+                    [DGMD_RELATION_PAGE_ID]: removeHyphens( m[NOTION_KEY_ID] )
                   } }
                 );
                 propdata[propertyKey] = {

@@ -11,7 +11,9 @@ import {
   DGMD_BLOCK_TYPE_DATE,
   DGMD_BLOCK_TYPE_EMAIL,
   DGMD_BLOCK_TYPE_FILE_EXTERNAL,
-  DGMD_BLOCK_TYPE_FORMULA,
+  DGMD_BLOCK_TYPE_FORMULA_BOOLEAN,
+  DGMD_BLOCK_TYPE_FORMULA_DATE,
+  DGMD_BLOCK_TYPE_FORMULA_STRING,
   DGMD_BLOCK_TYPE_ICON,
   DGMD_BLOCK_TYPE_ID,
   DGMD_BLOCK_TYPE_LAST_EDITED_TIME,
@@ -87,6 +89,9 @@ import {
   NOTION_DATA_TYPE_STATUS,
   NOTION_DATA_TYPE_TITLE,
   NOTION_DATA_TYPE_URL,
+  NOTION_FORMULA_RESULT_BOOLEAN,
+  NOTION_FORMULA_RESULT_DATE,
+  NOTION_FORMULA_RESULT_STRING,
   NOTION_HAS_MORE,
   NOTION_KEY_DATABASE_ID,
   NOTION_KEY_END_DATE,
@@ -142,8 +147,6 @@ const NOTION_WRANGLE_LOCAL_NDBP_COLLECTOR = 'NOTION_WRANGLE_LOCAL_NDBP_COLLECTOR
 const NOTION_WRANGLE_LOCAL_NDBP_NEXT = 'NOTION_WRANGLE_LOCAL_NDBP_NEXT';
 
 export async function GET( request, response ) {
-
-  console.log( 'DGMD_RELATION_DATABASE_ID', DGMD_RELATION_DATABASE_ID );
 
   const secrets = {
     [SECRET_ID]: process.env.NOTION_SECRET
@@ -439,7 +442,6 @@ const chainNotionDbaseRelationIds = async (nClient, dbId, collector) => {
 };
 
 const getNotionDbaseRelationsIds = ( nClient, dbId ) => {
-  console.log( 'dbId', dbId );
   const collector = {
     [NOTION_WRANGLE_KEY_RELATIONS_MAP]: new Map(),
     [NOTION_WRANGLE_KEY_DATA_DB_MAP]: new Map()
@@ -638,18 +640,23 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
               }
               else if (propertyType == NOTION_DATA_TYPE_FORMULA) {
                 const formulaType = propertyVal[NOTION_KEY_TYPE];
-                if (formulaType === NOTION_DATA_TYPE_DATE) {
+                console.log( 'formulaType', propertyVal, propertyKey, formulaType );
+                if (formulaType === NOTION_FORMULA_RESULT_DATE) {
                   const dgmdDateVal = convertDateFromNotionToDGMD( propertyVal[formulaType] );
                   propdata[propertyKey] = {
-                    [DGMD_TYPE]: DGMD_BLOCK_TYPE_FORMULA,
+                    [DGMD_TYPE]: DGMD_BLOCK_TYPE_FORMULA_DATE,
                     [DGMD_VALUE]: dgmdDateVal
                   };
+                  console.log( 'yes', DGMD_BLOCK_TYPE_FORMULA_DATE );
                 }
                 else {
-                  //todo: lookup table here for correct typing
+                  const dgmdFormulaType = {
+                    [NOTION_FORMULA_RESULT_STRING]: DGMD_BLOCK_TYPE_FORMULA_STRING,
+                    [NOTION_FORMULA_RESULT_BOOLEAN]: DGMD_BLOCK_TYPE_FORMULA_BOOLEAN,
+                  }[formulaType];
                   propdata[propertyKey] = {
-                    [DGMD_TYPE]: propertyType,
-                    [DGMD_VALUE]: propertyVal
+                    [DGMD_TYPE]: dgmdFormulaType,
+                    [DGMD_VALUE]: propertyVal[formulaType]
                   };
                 }
               }

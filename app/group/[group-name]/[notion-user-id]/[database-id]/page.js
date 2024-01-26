@@ -3,59 +3,59 @@
 import 'app/globals.css';
 
 import {
-    ArrowPathIcon
+  ArrowPathIcon
 } from '@heroicons/react/20/solid';
 import {
-    buttonClassNames,
-    cellClassNames
-} from '/components/look.js';
-import {
-    URL_PROTOTYPE_PARAM_ID
+  URL_PROTOTYPE_PARAM_ID
 } from 'app/api/prototype/keys.js';
 import {
-    DGMD_PAGE_DATA,
-    DGMD_PRIMARY_DATABASE,
-    DGMD_VALUE,
-    NOTION_RESULT,
-    NOTION_RESULT_BLOCK_DBS,
-    NOTION_RESULT_BLOCK_KEY,
-    PARAM_BLOCKS_REQUEST,
-    PARAM_DATABASE,
-    PARAM_RELATIONS_REQUEST
+  DGMD_PAGE_DATA,
+  DGMD_PRIMARY_DATABASE,
+  DGMD_VALUE,
+  NOTION_RESULT,
+  NOTION_RESULT_BLOCK_DBS,
+  NOTION_RESULT_BLOCK_KEY,
+  PARAM_BLOCKS_REQUEST,
+  PARAM_DATABASE,
+  PARAM_RELATIONS_REQUEST
 } from 'app/api/query/keys.js';
 import {
-    ClipboardButton
+  ClipboardButton
 } from 'components/clipboard-button.jsx';
 import {
-    LinkButton
+  LinkButton
 } from 'components/link-button.jsx';
 import {
-    TABLE_HEADER_HIDE,
-    TABLE_HEADER_NAME,
-    Table
+  TABLE_HEADER_HIDE,
+  TABLE_HEADER_NAME,
+  Table
 } from 'components/table.jsx';
 import {
-    Title
+  Title
 } from 'components/title';
 import {
-    DGMD_BLOCKS,
+  DGMD_BLOCKS,
+  DGMD_METADATA,
+  DGMD_PROPERTIES,
 } from 'constants.dgmd.cc';
 import {
-    useAuthentication
+  useAuthentication
 } from 'hooks/AuthenticationHook.js';
 import {
-    useParams
+  useParams
 } from 'next/navigation';
 import {
-    useEffect,
-    useRef,
-    useState
+  useEffect,
+  useRef,
+  useState
 } from "react";
 import {
-    getTextFromReadableStream
+  getTextFromReadableStream
 } from 'utils/network.js';
-
-import { DGMD_METADATA, DGMD_PROPERTIES } from '../../../../api/query/keys';
+import {
+  buttonClassNames,
+  cellClassNames
+} from '/components/look.js';
 
 const PROTO_TYPE = 'PROTO_TYPE';
 const PROTO_VAL = 'PROTO_VAL';

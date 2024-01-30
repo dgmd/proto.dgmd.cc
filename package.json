@@ -19,6 +19,7 @@
     "constants.dgmd.cc": "file:../constants.dgmd.cc",
     "eslint": "8.52.0",
     "eslint-config-next": "14.0.1",
+    "lodash-es": "^4.17.21",
     "next": "14.0.1",
     "postcss": "^8.4.31",
     "react": "18.2.0",
@@ -26,6 +27,7 @@
     "tailwindcss": "^3.3.5"
   },
   "devDependencies": {
+    "@types/lodash-es": "^4",
     "@types/node": "20.11.5",
     "@types/react": "18.2.21",
     "import-sort": "^6.0.0",

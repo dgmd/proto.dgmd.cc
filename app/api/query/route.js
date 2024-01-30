@@ -295,7 +295,6 @@ const makeDbSerialized = (props, pages, meta) => {
   return s;
 };
 
-
 const trackLoadedPages =
   (dbId, propertyPages, unloadedPageIds, loadedPageIds, dbTracker) => {
 
@@ -441,7 +440,7 @@ const chainNotionDbaseRelationIds = async (nClient, dbId, collector) => {
   return Promise.resolve(collector);
 };
 
-const getNotionDbaseRelationsIds = ( nClient, dbId ) => {
+export const getNotionDbaseRelationsIds = ( nClient, dbId ) => {
   const collector = {
     [NOTION_WRANGLE_KEY_RELATIONS_MAP]: new Map(),
     [NOTION_WRANGLE_KEY_DATA_DB_MAP]: new Map()
@@ -479,7 +478,7 @@ const getNotionPageTitle = nPage => {
   }
 };
 
-const getNotionDbaseProperties = (notionDatas, relMap) => {
+export const getNotionDbaseProperties = (notionDatas, relMap) => {
   if (NOTION_RESULTS in notionDatas) {
     const data = notionDatas[NOTION_RESULTS].map( (resultData, index) => {
       const metadata = {};
@@ -640,14 +639,12 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
               }
               else if (propertyType == NOTION_DATA_TYPE_FORMULA) {
                 const formulaType = propertyVal[NOTION_KEY_TYPE];
-                console.log( 'formulaType', propertyVal, propertyKey, formulaType );
                 if (formulaType === NOTION_FORMULA_RESULT_DATE) {
                   const dgmdDateVal = convertDateFromNotionToDGMD( propertyVal[formulaType] );
                   propdata[propertyKey] = {
                     [DGMD_TYPE]: DGMD_BLOCK_TYPE_FORMULA_DATE,
                     [DGMD_VALUE]: dgmdDateVal
                   };
-                  console.log( 'yes', DGMD_BLOCK_TYPE_FORMULA_DATE );
                 }
                 else {
                   const dgmdFormulaType = {
@@ -705,8 +702,8 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
   return {};
 };
 
-
-const getNotionDbasePromise = (nClient, allPages, relMap, collector, queryObj) => {
+const getNotionDbasePromise =
+  (nClient, allPages, relMap, collector, queryObj) => {
   const p = new Promise((resolve, reject) => {
 
     nClient.databases.query( queryObj )
@@ -771,7 +768,8 @@ const chainNotionDbasePromises =
   }
 };
 
-const getNotionDbase = ( nClient, meta, dbId, relMap ) => {
+const getNotionDbase = 
+  ( nClient, meta, dbId, relMap ) => {
   const initStartCursorType = meta[DATABASE_QUERY_PAGE_CURSOR_TYPE];
   const specificPage = initStartCursorType === PAGE_CURSOR_TYPE_SPECIFIC;
   const allPages = initStartCursorType === PAGE_CURSOR_TYPE_ALL;
@@ -789,7 +787,8 @@ const getNotionDbase = ( nClient, meta, dbId, relMap ) => {
     nClient, dbId, allPages, relMap, initStartCursor, true, collector );
 };
 
-const getNotionBlockKeyedDatabases = (blockDatas, collector) => {
+const getNotionBlockKeyedDatabases = 
+  (blockDatas, collector) => {
   if (NOTION_RESULTS in blockDatas) {
     const somedata = blockDatas[NOTION_RESULTS].reduce( (acc, cur) => {
       const propertyType = cur[NOTION_KEY_TYPE];
@@ -873,7 +872,8 @@ const getIcon = icon => {
   };
 };
 
-const getNotionPageBlockPromise = async(nClient, blockId, collector) => {
+const getNotionPageBlockPromise = 
+  async(nClient, blockId, collector) => {
   const p = new Promise((resolve, reject) => {
     nClient.blocks.children.list( { 
       block_id: blockId,
@@ -903,7 +903,8 @@ const getNotionPageBlockPromise = async(nClient, blockId, collector) => {
   return p;
 };
 
-const deriveBoolean = ( value ) => {
+const deriveBoolean = 
+  ( value ) => {
   const str = String( value );
   const strLowTrim = str.toLowerCase().trim();
   return [
@@ -916,7 +917,8 @@ const deriveBoolean = ( value ) => {
 };
 
 
-const getDbMeta = (primary, dbId, dbPgCursor) => {
+const getDbMeta = 
+  (primary, dbId, dbPgCursor) => {
   const obj = {
     [DATABASE_QUERY_PRIMARY]: primary,
     [DATABASE_QUERY_ID]: dbId,
@@ -934,7 +936,8 @@ const getDbMeta = (primary, dbId, dbPgCursor) => {
   return obj;
 };
 
-const notionUpdateDbMeta = async(nClient, nDbase, meta) => {
+const notionUpdateDbMeta = 
+  async(nClient, nDbase, meta) => {
   try {
     const primaryTitle = getNotionDbaseTitle( nDbase );
     meta[DATABASE_QUERY_TITLE] = primaryTitle;
@@ -956,7 +959,8 @@ const notionUpdateDbMeta = async(nClient, nDbase, meta) => {
   }
 };
 
-const loadBlocks = async ( nClient, allDbResults ) => {
+const loadBlocks = 
+  async ( nClient, allDbResults ) => {
   const notionPagePromises = [];
   allDbResults.forEach( dbResult => {
     const qProps = dbResult[QUERY_PROPERTIES];
@@ -983,7 +987,6 @@ const loadBlocks = async ( nClient, allDbResults ) => {
   
   return notionBlockResultsIndexed;
 };
-
 
 const convertDateFromNotionToDGMD = dateObj => {
   const startDate = dateObj[NOTION_KEY_START_DATE];

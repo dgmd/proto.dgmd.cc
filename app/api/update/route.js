@@ -3,6 +3,9 @@ import {
 } from "@notionhq/client";
 import {
   CRUD_PARAM_ACTION,
+  CRUD_PARAM_CREATE_BLOCK_ID,
+  CRUD_PARAM_CREATE_CHILDREN,
+  CRUD_PARAM_CREATE_META,
   CRUD_PARAM_DELETE_BLOCK_ID,
   CRUD_PARAM_UPDATE_BLOCK,
   CRUD_PARAM_UPDATE_BLOCK_ID,
@@ -12,6 +15,7 @@ import {
   CRUD_RESPONSE_BLOCK_KEY,
   CRUD_RESPONSE_CREATE,
   CRUD_RESPONSE_CREATE_BLOCKS,
+  CRUD_RESPONSE_CREATE_ID,
   CRUD_RESPONSE_CREATE_METAS,
   CRUD_RESPONSE_DB_ID,
   CRUD_RESPONSE_DELETE,
@@ -67,6 +71,8 @@ import {
 } from '../../../utils/strings.js';
 import {
   NOTION_KEY_DATABASE_ID,
+  NOTION_KEY_DB_ID,
+  NOTION_KEY_ID,
   NOTION_KEY_PAGE_ID,
   NOTION_KEY_PARENT,
   NOTION_RESULTS
@@ -124,26 +130,58 @@ export async function GET( request, response ) {
       }
     };
     try {
-      const dbId = removeHyphens( params.get( CRUD_PARAM_CREATE_BLOCK_ID ) );
-      
-      const rBlocks = [];
-      for (const [key, value] of Object.entries(updatePropObj)) {
-        await updateBlock( nClient, updatePageId, key, value, rBlocks );
+      const appendDbId = removeHyphens( params.get( CRUD_PARAM_CREATE_BLOCK_ID ) );
+
+      const appendPropsParam = params.get( CRUD_PARAM_CREATE_CHILDREN );
+      const appendPropsObj = JSON.parse( decodeURIComponent(appendPropsParam) );
+      const appendNotionPropsObj = {};
+      for (const [key, userBlock] of Object.entries(appendPropsObj)) {
+        const mmBlock = mmPropToNotionBlock( userBlock );
+        if (!isNil(mmBlock)) {
+          appendNotionPropsObj[key] = mmBlock;
+        }
       }
 
+      const appendMetasParam = params.get( CRUD_PARAM_CREATE_META );
+      const appendMetasObj = JSON.parse( decodeURIComponent(appendMetasParam) );
+      const appendNotionMetaObj = {};
+      for (const [key, userBlock] of Object.entries(appendMetasObj)) {
+        const mmBlock = mmMetaToNotionBlock( userBlock );
+        if (!isNil(mmBlock)) {
+          appendNotionMetaObj[key] = mmBlock;
+        }
+      }
+
+      const createObj = await nClient.pages.create({
+        parent: {
+          type: NOTION_KEY_DB_ID,
+          [NOTION_KEY_DB_ID]: appendDbId
+        },
+        properties: {},
+        children: [],
+      });
+      const createPageId = removeHyphens( createObj[NOTION_KEY_ID] );
+      
+      const rBlocks = [];
+      for (const [key, value] of Object.entries(appendNotionPropsObj)) {
+        await updateBlock( nClient, createPageId, key, value, rBlocks );
+      }
       const rMetas = [];
-      for (const [key, value] of Object.entries(updateMetaObj)) {
+      for (const [key, value] of Object.entries(appendNotionMetaObj)) {
         if (key === DGMD_BLOCK_TYPE_ICON || key === DGMD_BLOCK_TYPE_COVER) {
-          await updateMeta( nClient, updatePageId, key, value, rMetas );
+          await updateMeta( nClient, createPageId, key, value, rMetas );
         }
       }
 
       const createdPg = await nClient.pages.retrieve({ [NOTION_KEY_PAGE_ID]: createPageId });
-      const x = await getNotionDbaseRelationsIds( nClient, createBlockId );
+      const x = await getNotionDbaseRelationsIds( nClient, appendDbId );
       const relMap = x[NOTION_WRANGLE_KEY_RELATIONS_MAP];
       const pgs = getNotionDbaseProperties( {[NOTION_RESULTS]: [createdPg]}, relMap );
+
       rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_PAGE] = pgs[0];
-      rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_DB_ID] = createBlockId;
+      rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_CREATE] = true;
+      rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_DB_ID] = appendDbId;
+      rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_CREATE_ID] = createPageId;
       rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_CREATE_BLOCKS] = rBlocks;
       rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_CREATE_METAS] = rMetas;
     }

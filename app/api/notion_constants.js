@@ -47,6 +47,7 @@ export const NOTION_KEY_END_DATE = 'end';
 export const NOTION_KEY_TIME_ZONE = 'time_zone';
 
 export const NOTION_KEY_PAGE_ID = 'page_id';
+export const NOTION_KEY_DB_ID = 'database_id';
 
 export const NOTION_HAS_MORE = 'has_more';
 export const NOTION_NEXT_CURSOR = 'next_cursor';

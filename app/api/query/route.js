@@ -26,11 +26,14 @@ import {
   DGMD_BLOCK_TYPE_STATUS,
   DGMD_BLOCK_TYPE_TITLE,
   DGMD_BLOCK_TYPE_URL,
+  DGMD_CURSOR_DATA,
+  DGMD_CURSOR_HAS_MORE,
+  DGMD_CURSOR_NEXT,
   DGMD_DATABASE_ID,
   DGMD_DATABASE_TITLE,
   DGMD_END_DATE,
   DGMD_METADATA,
-  DGMD_PAGE_DATA,
+  DGMD_PAGE_ID,
   DGMD_PARENT_ID,
   DGMD_PARENT_TITLE,
   DGMD_PARENT_TYPE,
@@ -51,6 +54,9 @@ import {
   QUERY_RESPONSE_KEY_RESULT,
   QUERY_RESPONSE_KEY_SUCCESS
 } from 'constants.dgmd.cc';
+import {
+  isNil
+} from 'lodash-es';
 import {
   NextResponse
 } from 'next/server';
@@ -167,6 +173,7 @@ export async function GET( request, response ) {
     const dbId = params.get(QUERY_PARAM_DATABASE);
     requests[DATABASE_ID_REQUEST] = dbId;
   }
+
   if (params.has(QUERY_PARAM_PAGE_CURSOR_TYPE_REQUEST)) {
     const pcs = params.get(QUERY_PARAM_PAGE_CURSOR_TYPE_REQUEST);
     const cursorReq = {
@@ -188,6 +195,7 @@ export async function GET( request, response ) {
     const blocksReq = params.get(QUERY_PARAM_BLOCKS_REQUEST);
     requests[BLOCKS_REQUEST] = deriveBoolean(blocksReq);
   }
+
   try {
 
     const nClient = new Client({ 
@@ -196,14 +204,16 @@ export async function GET( request, response ) {
 
     const primaryDbId = requests[DATABASE_ID_REQUEST];
     const x = await getNotionDbaseRelationsIds( nClient, primaryDbId );
-
     const dbMap = x[NOTION_WRANGLE_KEY_DATA_DB_MAP];
     const relMap = x[NOTION_WRANGLE_KEY_RELATIONS_MAP];
 
     const metasMap = new Map();
     for (const [dbId, db] of dbMap.entries()) {
       const primary = dbId === primaryDbId;
-      const pageReq = primary ? requests[PAGE_CURSOR_REQUEST] : PAGE_CURSOR_TYPE_ALL;
+      const pageReq = primary ? requests[PAGE_CURSOR_REQUEST] : {
+        [PAGE_CURSOR_TYPE_REQUEST]: PAGE_CURSOR_TYPE_ALL,
+        [PAGE_CURSOR_ID_REQUEST]: null
+      };
       const meta = getDbMeta( primary, dbId, pageReq );
       notionUpdateDbMeta( nClient, db, meta );
       metasMap.set( dbId, meta );
@@ -278,19 +288,22 @@ const createResponse = (json, request) => {
   return resJson;
 };
 
-const makeDbSerialized = (props, pages, meta) => {
+const makeDbSerialized = (props, cursorData, meta) => {
   const s = {
     [DGMD_BLOCKS]: props,
     [DGMD_DATABASE_ID]: meta[DATABASE_QUERY_ID],
     [DGMD_DATABASE_TITLE]: meta[DATABASE_QUERY_TITLE],
-    [DGMD_PARENT_ID]: meta[DATABASE_QUERY_PARENT_TITLE],
-    [DGMD_PARENT_TITLE]: meta[DATABASE_QUERY_PARENT_ID],
+    [DGMD_PARENT_ID]: meta[DATABASE_QUERY_PARENT_ID],
+    [DGMD_PARENT_TITLE]: meta[DATABASE_QUERY_PARENT_TITLE],
     [DGMD_PARENT_TYPE]: meta[DATABASE_QUERY_PARENT_TYPE],
     [DGMD_BLOCK_TYPE_ICON]: meta[DATABASE_QUERY_ICON],
     [DGMD_BLOCK_TYPE_COVER]: meta[DATABASE_QUERY_COVER],
   };
-  if (pages) {
-    s[DGMD_PAGE_DATA] = pages;
+  if (!isNil(cursorData)) {
+    s[DGMD_CURSOR_DATA] = {
+      [DGMD_CURSOR_HAS_MORE]: cursorData[NOTION_HAS_MORE],
+      [DGMD_CURSOR_NEXT]: cursorData[NOTION_NEXT_CURSOR]
+    };
   }
   return s;
 };
@@ -793,7 +806,7 @@ const getNotionBlockKeyedDatabases =
     const somedata = blockDatas[NOTION_RESULTS].reduce( (acc, cur) => {
       const propertyType = cur[NOTION_KEY_TYPE];
       const propertyVal = cur[propertyType];
-      const gotPropertyVal = propertyVal !== null && propertyVal !== undefined;
+      const gotPropertyVal = !isNil(propertyVal);
       const id = cur[NOTION_KEY_ID];
       const idSansHyphens = removeHyphens( id );
 
@@ -801,7 +814,7 @@ const getNotionBlockKeyedDatabases =
         const propertyValTitle = propertyVal[NOTION_DATA_TYPE_TITLE];
         if (propertyType === NOTION_DATA_TYPE_CHILD_DATABASE) {
           const obj = {
-            [DGMD_PAGE_DATA]: idSansHyphens,
+            [DGMD_PAGE_ID]: idSansHyphens,
             [DGMD_VALUE]: propertyValTitle
           };
           acc[NOTION_RESULT_BLOCK_DBS].push( obj );

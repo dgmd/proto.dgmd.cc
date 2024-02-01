@@ -9,7 +9,7 @@ import {
   URL_PROTOTYPE_PARAM_ID
 } from 'app/api/prototype/keys.js';
 import {
-  DGMD_PAGE_DATA,
+  DGMD_PAGE_ID,
   DGMD_PRIMARY_DATABASE,
   DGMD_VALUE,
   NOTION_RESULT,
@@ -106,7 +106,7 @@ export default function Page() {
     const block = blocks.find(
       block => block[NOTION_RESULT_BLOCK_KEY] === pNotionUserId );
     const blockDbs = block[NOTION_RESULT_BLOCK_DBS];
-    const blockIdx = blockDbs.findIndex( x => x[DGMD_PAGE_DATA] === pDatabaseId );
+    const blockIdx = blockDbs.findIndex( x => x[DGMD_PAGE_ID] === pDatabaseId );
     const blockVal = blockDbs[blockIdx][DGMD_VALUE];
     setDatabaseName( x => blockVal );
 

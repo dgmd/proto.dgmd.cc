@@ -3,55 +3,55 @@
 import 'app/globals.css';
 
 import {
-    ArrowPathIcon
+  ArrowPathIcon
 } from '@heroicons/react/20/solid';
 import {
-    buttonClassNames,
-    cellClassNames
-} from '/components/look.js';
-import {
-    DGMD_METADATA,
-    DGMD_PAGE_DATA,
-    DGMD_PRIMARY_DATABASE,
-    DGMD_PROPERTIES,
-    DGMD_VALUE,
-    NOTION_RESULT,
-    NOTION_RESULT_BLOCK_DBS,
-    NOTION_RESULT_BLOCK_KEY
+  DGMD_METADATA,
+  DGMD_PAGE_ID,
+  DGMD_PRIMARY_DATABASE,
+  DGMD_PROPERTIES,
+  DGMD_VALUE,
+  NOTION_RESULT,
+  NOTION_RESULT_BLOCK_DBS,
+  NOTION_RESULT_BLOCK_KEY
 } from 'app/api/query/keys.js';
 import {
-    ClipboardButton
+  ClipboardButton
 } from 'components/clipboard-button.jsx';
 import {
-    LinkButton
+  LinkButton
 } from 'components/link-button.jsx';
 import {
-    TABLE_HEADER_HIDE,
-    TABLE_HEADER_NAME,
-    Table
+  TABLE_HEADER_HIDE,
+  TABLE_HEADER_NAME,
+  Table
 } from 'components/table.jsx';
 import {
-    Title
+  Title
 } from 'components/title';
 import {
-    DGMD_BLOCKS,
-    QUERY_RESPONSE_KEY_SUCCESS
+  DGMD_BLOCKS,
+  QUERY_RESPONSE_KEY_SUCCESS
 } from 'constants.dgmd.cc';
 import {
-    useAuthentication
+  useAuthentication
 } from 'hooks/AuthenticationHook.js';
 import {
-    queryApiForRoom
+  queryApiForRoom
 } from 'hooks/FetchNotionDataHook.js';
 import {
-    useParams
+  useParams
 } from 'next/navigation';
 import {
-    useCallback,
-    useEffect,
-    useRef,
-    useState
+  useCallback,
+  useEffect,
+  useRef,
+  useState
 } from "react";
+import {
+  buttonClassNames,
+  cellClassNames
+} from '/components/look.js';
 
 const PROJECT_TYPE = 'PROJECT_TYPE';
 const PROJECT_VAL = 'PROJECT_VAL';
@@ -118,7 +118,7 @@ export default function Page() {
           },
           {
             [PROJECT_TYPE]: PROJECT_ID,
-            [PROJECT_VAL]: cur[DGMD_PAGE_DATA]
+            [PROJECT_VAL]: cur[DGMD_PAGE_ID]
           }
         );
         return acc;

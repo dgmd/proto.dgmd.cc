@@ -52,7 +52,10 @@ import {
   QUERY_PARAM_PAGE_CURSOR_TYPE_REQUEST,
   QUERY_RESPONSE_KEY_ERROR,
   QUERY_RESPONSE_KEY_RESULT,
-  QUERY_RESPONSE_KEY_SUCCESS
+  QUERY_RESPONSE_KEY_SUCCESS,
+  QUERY_VALUE_PAGE_CURSOR_TYPE_ALL,
+  QUERY_VALUE_PAGE_CURSOR_TYPE_DEFAULT,
+  QUERY_VALUE_PAGE_CURSOR_TYPE_SPECIFIC
 } from 'constants.dgmd.cc';
 import {
   isNil
@@ -163,7 +166,7 @@ export async function GET( request, response ) {
     [BLOCKS_REQUEST]: false,
     [DATABASE_ID_REQUEST]: null,
     [PAGE_CURSOR_REQUEST]: {
-      [PAGE_CURSOR_TYPE_REQUEST]: PAGE_CURSOR_TYPE_ALL,
+      [PAGE_CURSOR_TYPE_REQUEST]: PAGE_CURSOR_TYPE_DEFAULT,
       [PAGE_CURSOR_ID_REQUEST]: null
     },
   };
@@ -177,9 +180,9 @@ export async function GET( request, response ) {
   if (params.has(QUERY_PARAM_PAGE_CURSOR_TYPE_REQUEST)) {
     const pcs = params.get(QUERY_PARAM_PAGE_CURSOR_TYPE_REQUEST);
     const cursorReq = {
-      [SEARCH_VALUE_PAGE_CURSOR_TYPE_ALL]: PAGE_CURSOR_TYPE_ALL,
-      [SEARCH_VALUE_PAGE_CURSOR_TYPE_SPECIFIC]: PAGE_CURSOR_TYPE_SPECIFIC,
-      [SEARCH_VALUE_PAGE_CURSOR_TYPE_DEFAULT]: PAGE_CURSOR_TYPE_DEFAULT
+      [QUERY_VALUE_PAGE_CURSOR_TYPE_ALL]: PAGE_CURSOR_TYPE_ALL,
+      [QUERY_VALUE_PAGE_CURSOR_TYPE_SPECIFIC]: PAGE_CURSOR_TYPE_SPECIFIC,
+      [QUERY_VALUE_PAGE_CURSOR_TYPE_DEFAULT]: PAGE_CURSOR_TYPE_DEFAULT
     }[pcs];
     if (cursorReq) {
       requests[PAGE_CURSOR_REQUEST][PAGE_CURSOR_TYPE_REQUEST] = cursorReq;
@@ -190,6 +193,7 @@ export async function GET( request, response ) {
     const pcid = params.get(QUERY_PARAM_PAGE_CURSOR_ID_REQUEST);
     requests[PAGE_CURSOR_REQUEST][PAGE_CURSOR_ID_REQUEST] = pcid;
   }
+  requests[PAGE_CURSOR_REQUEST][PAGE_CURSOR_ID_REQUEST] );
 
   if (params.has(QUERY_PARAM_BLOCKS_REQUEST)) {
     const blocksReq = params.get(QUERY_PARAM_BLOCKS_REQUEST);
@@ -727,19 +731,9 @@ const getNotionDbasePromise =
         const has_more = result[NOTION_HAS_MORE];
         const next_cursor = result[NOTION_NEXT_CURSOR];
 
-        if (allPages) {
-          const cursors = collector[QUERY_PAGES][NOTION_NEXT_CURSOR];
-          if (cursors.length === 0 && next_cursor === null) {
-            collector[QUERY_PAGES][NOTION_NEXT_CURSOR] = null;
-          }
-          else {
-            cursors.push( next_cursor );
-          }
-        }
-        else {
-          collector[QUERY_PAGES][NOTION_HAS_MORE] = has_more;
-          collector[QUERY_PAGES][NOTION_NEXT_CURSOR] = next_cursor;
-        }
+        collector[QUERY_PAGES][NOTION_NEXT_CURSOR] = next_cursor;
+        collector[QUERY_PAGES][NOTION_HAS_MORE] = has_more;
+
         const next = allPages ? next_cursor : null;
         resolve( {
           [NOTION_WRANGLE_LOCAL_NDBP_COLLECTOR]:collector, 

@@ -3,45 +3,28 @@
 import 'app/globals.css';
 
 import {
-    cellClassNames
-} from '/components/look.js';
-import {
-    Title
-} from '/components/title.jsx';
-import {
-    DGMD_PRIMARY_DATABASE,
-    DGMD_VALUE,
-    NOTION_RESULT_BLOCK_KEY
-} from 'app/api/query/keys.js';
-import {
-    ClipboardButton
+  ClipboardButton
 } from 'components/clipboard-button.jsx';
 import {
-    LinkButton
+  LinkButton
 } from 'components/link-button.jsx';
 import {
-    TABLE_HEADER_HIDE,
-    TABLE_HEADER_NAME,
-    Table
+  TABLE_HEADER_HIDE,
+  TABLE_HEADER_NAME,
+  Table
 } from 'components/table.jsx';
 import {
-    DGMD_BLOCKS,
-} from 'constants.dgmd.cc';
-import {
-    AUTH_STATE_SIGNED_IN,
-    AUTH_STATE_SIGNED_OUT,
-    useAuthentication
-} from 'hooks/AuthenticationHook.js';
-import {
-    useParams,
-    useRouter
+  useParams
 } from 'next/navigation';
 import {
-    useEffect,
-    useState
+  useState
 } from 'react';
-
-import { DGMD_METADATA, DGMD_PROPERTIES } from '../../api/query/keys';
+import {
+  cellClassNames
+} from '/components/look.js';
+import {
+  Title
+} from '/components/title.jsx';
 
 const USER_ID = 'USER_ID';
 const USER_NAME = 'USER_NAME';
@@ -59,83 +42,75 @@ export default function List() {
   ] );
   const [rows, setRows] = useState( x => [] );
 
-  const [
-    authSessionState, 
-    authSession, 
-    authEvent,
-    supabase,
-    supaUiReady
-  ] = useAuthentication();
+  // const router = useRouter();
 
-  const router = useRouter();
+  // useEffect( () => {
+  //   if ( supabase ) {
+  //     fetchData( supabase, pGroupName );
+  //   }
+  // }, [
+  //   supabase
+  // ] );
 
-  useEffect( () => {
-    if ( supabase ) {
-      fetchData( supabase, pGroupName );
-    }
-  }, [
-    supabase
-  ] );
+  // const fetchData = async ( supabase, pGroupName ) => {
+  //   const frows = [];
 
-  const fetchData = async ( supabase, pGroupName ) => {
-    const frows = [];
+  //   try {
+  //     const idResultSupa = await supabase
+  //     .from( 'notion_rooms' )
+  //     .select( 'id' )
+  //     .eq( 'name', pGroupName );
 
-    try {
-      const idResultSupa = await supabase
-      .from( 'notion_rooms' )
-      .select( 'id' )
-      .eq( 'name', pGroupName );
+  //     if (idResultSupa.data && idResultSupa.data.length > 0) {
+  //       const dataResultSupa = await supabase
+  //       .from( 'notion_rooms_data' )
+  //       .select( 'data' )
+  //       .order( 'created_at', { ascending: false } )
+  //       .eq( 'notion_table', idResultSupa.data[ 0 ].id )
+  //       .limit( 1 );
 
-      if (idResultSupa.data && idResultSupa.data.length > 0) {
-        const dataResultSupa = await supabase
-        .from( 'notion_rooms_data' )
-        .select( 'data' )
-        .order( 'created_at', { ascending: false } )
-        .eq( 'notion_table', idResultSupa.data[ 0 ].id )
-        .limit( 1 );
-
-        if (dataResultSupa.data && dataResultSupa.data.length > 0) {
-          const room = dataResultSupa.data[0].data;
-          const students = room[DGMD_PRIMARY_DATABASE][DGMD_BLOCKS];
-          const blocks = room[DGMD_BLOCKS];
-          for (const student of students) {
-            const studentId = student[DGMD_METADATA]['id'][DGMD_VALUE];
-            const studentBlocks = blocks.find(
-              block => block[NOTION_RESULT_BLOCK_KEY] == studentId );
-            const keys = Object.keys(studentBlocks);
-            if (keys.length > 0) {
-              const studentName = student[DGMD_PROPERTIES]['Name'][DGMD_VALUE];
-              frows.push( {
-                [USER_NAME]: studentName,
-                [USER_ID]: studentId
-              } );
-            }
-          }
+  //       if (dataResultSupa.data && dataResultSupa.data.length > 0) {
+  //         const room = dataResultSupa.data[0].data;
+  //         const students = room[DGMD_PRIMARY_DATABASE][DGMD_BLOCKS];
+  //         const blocks = room[DGMD_BLOCKS];
+  //         for (const student of students) {
+  //           const studentId = student[DGMD_METADATA]['id'][DGMD_VALUE];
+  //           const studentBlocks = blocks.find(
+  //             block => block[NOTION_RESULT_BLOCK_KEY] == studentId );
+  //           const keys = Object.keys(studentBlocks);
+  //           if (keys.length > 0) {
+  //             const studentName = student[DGMD_PROPERTIES]['Name'][DGMD_VALUE];
+  //             frows.push( {
+  //               [USER_NAME]: studentName,
+  //               [USER_ID]: studentId
+  //             } );
+  //           }
+  //         }
         
-          setGroupName( x => pGroupName );
-        }
-      }
-    }
-    catch ( e ) {
-      console.log( e );
-    }
+  //         setGroupName( x => pGroupName );
+  //       }
+  //     }
+  //   }
+  //   catch ( e ) {
+  //     console.log( e );
+  //   }
 
-    setRows( x => frows );
-  };
+  //   setRows( x => frows );
+  // };
 
-  useEffect( () => {
-    if (authSessionState === AUTH_STATE_SIGNED_OUT) {
-      router.push("/");
-    }
-  }, [
-    authSessionState,
-    authSession,
-    supabase
-  ] );
+  // useEffect( () => {
+  //   if (authSessionState === AUTH_STATE_SIGNED_OUT) {
+  //     router.push("/");
+  //   }
+  // }, [
+  //   authSessionState,
+  //   authSession,
+  //   supabase
+  // ] );
 
-  if (!supaUiReady || authSessionState !== AUTH_STATE_SIGNED_IN) {
-    return null;
-  }
+  // if (!supaUiReady || authSessionState !== AUTH_STATE_SIGNED_IN) {
+  //   return null;
+  // }
 
   return (
     <div className='flex-grow'>

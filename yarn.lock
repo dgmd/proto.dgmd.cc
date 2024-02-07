@@ -584,6 +584,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@supabase/auth-helpers-nextjs@npm:^0.9.0":
+  version: 0.9.0
+  resolution: "@supabase/auth-helpers-nextjs@npm:0.9.0"
+  dependencies:
+    "@supabase/auth-helpers-shared": "npm:0.6.3"
+    set-cookie-parser: "npm:^2.6.0"
+  peerDependencies:
+    "@supabase/supabase-js": ^2.19.0
+  checksum: 05faa68e3afcd467126134f0a2f3fd6d19592672b15c2685f5cf50300735823a8213ed8e646a8d2558e2e085a81af7e468091678376c71e9777f64c136fb9169
+  languageName: node
+  linkType: hard
+
+"@supabase/auth-helpers-shared@npm:0.6.3":
+  version: 0.6.3
+  resolution: "@supabase/auth-helpers-shared@npm:0.6.3"
+  dependencies:
+    jose: "npm:^4.14.4"
+  peerDependencies:
+    "@supabase/supabase-js": ^2.19.0
+  checksum: 8220ceba8e6418df9779464a43d4801bf1758764350335b3dc5d0ad88785e7b6b428b473a639b249a4f83f694e880fc2713b3b8d753df1cac9104dd7e5935f13
+  languageName: node
+  linkType: hard
+
 "@supabase/auth-ui-react@npm:^0.4.5":
   version: 0.4.7
   resolution: "@supabase/auth-ui-react@npm:0.4.7"
@@ -656,6 +679,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@supabase/ssr@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "@supabase/ssr@npm:0.1.0"
+  dependencies:
+    cookie: "npm:^0.5.0"
+    ramda: "npm:^0.29.0"
+  peerDependencies:
+    "@supabase/supabase-js": ^2.33.1
+  checksum: 1ae3459cbdd06af01475dbeca7375dc2d5ac5e6534244ddfcc1fbdaae90af766a86fdc7ed660b9f205a9802265f0f04baeaab8801fd4d7cf1e74dc5218325bae
+  languageName: node
+  linkType: hard
+
 "@supabase/storage-js@npm:^2.5.4":
   version: 2.5.5
   resolution: "@supabase/storage-js@npm:2.5.5"
@@ -665,7 +700,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@supabase/supabase-js@npm:^2.36.0":
+"@supabase/supabase-js@npm:^2.39.3":
   version: 2.39.3
   resolution: "@supabase/supabase-js@npm:2.39.3"
   dependencies:
@@ -1686,11 +1721,11 @@ __metadata:
 
 "constants.dgmd.cc@file:../constants.dgmd.cc::locator=dgmdcc_server%40workspace%3A.":
   version: 0.1.0
-  resolution: "constants.dgmd.cc@file:../constants.dgmd.cc#../constants.dgmd.cc::hash=bd8970&locator=dgmdcc_server%40workspace%3A."
+  resolution: "constants.dgmd.cc@file:../constants.dgmd.cc#../constants.dgmd.cc::hash=922e49&locator=dgmdcc_server%40workspace%3A."
   dependencies:
     react: "npm:^18"
     react-dom: "npm:^18"
-  checksum: 5e743f157923304753c6a3a49807658b122c9f8f53150f43f65e894e0afc7a40525f2fa84460228fec4fd4605ba5263ca8fd9209da1a34340283ad2ee1729b7e
+  checksum: d7ee7bd6fdcc718046fc80d5c582b2265a4914ffa8b61802c5985268b6163975684e86a76c161e57a9f0c26d088ec8f15c8b85caa52b8fe3ffa59713653baf94
   languageName: node
   linkType: hard
 
@@ -1698,6 +1733,13 @@ __metadata:
   version: 2.0.0
   resolution: "convert-source-map@npm:2.0.0"
   checksum: 8f2f7a27a1a011cc6cc88cc4da2d7d0cfa5ee0369508baae3d98c260bb3ac520691464e5bbe4ae7cdf09860c1d69ecc6f70c63c6e7c7f7e3f18ec08484dc7d9b
+  languageName: node
+  linkType: hard
+
+"cookie@npm:^0.5.0":
+  version: 0.5.0
+  resolution: "cookie@npm:0.5.0"
+  checksum: c01ca3ef8d7b8187bae434434582288681273b5a9ed27521d4d7f9f7928fe0c920df0decd9f9d3bbd2d14ac432b8c8cf42b98b3bdd5bfe0e6edddeebebe8b61d
   languageName: node
   linkType: hard
 
@@ -1896,9 +1938,11 @@ __metadata:
     "@headlessui/react": "npm:^1.7.17"
     "@heroicons/react": "npm:^2.0.18"
     "@notionhq/client": "npm:^2.2.12"
+    "@supabase/auth-helpers-nextjs": "npm:^0.9.0"
     "@supabase/auth-ui-react": "npm:^0.4.5"
     "@supabase/auth-ui-shared": "npm:^0.1.7"
-    "@supabase/supabase-js": "npm:^2.36.0"
+    "@supabase/ssr": "npm:^0.1.0"
+    "@supabase/supabase-js": "npm:^2.39.3"
     "@types/lodash-es": "npm:^4"
     "@types/node": "npm:20.11.5"
     "@types/react": "npm:18.2.21"
@@ -3967,6 +4011,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jose@npm:^4.14.4":
+  version: 4.15.4
+  resolution: "jose@npm:4.15.4"
+  checksum: ce8b29f84d6172a566b12b599dafa82f3bef0f16278bb76d562490ac1516fcc14017b05a39d20ffad25ed504f4996d4af4c9d3e0273d95b2d5559bf6d1112bc0
+  languageName: node
+  linkType: hard
+
 "js-tokens@npm:^3.0.0 || ^4.0.0, js-tokens@npm:^4.0.0":
   version: 4.0.0
   resolution: "js-tokens@npm:4.0.0"
@@ -5312,6 +5363,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ramda@npm:^0.29.0":
+  version: 0.29.1
+  resolution: "ramda@npm:0.29.1"
+  checksum: 5de53a07400959c1a704c366ec52b1b8cd9a444dc1f9cdf17d607e0b9eeaa38cbaea309d43e59dbd7f36731ba977a64d40092555c0e7c2d4a41e8e922239c0ba
+  languageName: node
+  linkType: hard
+
 "react-dom@npm:18.2.0, react-dom@npm:^18, react-dom@npm:^18.2.0":
   version: 18.2.0
   resolution: "react-dom@npm:18.2.0"
@@ -5674,6 +5732,13 @@ __metadata:
   version: 2.0.0
   resolution: "set-blocking@npm:2.0.0"
   checksum: 9f8c1b2d800800d0b589de1477c753492de5c1548d4ade52f57f1d1f5e04af5481554d75ce5e5c43d4004b80a3eb714398d6907027dc0534177b7539119f4454
+  languageName: node
+  linkType: hard
+
+"set-cookie-parser@npm:^2.6.0":
+  version: 2.6.0
+  resolution: "set-cookie-parser@npm:2.6.0"
+  checksum: 739da029f0e56806a103fcd5501d9c475e19e77bd8274192d7ae5c374ae714a82bba9a7ac00b0330a18227c5644b08df9e442240527be578f5a6030f9bb2bb80
   languageName: node
   linkType: hard
 

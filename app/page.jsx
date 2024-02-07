@@ -1,11 +1,11 @@
-import 'app/globals.css';
+"use server";
 
 import Link from 'next/link';
 import {
   NotionToFramerLogo
 } from '/components/logo.jsx';
 
-export default function Hero() {
+export default async function Hero() {
 
   return (
     <div className="bg-white">
@@ -90,38 +90,36 @@ export default function Hero() {
 };
 
 const getCodeSample = () => {
-
   return (
 
-<pre className="bg-gray-900 p-4 rounded-md shadow-inner overflow-x-auto text-yellow-400">
-<code>{'{'}
-    <span className="text-green-400">"comic_books": [</span>
-    <br/>
-        {'{'}
+    <pre className="bg-gray-900 p-4 rounded-md shadow-inner overflow-x-auto text-yellow-400">
+    <code>{'{'}
+        <span className="text-green-400">"comic_books": [</span>
         <br/>
-            <span className="text-blue-400">"title":</span> <span className="text-purple-400">"Spider-Man: Into the Spider-Verse",</span>
+            {'{'}
             <br/>
-            <span className="text-blue-400">"year":</span> <span className="text-teal-400">2018,</span>
+                <span className="text-blue-400">"title":</span> <span className="text-purple-400">"Spider-Man: Into the Spider-Verse",</span>
+                <br/>
+                <span className="text-blue-400">"year":</span> <span className="text-teal-400">2018,</span>
+                <br/>
+                <span className="text-blue-400">"authors":</span> [<span className="text-purple-400">"Phil Lord", "Rodney Rothman"</span>],
+                <br/>
+                <span className="text-blue-400">"characters":</span> [<span className="text-purple-400">"Miles Morales", "Peter Parker", "Gwen Stacy"</span>],
+                <br/>
+                <span className="text-blue-400">"rating":</span> <span className="text-teal-400">9.0</span>
+                <br/>
+            {`}`},
             <br/>
-            <span className="text-blue-400">"authors":</span> [<span className="text-purple-400">"Phil Lord", "Rodney Rothman"</span>],
-            <br/>
-            <span className="text-blue-400">"characters":</span> [<span className="text-purple-400">"Miles Morales", "Peter Parker", "Gwen Stacy"</span>],
-            <br/>
-            <span className="text-blue-400">"rating":</span> <span className="text-teal-400">9.0</span>
-            <br/>
-        {`}`},
-        <br/>
-        {`{`}
-            <br/>
-            <span className="text-blue-400">"title":</span> <span className="text-purple-400">"Batman: The Dark Knight Returns",</span>
-            <br/>
-            <span className="text-blue-400">"year":</span> <span className="text-teal-400">1986,</span>
-            <br/>
-      ...
-</code>
-</pre>
+            {`{`}
+                <br/>
+                <span className="text-blue-400">"title":</span> <span className="text-purple-400">"Batman: The Dark Knight Returns",</span>
+                <br/>
+                <span className="text-blue-400">"year":</span> <span className="text-teal-400">1986,</span>
+                <br/>
+          ...
+    </code>
+    </pre>
 
   );
-
 };
 

@@ -1,8 +1,12 @@
-export default function RootLayout({ children }) {
+"use server"
+
+import 'app/globals.css';
+
+export default async function RootLayout({ children }) {
  return (
     <html lang="en">
       <body>
-        {children} 
+        { children } 
       </body>
     </html>
   );

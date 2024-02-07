@@ -1,7 +1,5 @@
 "use client"
 
-import 'app/globals.css';
-
 import {
   buttonClassNames
 } from 'components/look.js';
@@ -21,7 +19,8 @@ const Search = () => {
 
   const cbChangeStudentCode = useCallback( event => {
     setStudentCode( x => event.target.value.trim() );
-  }, [ ] );
+  }, [
+  ] );
 
   const cbSignIn = useCallback( event => {
     const lastHyphenIndex = studentCode.lastIndexOf('-');

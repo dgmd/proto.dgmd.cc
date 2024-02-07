@@ -1,5 +1,6 @@
 
 export const NOTION_RESULTS = 'results';
+export const NOTION_RESULT = 'result';
 export const NOTION_PROPERTIES = 'properties';
 
 export const NOTION_DATA_TYPE_NUMBER = 'number';

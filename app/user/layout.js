@@ -1,34 +1,48 @@
-"use client"
-
-import 'app/globals.css';
+"use server"
 
 import {
   Header
 } from "components/header.jsx";
 import {
-  usePathname
+  cookies
+} from 'next/headers';
+import {
+  redirect
 } from 'next/navigation';
 
-export default function Layout({ 
-  children,
-  params
- }) {
+import {
+  createClient
+} from '../../utils/supabase/server.js';
+import {
+  AuthContextProvider
+} from '../authContextProvider.js';
+import {
+  getAuthUser
+} from '../authContextUtils.js';
 
-  const pathname = usePathname();
+export default async function Layout({ children }) {
+
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const { data, error } = await supabase.auth.getUser();
+
+  if (getAuthUser(data)) {
+    console.log( 'User is authenticated' );
+  }
 
   return (
     <div
-      className="min-h-screen flex flex-col"
+      className={ `min-h-screen flex flex-col` }
     >
-      <Header
-        showUser={ !pathname.endsWith('signin') } 
-        showAdmin={ !pathname.endsWith('user') }
-      />
-
+      <AuthContextProvider
+        auth={ data }
+      >
+        <Header/>
         <div 
           className="flex-grow w-100 h-100 flex items-stretch justify-center items-center">
           { children }
         </div>
+      </AuthContextProvider>
     </div>
   );
 };

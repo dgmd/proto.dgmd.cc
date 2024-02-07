@@ -1,42 +1,49 @@
+"use client"
+
 import {
   Menu,
   Transition
-} from '@headlessui/react'
+} from '@headlessui/react';
 import {
   UserCircleIcon
 } from '@heroicons/react/20/solid';
 import {
-  NotionToFramerLogo
-} from '/components/logo.jsx';
-import {
   buttonClassNames
 } from 'components/look.js';
 import {
-  AUTH_STATE_SIGNED_IN,
-  AUTH_STATE_SIGNED_OUT,
-  getUserEmail,
-  useAuthentication
-} from 'hooks/AuthenticationHook.js';
+  isNil
+} from 'lodash-es';
 import Link from 'next/link';
 import {
-  Fragment
-} from 'react'
+  Fragment,
+  useContext
+} from 'react';
 import {
   classNames
 } from 'utils/jsx.js';
+import {
+  NotionToFramerLogo
+} from '/components/logo.jsx';
 
-export const Header = (props) => {
+import {
+  AuthContext
+} from '../app/authContextProvider.js';
+import {
+  getAuthUser
+} from '../app/authContextUtils.js';
+import {
+  useServerSignOut
+} from '../utils/supabase/client.js';
 
-  const pShowUser = props.showUser;
-  const pShowAdmin = props.showAdmin;
+export const Header = () => {
 
-  const [    
-    authSessionState,
-    authSession,
-    authEvent,
-    supabase,
-    supaUIMaybeReady
-  ] = useAuthentication();
+  const auth = useContext(AuthContext);
+  const user = getAuthUser(auth);
+  const validUser = !isNil(user);
+  const showUser = !validUser;
+  const showAdmin = validUser;
+
+  const handleSignOut = useServerSignOut();
 
   return (
     <div className="bg-white max-h-20 z-10">
@@ -54,10 +61,10 @@ export const Header = (props) => {
         <div className="flex flex-1 items-center justify-end gap-x-6">
 
         {
-        (pShowUser && authSessionState === AUTH_STATE_SIGNED_OUT) && (
+          showUser && (
 
           <Link
-            href="/user/signin">
+            href="/user/sign-in">
 
             <button
               type="button"
@@ -77,7 +84,7 @@ export const Header = (props) => {
         )}
 
         {
-        (pShowUser && authSessionState === AUTH_STATE_SIGNED_IN) && (
+          showAdmin && (
 
           <Menu as="div" className="relative inline-block text-left">
             <Menu.Button
@@ -89,7 +96,7 @@ export const Header = (props) => {
                 aria-hidden="true"
               />
               {
-                <span>{ getUserEmail(authSession) }</span>
+                <span>{ user.email }</span>
               }
             </Menu.Button>
 
@@ -108,7 +115,7 @@ export const Header = (props) => {
               <div className="py-1">
                 
                 {
-                pShowAdmin &&
+                showAdmin &&
                 <Menu.Item>
                   {({ active }) => (
                     <Link
@@ -131,7 +138,7 @@ export const Header = (props) => {
                         active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
                         'block w-full px-4 py-2 text-left text-sm'
                       )}
-                      onClick={ e => supabase.auth.signOut() }
+                      onClick={ handleSignOut }
                     >
                       Sign out
                     </button>

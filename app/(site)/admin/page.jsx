@@ -1,6 +1,9 @@
 "use server"
 
 import {
+  AdminTable
+} from '@/components/admin-table.jsx';
+import {
   getAuthServerCache
 } from '@/utils/auth/authServerCache.js';
 import {
@@ -18,7 +21,9 @@ async function AdminPage( ) {
     return null;
   }
 
-  return <h1>signed in admin page</h1>;
+  return (
+    <AdminTable/>
+  );
 }
 
 export default AdminPage;

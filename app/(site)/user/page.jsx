@@ -15,6 +15,7 @@ async function UserPage( ) {
   const auth = await getAuthServerCache();
   if (!isAuthUser(auth)) {
     redirect('/user/sign-in');
+    return null;
   }
 
   return <h1>signed in user page</h1>;

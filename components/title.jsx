@@ -20,7 +20,7 @@ export const Title = props => {
         }
         { pChildren }
       </div>
-     </div>
-</div>
+    </div>
+  </div>
   );
 };

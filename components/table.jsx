@@ -94,7 +94,6 @@ export const Table = props => {
   );
 };
 
-
 const getColWidthTailwind = header => {
 
   const headerHide = header[TABLE_HEADER_HIDE];

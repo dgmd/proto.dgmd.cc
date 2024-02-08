@@ -16,9 +16,6 @@ import {
   classNames
 } from '@/utils/jsx.js';
 import {
-  getPath
-} from '@/utils/pathUtils.js';
-import {
   useServerSignOut
 } from '@/utils/supabase/client.js';
 import {
@@ -29,7 +26,6 @@ import {
   UserCircleIcon
 } from '@heroicons/react/20/solid';
 import {
-  endsWith,
   isNil
 } from 'lodash-es';
 import Link from 'next/link';

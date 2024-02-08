@@ -1,6 +1,10 @@
 "use client"
 
 import {
+  buttonCancelClassNames,
+  buttonClassNames
+} from '@/components/look.js';
+import {
   Dialog,
   Transition
 } from '@headlessui/react';
@@ -11,10 +15,6 @@ import {
 import {
   Fragment,
 } from 'react';
-import {
-  buttonCancelClassNames,
-  buttonClassNames
-} from '/components/look.js';
 
 export const SidePanel = props => {
 

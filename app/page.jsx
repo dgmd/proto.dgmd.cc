@@ -3,9 +3,17 @@
 import {
   NotionToFramerLogo
 } from '@/components/logo.jsx';
+import {
+  getAuthServerCache
+} from '@/utils/auth/authServerCache';
+import {
+  isAuthUser
+} from '@/utils/auth/authUtils';
 import Link from 'next/link';
 
 export default async function Hero() {
+
+  const auth = await getAuthServerCache();
 
   return (
     <div className="bg-white">
@@ -36,7 +44,7 @@ export default async function Hero() {
                   }
 
                   <Link 
-                    href="/user" 
+                    href={ isAuthUser(auth) ? '/user' : '/user/sign-in' } 
                     className="text-sm font-semibold leading-6 text-gray-900"
                   >
                     Admin Dashboard <span aria-hidden="true">→</span>

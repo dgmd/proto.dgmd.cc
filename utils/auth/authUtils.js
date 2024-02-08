@@ -7,8 +7,14 @@ import {
 } from './authKeys.js';
 
 export const getAuthUser = (auth) => {
-  if (auth && auth[KEY_AUTH_CONTEXT_USER]) {
-    return auth[KEY_AUTH_CONTEXT_USER].user;
+  if (auth) {
+    const ctx = auth[KEY_AUTH_CONTEXT_USER];
+    if (ctx) {
+      const data = ctx['data'];
+      if (data) {
+        return data['user'];
+      }
+    }
   }
   return null;
 };

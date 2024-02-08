@@ -10,11 +10,11 @@ import {
 } from '@/utils/auth/authServerCache.js';
 
 export default async function Page({ children }) {
-  const {error, data} = await getAuthServerCache();
+  const auth = await getAuthServerCache();
 
   return (
     <AuthContextProvider
-      auth={ data }
+      auth={ auth }
     >
       <html lang="en">
         <body>

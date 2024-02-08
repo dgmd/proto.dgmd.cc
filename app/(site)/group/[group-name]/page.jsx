@@ -3,6 +3,12 @@
 import 'app/globals.css';
 
 import {
+  cellClassNames
+} from '@/components/look.js';
+import {
+  Title
+} from '@/components/title.jsx';
+import {
   ClipboardButton
 } from 'components/clipboard-button.jsx';
 import {
@@ -19,12 +25,6 @@ import {
 import {
   useState
 } from 'react';
-import {
-  cellClassNames
-} from '/components/look.js';
-import {
-  Title
-} from '/components/title.jsx';
 
 const USER_ID = 'USER_ID';
 const USER_NAME = 'USER_NAME';

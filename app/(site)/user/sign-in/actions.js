@@ -1,6 +1,9 @@
 'use server'
 
 import {
+  createClient
+} from '@/utils/supabase/server.js';
+import {
   revalidatePath
 } from 'next/cache';
 import {
@@ -10,11 +13,7 @@ import {
   redirect
 } from 'next/navigation';
 
-import {
-  createClient
-} from '../../../utils/supabase/server.js';
-
-export async function login(formData) {
+export async function signInAction( formData ) {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
 
@@ -32,9 +31,9 @@ export async function login(formData) {
 
   revalidatePath('/', 'layout');
   redirect('/');
-}
+};
 
-export async function signup(formData) {
+export async function signUpAction( formData ) {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
 
@@ -53,4 +52,4 @@ export async function signup(formData) {
 
   revalidatePath('/', 'layout');
   redirect('/');
-}
+};

@@ -2,7 +2,7 @@
 
 import {
   buttonClassNames
-} from 'components/look.js';
+} from '@/components/look.js';
 import {
   useRouter
 } from "next/navigation";
@@ -11,7 +11,7 @@ import {
   useState
 } from 'react';
 
-const Search = () => {
+const SearchPage = () => {
 
   const router = useRouter();
 
@@ -72,4 +72,4 @@ const Search = () => {
 
 };
 
-export default Search;
+export default SearchPage;

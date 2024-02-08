@@ -6,7 +6,7 @@ import {
 
 import {
   KEY_AUTH_CONTEXT_USER
-} from './authContextKeys.js';
+} from './authKeys.js';
 
 export const AuthContext = createContext({
   [KEY_AUTH_CONTEXT_USER]: null
@@ -15,7 +15,7 @@ export const AuthContext = createContext({
 export const AuthContextProvider = ({ children, auth }) => {
   return (
     <AuthContext.Provider
-      value={ { [KEY_AUTH_CONTEXT_USER]: auth } }
+      value={ auth }
     >
       { children }
     </AuthContext.Provider>

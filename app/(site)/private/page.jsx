@@ -1,15 +1,14 @@
 "use server"
 
 import {
+  createClient
+} from '@/utils/supabase/server.js';
+import {
   cookies
 } from 'next/headers';
 import {
   redirect
 } from 'next/navigation';
-
-import {
-  createClient
-} from '../../utils/supabase/server.js';
 
 export default async function PrivatePage() {
   const cookieStore = cookies();

@@ -3,6 +3,13 @@
 import 'app/globals.css';
 
 import {
+  buttonClassNames,
+  cellClassNames
+} from '@/components/look.js';
+import {
+  getTextFromReadableStream
+} from '@/utils/network.js';
+import {
   ArrowPathIcon
 } from '@heroicons/react/20/solid';
 import {
@@ -49,13 +56,6 @@ import {
   useRef,
   useState
 } from "react";
-import {
-  getTextFromReadableStream
-} from 'utils/network.js';
-import {
-  buttonClassNames,
-  cellClassNames
-} from '/components/look.js';
 
 const PROTO_TYPE = 'PROTO_TYPE';
 const PROTO_VAL = 'PROTO_VAL';

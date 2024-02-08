@@ -1,9 +1,9 @@
 "use server";
 
-import Link from 'next/link';
 import {
   NotionToFramerLogo
-} from '/components/logo.jsx';
+} from '@/components/logo.jsx';
+import Link from 'next/link';
 
 export default async function Hero() {
 

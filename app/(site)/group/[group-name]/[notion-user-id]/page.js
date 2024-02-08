@@ -3,6 +3,10 @@
 import 'app/globals.css';
 
 import {
+  buttonClassNames,
+  cellClassNames
+} from '@/components/look.js';
+import {
   ArrowPathIcon
 } from '@heroicons/react/20/solid';
 import {
@@ -48,10 +52,6 @@ import {
   useRef,
   useState
 } from "react";
-import {
-  buttonClassNames,
-  cellClassNames
-} from '/components/look.js';
 
 const PROJECT_TYPE = 'PROJECT_TYPE';
 const PROJECT_VAL = 'PROJECT_VAL';

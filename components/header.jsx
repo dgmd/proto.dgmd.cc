@@ -1,6 +1,27 @@
 "use client"
 
 import {
+  NotionToFramerLogo
+} from '@/components/logo.jsx';
+import {
+  buttonClassNames
+} from '@/components/look.js';
+import {
+  AuthContext
+} from '@/utils/auth/authContextProvider.js';
+import {
+  getAuthUser
+} from '@/utils/auth/authUtils.js';
+import {
+  classNames
+} from '@/utils/jsx.js';
+import {
+  getPath
+} from '@/utils/pathUtils.js';
+import {
+  useServerSignOut
+} from '@/utils/supabase/client.js';
+import {
   Menu,
   Transition
 } from '@headlessui/react';
@@ -8,39 +29,25 @@ import {
   UserCircleIcon
 } from '@heroicons/react/20/solid';
 import {
-  buttonClassNames
-} from 'components/look.js';
-import {
+  endsWith,
   isNil
 } from 'lodash-es';
 import Link from 'next/link';
 import {
+  usePathname
+} from "next/navigation";
+import {
   Fragment,
   useContext
 } from 'react';
-import {
-  classNames
-} from 'utils/jsx.js';
-import {
-  NotionToFramerLogo
-} from '/components/logo.jsx';
-
-import {
-  AuthContext
-} from '../app/authContextProvider.js';
-import {
-  getAuthUser
-} from '../app/authContextUtils.js';
-import {
-  useServerSignOut
-} from '../utils/supabase/client.js';
 
 export const Header = () => {
 
   const auth = useContext(AuthContext);
   const user = getAuthUser(auth);
   const validUser = !isNil(user);
-  const showUser = !validUser;
+  const urlPath = usePathname();
+  const showUser = !validUser && !urlPath.endsWith('/user/sign-in');
   const showAdmin = validUser;
 
   const handleSignOut = useServerSignOut();

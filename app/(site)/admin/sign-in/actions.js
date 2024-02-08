@@ -34,7 +34,7 @@ export async function signInAction( formData ) {
   }
 
   revalidatePath('/', 'layout');
-  redirect('/user');
+  redirect('/admin');
 };
 
 // export async function signUpAction( formData ) {

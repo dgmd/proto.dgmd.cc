@@ -25,7 +25,7 @@ export default async function UserSignInPage() {
 
   const user = await getAuthServerCache();
   if (isAuthUser(user)) {
-    redirect('/user');
+    redirect('/admin');
   }
 
   return (

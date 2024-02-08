@@ -44,7 +44,7 @@ export default async function Hero() {
                   }
 
                   <Link 
-                    href={ isAuthUser(auth) ? '/user' : '/user/sign-in' } 
+                    href={ isAuthUser(auth) ? '/admin' : '/admin/sign-in' } 
                     className="text-sm font-semibold leading-6 text-gray-900"
                   >
                     Admin Dashboard <span aria-hidden="true">→</span>

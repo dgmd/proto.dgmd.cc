@@ -10,15 +10,15 @@ import {
   redirect
 } from 'next/navigation';
 
-async function UserPage( ) {
+async function AdminPage( ) {
 
   const auth = await getAuthServerCache();
   if (!isAuthUser(auth)) {
-    redirect('/user/sign-in');
+    redirect('/admin/sign-in');
     return null;
   }
 
-  return <h1>signed in user page</h1>;
+  return <h1>signed in admin page</h1>;
 }
 
-export default UserPage;
+export default AdminPage;

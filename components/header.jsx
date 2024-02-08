@@ -43,7 +43,7 @@ export const Header = () => {
   const user = getAuthUser(auth);
   const validUser = !isNil(user);
   const urlPath = usePathname();
-  const showUser = !validUser && !urlPath.endsWith('/user/sign-in');
+  const showUser = !validUser && !urlPath.endsWith('/admin/sign-in');
   const showAdmin = validUser;
 
   const handleSignOut = useServerSignOut();
@@ -67,7 +67,7 @@ export const Header = () => {
           showUser && (
 
           <Link
-            href="/user/sign-in">
+            href="/admin/sign-in">
 
             <button
               type="button"
@@ -122,7 +122,7 @@ export const Header = () => {
                 <Menu.Item>
                   {({ active }) => (
                     <Link
-                      href='/user'
+                      href='/admin'
                       className= { classNames(
                         active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
                         'block px-4 py-2 text-sm'

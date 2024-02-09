@@ -1,4 +1,4 @@
-export const loadPageBlocks = 
+export const getNotionPageBlocks = 
   async ( nClient, allDbResults ) => {
   const notionPagePromises = [];
   allDbResults.forEach( dbResult => {
@@ -56,4 +56,54 @@ const getNotionPageBlockPromise =
   }
 
   return p;
+};
+
+
+const getNotionBlockKeyedDatabases = 
+  (blockDatas, collector) => {
+  if (NOTION_RESULTS in blockDatas) {
+    const somedata = blockDatas[NOTION_RESULTS].reduce( (acc, cur) => {
+      const propertyType = cur[NOTION_KEY_TYPE];
+      const propertyVal = cur[propertyType];
+      const gotPropertyVal = !isNil(propertyVal);
+      const id = cur[NOTION_KEY_ID];
+      const idSansHyphens = removeHyphens( id );
+
+      if (gotPropertyVal) {
+        const propertyValTitle = propertyVal[NOTION_DATA_TYPE_TITLE];
+        if (propertyType === NOTION_DATA_TYPE_CHILD_DATABASE) {
+          const obj = {
+            [DGMD_PAGE_ID]: idSansHyphens,
+            [DGMD_VALUE]: propertyValTitle
+          };
+          acc[NOTION_RESULT_BLOCK_DBS].push( obj );
+        }
+        else if (
+          propertyType === NOTION_DATA_TYPE_COLUMN_LIST ||
+          propertyType === NOTION_DATA_TYPE_COLUMN) {
+          acc[NOTION_RESULT_COLUMN_LISTS].push( idSansHyphens );
+        }
+        else if (
+          propertyType === 'heading_3' ||
+          propertyType === 'heading_2' ||
+          propertyType === 'heading_1' ||
+          propertyType === 'paragraph' ||
+          propertyType === 'to_do' ||
+          propertyType === 'bulleted_list_item' ||
+          propertyType === 'divider' ||
+          propertyType === 'quote' ||
+          propertyType === 'toggle' ||
+          propertyType === 'child_page'
+        ) {
+        }
+        else {
+          // console.log( 'what is it?', propertyType, propertyVal );
+        }   
+      }
+
+      return acc;
+    }, collector );
+    return somedata;
+  }
+  return collector;
 };

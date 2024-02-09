@@ -1,4 +1,10 @@
 import {
+  getApiCoriHeaders
+} from '@/utils/coriHeaders.js';
+import {
+  removeHyphens
+} from '@/utils/strings.js';
+import {
   Client
 } from "@notionhq/client";
 import {
@@ -64,12 +70,6 @@ import {
 } from 'next/server';
 
 import {
-  getApiCoriHeaders
-} from '../../../utils/coriHeaders.js';
-import {
-  removeHyphens
-} from '../../../utils/strings.js';
-import {
   NOTION_KEY_DATABASE_ID,
   NOTION_KEY_DB_ID,
   NOTION_KEY_ID,
@@ -87,7 +87,7 @@ import {
 
 const SECRET_ID = 'SECRET_ID';
 
-export async function GET( request, response ) {
+export async function GET( request ) {
 
   const params = request.nextUrl.searchParams;
   const paramAction = params.get( CRUD_PARAM_ACTION );

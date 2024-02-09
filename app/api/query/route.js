@@ -55,7 +55,6 @@ import {
   DGMD_TIME_ZONE,
   DGMD_TYPE,
   DGMD_VALUE,
-  QUERY_PARAM_BLOCKS_REQUEST,
   QUERY_PARAM_DATABASE,
   QUERY_PARAM_PAGE_CURSOR_ID_REQUEST,
   QUERY_PARAM_PAGE_CURSOR_TYPE_REQUEST,
@@ -120,8 +119,11 @@ import {
   NOTION_RESULTS,
 } from '../notion_constants.js';
 import {
+  NOTION_RESULT_BLOCK_DBS,
+  NOTION_RESULT_BLOCK_KEY,
+  NOTION_RESULT_COLUMN_LISTS,
   NOTION_WRANGLE_KEY_DATA_DB_MAP,
-  NOTION_WRANGLE_KEY_RELATIONS_MAP
+  NOTION_WRANGLE_KEY_RELATIONS_MAP,
 } from '../notion_wrangler_constants.js';
 
 const QUERY_PROPERTIES = 'QUERY_PROPERTIES';
@@ -129,8 +131,6 @@ const QUERY_PAGES = 'QUERY_PAGES';
 
 const SECRET_ID = 'SECRET_ID';
 const DATABASE_ID_REQUEST = 'DATABASE_ID_REQUEST';
-const RELATIONS_REQUEST = 'RELATIONS_REQUEST';
-const BLOCKS_REQUEST = 'BLOCKS_REQUEST';
 const PAGE_CURSOR_REQUEST = 'PAGE_CURSOR_REQUEST';
 const PAGE_CURSOR_TYPE_REQUEST = 'PAGE_CURSOR_TYPE_REQUEST';
 const PAGE_CURSOR_ID_REQUEST = 'PAGE_CURSOR_ID_REQUEST';
@@ -162,8 +162,6 @@ export async function GET( request ) {
   };
 
   const requests = {
-    [RELATIONS_REQUEST]: true,
-    [BLOCKS_REQUEST]: false,
     [DATABASE_ID_REQUEST]: null,
     [PAGE_CURSOR_REQUEST]: {
       [PAGE_CURSOR_TYPE_REQUEST]: PAGE_CURSOR_TYPE_DEFAULT,
@@ -192,11 +190,6 @@ export async function GET( request ) {
   if (params.has(QUERY_PARAM_PAGE_CURSOR_ID_REQUEST)) {
     const pcid = params.get(QUERY_PARAM_PAGE_CURSOR_ID_REQUEST);
     requests[PAGE_CURSOR_REQUEST][PAGE_CURSOR_ID_REQUEST] = pcid;
-  }
-
-  if (params.has(QUERY_PARAM_BLOCKS_REQUEST)) {
-    const blocksReq = params.get(QUERY_PARAM_BLOCKS_REQUEST);
-    requests[BLOCKS_REQUEST] = deriveBoolean(blocksReq);
   }
 
   try {
@@ -261,11 +254,11 @@ export async function GET( request ) {
       [DGMD_RELATION_DATABASES]: rDbResults
     };
 
-    if (requests[BLOCKS_REQUEST]) {
-      const allDbResults = [nDbResult, ...rDbResults];
-      const blocks = await loadBlocks( nClient, allDbResults );
-      orgDbResult[DGMD_BLOCKS] = blocks;
-    }
+    // if (requests[BLOCKS_REQUEST]) {
+    //   const allDbResults = [nDbResult, ...rDbResults];
+    //   const blocks = await loadBlocks( nClient, allDbResults );
+    //   orgDbResult[DGMD_BLOCKS] = blocks;
+    // }
 
     return createResponse( {
       [QUERY_RESPONSE_KEY_SUCCESS]: true,
@@ -878,51 +871,6 @@ const getIcon = icon => {
   };
 };
 
-const getNotionPageBlockPromise = 
-  async(nClient, blockId, collector) => {
-  const p = new Promise((resolve, reject) => {
-    nClient.blocks.children.list( { 
-      block_id: blockId,
-      page_size: 50
-    } )
-    .then( result => {
-      const keyedDatabases = getNotionBlockKeyedDatabases( result, collector );
-
-      resolve( {
-        [NOTION_RESULT_BLOCK_KEY]: blockId,
-        [NOTION_RESULT_BLOCK_DBS]: keyedDatabases[NOTION_RESULT_BLOCK_DBS],
-        [NOTION_RESULT_COLUMN_LISTS]: keyedDatabases[NOTION_RESULT_COLUMN_LISTS]
-      } );
-    })
-    .catch( error => {
-      reject(error);
-    });
-  });
-  let results = await p;
-  const clList = results[NOTION_RESULT_COLUMN_LISTS];
-  for (var clListIdx = clList.length-1; clListIdx >= 0; clListIdx--) {
-    const cListItemId = clList[clListIdx];
-    clList.splice( clListIdx, 1 );
-    getNotionPageBlockPromise( nClient, cListItemId, collector );
-  }
-
-  return p;
-};
-
-const deriveBoolean = 
-  ( value ) => {
-  const str = String( value );
-  const strLowTrim = str.toLowerCase().trim();
-  return [
-    'true',
-    '1',
-    'yes',
-    'y',
-    'on'
-  ].includes( strLowTrim );
-};
-
-
 const getDbMeta = 
   (primary, dbId, dbPgCursor) => {
   const obj = {
@@ -963,35 +911,6 @@ const notionUpdateDbMeta =
   catch (e) {
     console.log( 'primary meta collection error', e );
   }
-};
-
-const loadBlocks = 
-  async ( nClient, allDbResults ) => {
-  const notionPagePromises = [];
-  allDbResults.forEach( dbResult => {
-    const qProps = dbResult[QUERY_PROPERTIES];
-    qProps.forEach( qProp => {
-      const qPropId = qProp[DGMD_METADATA][DGMD_BLOCK_TYPE_ID][DGMD_VALUE];
-      const blocksCollector = {
-        [NOTION_RESULT_BLOCK_DBS]: [],
-        [NOTION_RESULT_COLUMN_LISTS]: []
-      };
-      const blocksResult = getNotionPageBlockPromise( nClient, qPropId, blocksCollector );
-      notionPagePromises.push( blocksResult );
-    });
-  });
-  const notionBlockResults = await Promise.all( notionPagePromises );
-  const notionBlockResultsIndexed = notionBlockResults.reduce((result, item) => {
-    if (NOTION_RESULT_BLOCK_KEY in item && NOTION_RESULT_BLOCK_DBS in item) {
-      result.push( {
-        [NOTION_RESULT_BLOCK_KEY]: item[NOTION_RESULT_BLOCK_KEY],
-        [NOTION_RESULT_BLOCK_DBS]: item[NOTION_RESULT_BLOCK_DBS]
-      } );
-    }
-    return result;
-  }, [] );
-  
-  return notionBlockResultsIndexed;
 };
 
 const convertDateFromNotionToDGMD = dateObj => {

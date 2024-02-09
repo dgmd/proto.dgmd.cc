@@ -1,6 +1,15 @@
 export const maxDuration = 300;
 
 import {
+  getApiCoriHeaders
+} from '@/utils/coriHeaders.js';
+import {
+  areAllMapSetsEmpty
+} from '@/utils/lists.js';
+import {
+  removeHyphens
+} from '@/utils/strings.js';
+import {
   Client
 } from "@notionhq/client";
 import {
@@ -64,15 +73,6 @@ import {
   NextResponse
 } from 'next/server';
 
-import {
-  getApiCoriHeaders
-} from '../../../utils/coriHeaders.js';
-import {
-  areAllMapSetsEmpty
-} from '../../../utils/lists.js';
-import {
-  removeHyphens
-} from '../../../utils/strings.js';
 import {
   NOTION_DATA_TYPE_CHECKBOX,
   NOTION_DATA_TYPE_CHILD_DATABASE,
@@ -155,7 +155,7 @@ const NOTION_WRANGLE_LOCAL_LOADED_DB_ID = 'NOTION_WRANGLE_LOCAL_LOADED_DB_ID';
 const NOTION_WRANGLE_LOCAL_NDBP_COLLECTOR = 'NOTION_WRANGLE_LOCAL_NDBP_COLLECTOR';
 const NOTION_WRANGLE_LOCAL_NDBP_NEXT = 'NOTION_WRANGLE_LOCAL_NDBP_NEXT';
 
-export async function GET( request, response ) {
+export async function GET( request ) {
 
   const secrets = {
     [SECRET_ID]: process.env.NOTION_SECRET
@@ -193,7 +193,6 @@ export async function GET( request, response ) {
     const pcid = params.get(QUERY_PARAM_PAGE_CURSOR_ID_REQUEST);
     requests[PAGE_CURSOR_REQUEST][PAGE_CURSOR_ID_REQUEST] = pcid;
   }
-  requests[PAGE_CURSOR_REQUEST][PAGE_CURSOR_ID_REQUEST] );
 
   if (params.has(QUERY_PARAM_BLOCKS_REQUEST)) {
     const blocksReq = params.get(QUERY_PARAM_BLOCKS_REQUEST);

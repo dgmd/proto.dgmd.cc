@@ -2,7 +2,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/api/rosters/*": ["app/api/rosters/*"],
+      "@/api/*": ["app/api/*"],
       "@/utils/*": ["utils/*"],
       "@/components/*": ["components/*"],
     }

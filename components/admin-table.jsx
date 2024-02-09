@@ -1,7 +1,8 @@
 "use client"
 
 import {
-  KEY_ROSTER_AUTH
+  KEY_ROSTER_AUTH,
+  PARAM_DB_ID
 } from '@/api/rosters/keys.js';
 import {
   ArrowPathIcon,
@@ -56,8 +57,16 @@ export const AdminTable = ( ) => {
   const [addingNotionRoom, setAddingNotionRoom] = useState( x => false );
   const rAddingNotionRoom = useRef( addingNotionRoom );
 
+  const [headers, setHeaders] = useState( x => [ 
+    { [TABLE_HEADER_NAME]: 'name', [TABLE_HEADER_HIDE]: null },
+    { [TABLE_HEADER_NAME]: 'dbId', [TABLE_HEADER_HIDE]: TABLE_COL_HIDE_MD },
+    { [TABLE_HEADER_NAME]: 'url', [TABLE_HEADER_HIDE]: null },
+    { [TABLE_HEADER_NAME]: 'update', [TABLE_HEADER_HIDE]: null },
+    { [TABLE_HEADER_NAME]: 'actions', [TABLE_HEADER_HIDE]: TABLE_COL_HIDE_SM },
+  ] );
+
   useEffect( () => {
-    const load = async() => {
+    const get = async() => {
       const response = await fetch( '/api/rosters/', {
         method: 'GET'
       });
@@ -67,7 +76,7 @@ export const AdminTable = ( ) => {
         return;
       }
     };
-    load();
+    get();
   }, [
   ] );
 
@@ -80,32 +89,28 @@ export const AdminTable = ( ) => {
     const v = e.target.value;
     setDbId( s => v );
     setDbIdValid( s => v.length > 0 );
-
     setAddRosterError( x => false );
   }, [
   ] );
-
-  const [headers, setHeaders] = useState( x => [ 
-    { [TABLE_HEADER_NAME]: 'name', [TABLE_HEADER_HIDE]: null },
-    { [TABLE_HEADER_NAME]: 'dbId', [TABLE_HEADER_HIDE]: TABLE_COL_HIDE_MD },
-    { [TABLE_HEADER_NAME]: 'url', [TABLE_HEADER_HIDE]: null },
-    { [TABLE_HEADER_NAME]: 'update', [TABLE_HEADER_HIDE]: null },
-    { [TABLE_HEADER_NAME]: 'actions', [TABLE_HEADER_HIDE]: TABLE_COL_HIDE_SM },
-  ] );
-
   
   const cbAddNotionRoom = useCallback( () => {
     rAddingNotionRoom.current = true;
-    const go = async() => {
+    const post = async() => {
       const response = await fetch( '/api/rosters/', {
-        method: 'POST'
+        method: 'POST',
+        body: JSON.stringify( { 
+          [PARAM_DB_ID]:dbId
+        } )
       });
       const text = await response.text();
       const data = JSON.parse(text);
       console.log( 'data', data );
+
+      rAddingNotionRoom.current = false;
     };
-    go();
+    post();
   }, [
+    dbId
   ] );
 
   const cbDeleteNotionRoom = useCallback( async(e) => {

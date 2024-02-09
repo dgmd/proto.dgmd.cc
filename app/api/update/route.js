@@ -5,6 +5,21 @@ import {
   removeHyphens
 } from '@/utils/strings.js';
 import {
+  NOTION_KEY_DATABASE_ID,
+  NOTION_KEY_DB_ID,
+  NOTION_KEY_ID,
+  NOTION_KEY_PAGE_ID,
+  NOTION_KEY_PARENT,
+  NOTION_RESULTS
+} from '@api/notion_constants.js';
+import {
+  NOTION_WRANGLE_KEY_RELATIONS_MAP
+} from '@api/notion_wrangler_constants.js';
+import {
+  getNotionDbaseProperties,
+  getNotionDbaseRelationsIds
+} from '@api/query/route.js';
+import {
   Client
 } from "@notionhq/client";
 import {
@@ -68,22 +83,6 @@ import {
 import {
   NextResponse
 } from 'next/server';
-
-import {
-  NOTION_KEY_DATABASE_ID,
-  NOTION_KEY_DB_ID,
-  NOTION_KEY_ID,
-  NOTION_KEY_PAGE_ID,
-  NOTION_KEY_PARENT,
-  NOTION_RESULTS
-} from '../notion_constants.js';
-import {
-  NOTION_WRANGLE_KEY_RELATIONS_MAP
-} from '../notion_wrangler_constants.js';
-import {
-  getNotionDbaseProperties,
-  getNotionDbaseRelationsIds
-} from '../query/route.js';
 
 const SECRET_ID = 'SECRET_ID';
 

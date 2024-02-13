@@ -65,20 +65,20 @@ export const AdminTable = ( ) => {
     { [TABLE_HEADER_NAME]: 'actions', [TABLE_HEADER_HIDE]: TABLE_COL_HIDE_SM },
   ] );
 
-  useEffect( () => {
-    const get = async() => {
-      const response = await fetch( '/api/rosters/', {
-        method: 'GET'
-      });
-      const text = await response.text();
-      const data = JSON.parse(text);
-      if (!data[KEY_ROSTER_AUTH]) {
-        return;
-      }
-    };
-    get();
-  }, [
-  ] );
+  // useEffect( () => {
+  //   const get = async() => {
+  //     const response = await fetch( '/api/rosters/', {
+  //       method: 'GET'
+  //     });
+  //     const text = await response.text();
+  //     const data = JSON.parse(text);
+  //     if (!data[KEY_ROSTER_AUTH]) {
+  //       return;
+  //     }
+  //   };
+  //   get();
+  // }, [
+  // ] );
 
   const cbCredentialsChange = useCallback( e => {
 

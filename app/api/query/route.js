@@ -67,7 +67,6 @@ export async function GET( request ) {
   }
 
   try {
-
     const nClient = new Client({ 
       auth: process.env.NOTION_SECRET
     });

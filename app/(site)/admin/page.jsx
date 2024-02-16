@@ -8,9 +8,6 @@ import {
   AdminTable
 } from '@/components/admin-table.jsx';
 import {
-  useServerPath
-} from '@/utils/serverPathHook.js';
-import {
   getAuthServerCache
 } from '@/utils/supabase/auth/authServerCache.js';
 import {
@@ -23,15 +20,15 @@ import {
   redirect
 } from 'next/navigation';
 
-async function AdminPage() {
+async function AdminPage( x ) {
   const auth = await getAuthServerCache();
   if (!isAuthUser(auth)) {
     redirect('/admin/sign-in');
   }
 
+
   let data = [];
-  const urlObject = useServerPath();
-  const rostersUrl = new URL('/api/rosters', urlObject.origin);
+  const rostersUrl = new URL('/api/rosters', process.env.SITE_ORIGIN);
   const rosterData = await fetch(rostersUrl.href, {
     headers: { Cookie: cookies().toString() },
   });
@@ -42,7 +39,7 @@ async function AdminPage() {
 
   return (
     <AdminTable
-      url={ urlObject.origin }
+      url={ process.env.SITE_ORIGIN }
       data={ data }
     />
   );

@@ -15,7 +15,6 @@ export const LinkButton = props => {
       href={ link }
     >
       <button
-        type="button"
         className={ getRoundButtonClasses(false) }
       >
         <ArrowRightIcon

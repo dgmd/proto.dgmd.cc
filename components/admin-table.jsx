@@ -44,6 +44,8 @@ import {
 
 export const AdminTable = ( {data, url} ) => {
 
+  console.log( 'data', data, 'url', url );
+
   const [dbId, setDbId] = useState( '' );
   const [dbIdValid, setDbIdValid] = useState( false );
 
@@ -113,11 +115,13 @@ export const AdminTable = ( {data, url} ) => {
     dbId
   ] );
 
-  const cbDeleteNotionRoom = useCallback( async(e) => {
+  const cbDeleteRosterEntry = useCallback( () => {
+    console.log( 'delete' );
   }, [
   ] );
 
-  const cbRefreshNotionRoom = useCallback( async(e) => {
+  const cbRefreshRoster = useCallback( () => {
+    console.log( 'refresh' );
   }, [
   ] );
 
@@ -148,32 +152,49 @@ export const AdminTable = ( {data, url} ) => {
           headers={ headers }
         >
         {
-          cells.map((row, i) => 
+          cells.map((row, i) =>
             headers.map((header, j) => {
               const key = header[TABLE_HEADER_NAME];
               const cell = row[key];
-              if (key === KEY_URL) {
-                return (
-                  <div
-                    key={`row-${i}-cell-${j}`}
-                    className={ [cellClassNames, cellHoverClassNames].join(' ') }
-                  >
-                    <Link href={ cell.pathname }>
-                      { cell.href }
-                    </Link>
-                  </div>
-                );
-              }
-              else {
-                return (
-                  <div
-                    key={`row-${i}-cell-${j}`}
-                    className={ [cellClassNames, cellHoverClassNames].join(' ') }
-                  >
-                    { cell }
-                  </div>
-                );
-              }
+              const classNames = [cellClassNames, cellHoverClassNames].join(' ');
+
+              return (
+                <div key={`row-${i}-cell-${j}`}>
+                  {key === KEY_URL && (
+                    <div className={ [cellClassNames, 'space-x-1'].join( ' ' )}>
+                      <LinkButton link={row[KEY_URL].pathname} />
+                      <ClipboardButton text={row[KEY_URL].href} />
+                    </div>
+                  )}
+                  {key === KEY_ACTIONS && (
+                    <div className={ [cellClassNames, 'space-x-1'].join( ' ' )}>
+                      <button
+                        className={ getRoundButtonClasses(false) }
+                        onClick={ cbRefreshRoster }
+                      >
+                        <ArrowPathIcon
+                          className={ getRoundButtonIconClasses() }
+                          alt="refresh data"
+                        />
+                      </button>
+                      <button
+                        className={ getRoundButtonClasses(false) }
+                        onClick={ cbDeleteRosterEntry }
+                      >
+                        <MinusIcon
+                          className={ getRoundButtonIconClasses() }
+                          alt="delete roster"
+                        />
+                      </button>
+                    </div>
+                  )}
+                  {key !== KEY_ACTIONS && key !== KEY_URL && (
+                    <div className={classNames}>
+                      { key === KEY_URL ? cell.href : cell }
+                    </div>
+                  )}
+                </div>
+              );
             })
           )
         }

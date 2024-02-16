@@ -6,14 +6,16 @@ import {
 } from 'next/server';
 
 export async function middleware(request) {
+
   //
   //  HANDLE AUTHENTICATION WORK
   //
   let response = NextResponse.next({
     request: {
-      headers: request.headers,
+      headers: request.headers
     },
   });
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_REACT_APP_SUPABASE_URL, 
     process.env.NEXT_PUBLIC_REACT_APP_SUPABASE_KEY,

@@ -10,9 +10,6 @@ import {
   Title
 } from '@/components/title.jsx';
 import {
-  useServerPath
-} from '@/utils/serverPathHook.js';
-import {
   getAuthServerCache
 } from '@/utils/supabase/auth/authServerCache.js';
 import {
@@ -33,8 +30,7 @@ async function GroupName( {params} ) {
 
   const groupName = params[ 'group-name' ];
 
-  const urlObject = useServerPath();
-  const rostersUrl = new URL('/api/roster-entries', urlObject.origin);
+  const rostersUrl = new URL('/api/roster-entries', process.env.SITE_ORIGIN );
   rostersUrl.searchParams.append( PARAM_ROSTERS_DB_ID, groupName );
   const rosterData = await fetch(rostersUrl.href, {
     headers: { Cookie: cookies().toString() },

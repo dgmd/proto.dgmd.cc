@@ -11,7 +11,6 @@ export const ClipboardButton = props => {
   const text = props.text;
   return (
     <button
-      type="button"
       className={ getRoundButtonClasses(false) }
       onClick={ () => navigator.clipboard.writeText(text) }
     >

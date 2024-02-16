@@ -1,14 +1,14 @@
 "use server";
 
 import {
-  NotionToFramerLogo
+    NotionToFramerLogo
 } from '@/components/logo.jsx';
 import {
-  getAuthServerCache
-} from '@/utils/auth/authServerCache';
+    getAuthServerCache
+} from '@/utils/supabase/auth/authServerCache';
 import {
-  isAuthUser
-} from '@/utils/auth/authUtils';
+    isAuthUser
+} from '@/utils/supabase/auth/authUtils';
 import Link from 'next/link';
 
 export default async function Hero() {

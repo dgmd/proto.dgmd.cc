@@ -3,11 +3,11 @@
 import 'app/globals.css';
 
 import {
-  AuthContextProvider
-} from '@/utils/auth/authContextProvider.js';
+    AuthContextProvider
+} from '@/utils/supabase/auth/authContextProvider.js';
 import {
-  getAuthServerCache
-} from '@/utils/auth/authServerCache.js';
+    getAuthServerCache
+} from '@/utils/supabase/auth/authServerCache.js';
 
 export default async function Page({ children }) {
   const auth = await getAuthServerCache();

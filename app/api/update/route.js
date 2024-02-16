@@ -84,19 +84,14 @@ import {
   NextResponse
 } from 'next/server';
 
-const SECRET_ID = 'SECRET_ID';
-
 export async function GET( request ) {
 
   const params = request.nextUrl.searchParams;
   const paramAction = params.get( CRUD_PARAM_ACTION );
 
-  const secrets = {
-    [SECRET_ID]: process.env.NOTION_SECRET
-  };
 
   const nClient = new Client({ 
-    auth: secrets[SECRET_ID]
+    auth: process.env.NOTION_SECRET
   });
 
   if (paramAction === CRUD_VALUE_ACTION_DELETE) {

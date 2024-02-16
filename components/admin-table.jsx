@@ -1,26 +1,37 @@
 "use client"
 
 import {
-  KEY_ROSTER_AUTH,
-  PARAM_DB_ID
+  PARAM_ROSTERS_DB_ID
 } from '@/api/rosters/keys.js';
 import {
-  ArrowPathIcon,
-  MinusIcon
-} from '@heroicons/react/20/solid';
-import {
   ClipboardButton
-} from 'components/clipboard-button.jsx';
+} from '@/components/clipboard-button.jsx';
 import {
   LinkButton
-} from 'components/link-button.jsx';
+} from '@/components/link-button.jsx';
+import {
+  buttonClassNames,
+  cellClassNames,
+  getRoundButtonClasses,
+  getRoundButtonIconClasses
+} from '@/components/look.js';
+import {
+  SidePanel
+} from '@/components/side-panel.jsx';
 import {
   TABLE_COL_HIDE_MD,
   TABLE_COL_HIDE_SM,
   TABLE_HEADER_HIDE,
   TABLE_HEADER_NAME,
   Table
-} from 'components/table.jsx';
+} from '@/components/table.jsx';
+import {
+  Title
+} from '@/components/title.jsx';
+import {
+  ArrowPathIcon,
+  MinusIcon
+} from '@heroicons/react/20/solid';
 import {
   useCallback,
   useEffect,
@@ -28,20 +39,8 @@ import {
   useRef,
   useState
 } from 'react';
-import {
-  buttonClassNames,
-  cellClassNames,
-  getRoundButtonClasses,
-  getRoundButtonIconClasses
-} from '/components/look.js';
-import {
-  SidePanel
-} from '/components/side-panel.jsx';
-import {
-  Title
-} from '/components/title.jsx';
 
-export const AdminTable = ( ) => {
+export const AdminTable = ( {data} ) => {
 
   const [dbId, setDbId] = useState( '' );
   const [dbIdValid, setDbIdValid] = useState( false );
@@ -57,35 +56,34 @@ export const AdminTable = ( ) => {
   const [addingNotionRoom, setAddingNotionRoom] = useState( x => false );
   const rAddingNotionRoom = useRef( addingNotionRoom );
 
+  const KEY_NAME = 'name';
+  const KEY_DB_ID = 'dbId';
+  const KEY_URL = 'url';
+  const KEY_UPDATE = 'update';
+  const KEY_ACTIONS = 'actions';
   const [headers, setHeaders] = useState( x => [ 
-    { [TABLE_HEADER_NAME]: 'name', [TABLE_HEADER_HIDE]: null },
-    { [TABLE_HEADER_NAME]: 'dbId', [TABLE_HEADER_HIDE]: TABLE_COL_HIDE_MD },
-    { [TABLE_HEADER_NAME]: 'url', [TABLE_HEADER_HIDE]: null },
-    { [TABLE_HEADER_NAME]: 'update', [TABLE_HEADER_HIDE]: null },
-    { [TABLE_HEADER_NAME]: 'actions', [TABLE_HEADER_HIDE]: TABLE_COL_HIDE_SM },
+    { [TABLE_HEADER_NAME]: KEY_NAME, [TABLE_HEADER_HIDE]: null },
+    { [TABLE_HEADER_NAME]: KEY_DB_ID, [TABLE_HEADER_HIDE]: TABLE_COL_HIDE_MD },
+    { [TABLE_HEADER_NAME]: KEY_URL, [TABLE_HEADER_HIDE]: null },
+    { [TABLE_HEADER_NAME]: KEY_UPDATE, [TABLE_HEADER_HIDE]: null },
+    { [TABLE_HEADER_NAME]: KEY_ACTIONS, [TABLE_HEADER_HIDE]: TABLE_COL_HIDE_SM },
   ] );
-
-  // useEffect( () => {
-  //   const get = async() => {
-  //     const response = await fetch( '/api/rosters/', {
-  //       method: 'GET'
-  //     });
-  //     const text = await response.text();
-  //     const data = JSON.parse(text);
-  //     if (!data[KEY_ROSTER_AUTH]) {
-  //       return;
-  //     }
-  //   };
-  //   get();
-  // }, [
-  // ] );
+  const [cells, setCells] = useState( x => {
+    return data.map( cur => {
+      return {
+        [KEY_NAME]: cur.snapshot_name,
+        [KEY_DB_ID]: cur.notion_id,
+        [KEY_URL]: 'http://' + cur.notion_id,
+        [KEY_UPDATE]: cur.created_at,
+        [KEY_ACTIONS]: []
+      };
+    } );
+  } );
 
   const cbCredentialsChange = useCallback( e => {
-
     if (rAddingNotionRoom.current) {
       return false;
     }
-
     const v = e.target.value;
     setDbId( s => v );
     setDbIdValid( s => v.length > 0 );
@@ -99,12 +97,11 @@ export const AdminTable = ( ) => {
       const response = await fetch( '/api/rosters/', {
         method: 'POST',
         body: JSON.stringify( { 
-          [PARAM_DB_ID]:dbId
+          [PARAM_ROSTERS_DB_ID]: dbId
         } )
       });
       const text = await response.text();
       const data = JSON.parse(text);
-      console.log( 'data', data );
 
       rAddingNotionRoom.current = false;
     };
@@ -121,16 +118,12 @@ export const AdminTable = ( ) => {
   }, [
   ] );
 
-  const [cells, setCells] = useState( x => [
-  ] );
-
   const mInputTw = useMemo( () => {
     const borderColor = addRosterError ? 'border-red-500' : 'border-gray-300';
     return `w-full px-3 py-2 border ${borderColor} rounded-md focus:outline-none focus:border-blue-400`;
   }, [
     addRosterError
   ] );
-
 
   return (
     <div className='flex-grow'>  
@@ -140,7 +133,7 @@ export const AdminTable = ( ) => {
       >
         <button
           className={ `${buttonClassNames} mt-2` }
-          onClick={ () => setOpen( x => true) }>
+          onClick={ () => setOpen( x => true ) }>
           Add Roster
         </button>
       </Title>
@@ -151,67 +144,25 @@ export const AdminTable = ( ) => {
         <Table
           headers={ headers }
         >
-          {/* existing rows */}
-          {
-            cells.map( (cell, cellIdx) => {
-              const key = `c${cellIdx}`;
-              const colNum = cellIdx % headers.length;
-              if (colNum === 4) {
-                return (
-                  <div
-                    key={ key }
-                    className={ `${cellClassNames} flex space-x-1` }
-                  >
-                    <button
-                      data-row={ cells[ cellIdx - 3 ] }
-                      type="button"
-                      onClick={ cbDeleteNotionRoom }
-                      className={ getRoundButtonClasses( false ) }
-                    >
-                    <MinusIcon
-                      className={ getRoundButtonIconClasses() }
-                      aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      data-row={ cells[ cellIdx - 3 ] }
-                      onClick={ cbRefreshNotionRoom }
-                      className={ 
-                        `${ getRoundButtonClasses( false ) } ${ refreshing.includes( cells[ cellIdx - 3 ] ) ? `animate-spin` : `` }` }
-                    >
-                      <ArrowPathIcon
-                        className={ getRoundButtonIconClasses() }
-                        aria-hidden="true" />
-                    </button>
-                  </div>
-                );
-              }
+        {
+          cells.map((row, i) => 
+            headers.map((header, j) => {
+              const key = header[TABLE_HEADER_NAME];
+              const cell = row[key];
               return (
-                cellIdx % headers.length === 2 ? (
-                  <div
-                    key={ key}
-                    className={ `${cellClassNames} flex flex-row gap-2` }
-                  >
-                    <ClipboardButton
-                      text={ `${window.location.origin}/group/${cells[ cellIdx - 2 ]}` }
-                    />
-                    <LinkButton
-                      link={ `/group/${cells[ cellIdx - 2 ]}` }
-                    />
-                  </div>
-                )
-                :
                 <div
-                  key={ key }
-                  className={ `${cellClassNames}` }
+                  key={`row-${i}-cell-${j}`}
+                  className={ cellClassNames }
                 >
-                  { cell }
+                  {cell}
                 </div>
-              )
-            } )
-          }
+              );
+            })
+          )
+        }
         </Table>
       </div>
+
       <SidePanel
         open={ open }
         loading={ addingNotionRoom }
@@ -241,6 +192,7 @@ export const AdminTable = ( ) => {
 
         </div>
       </SidePanel>
+      
     </div>
 );
 

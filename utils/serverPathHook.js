@@ -6,6 +6,6 @@ import {
 
 export const useServerPath = () => {
   const headersList = headers();
-  const requestedUrlString = headersList.get('referer') || "";
-  return getPath(requestedUrlString);
+  const requestedUrlString = headersList.get('referer');
+  return new URL( requestedUrlString );
 };

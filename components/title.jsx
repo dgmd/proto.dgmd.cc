@@ -1,3 +1,5 @@
+"use client"
+
 export const Title = props => {
   const pTitle = props.title;
   const pSubtitle = props.subtitle;

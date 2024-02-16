@@ -22,3 +22,7 @@ export const getAuthUser = (auth) => {
 export const isAuthUser = (auth) => {
   return !isNil(getAuthUser(auth));
 };
+
+export const getAuthId = (authUser) => {
+  return authUser['id'];
+};

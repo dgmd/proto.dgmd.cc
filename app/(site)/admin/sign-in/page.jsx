@@ -5,10 +5,10 @@ import {
 } from '@/components/look.js';
 import {
   getAuthServerCache
-} from '@/utils/auth/authServerCache.js';
+} from '@/utils/supabase/auth/authServerCache.js';
 import {
   isAuthUser
-} from '@/utils/auth/authUtils.js';
+} from '@/utils/supabase/auth/authUtils.js';
 import {
   redirect
 } from 'next/navigation';

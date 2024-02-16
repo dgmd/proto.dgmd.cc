@@ -1,8 +1,14 @@
 import {
   createServerClient
 } from '@supabase/ssr';
+import {
+  cookies
+} from 'next/headers';
 
-export const createClient = cookieStore => {
+export const createClient = () => {
+
+  const cookieStore = cookies();
+
   return createServerClient(
     process.env.NEXT_PUBLIC_REACT_APP_SUPABASE_URL, 
     process.env.NEXT_PUBLIC_REACT_APP_SUPABASE_KEY,

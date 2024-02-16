@@ -1,7 +1,8 @@
 "use client"
 
 import {
-  PARAM_ROSTERS_DB_ID
+  PARAM_ROSTERS_DB_ID,
+  PARAM_ROSTERS_ROSTER_ID
 } from '@/api/rosters/keys.js';
 import {
   ClipboardButton
@@ -33,7 +34,6 @@ import {
   ArrowPathIcon,
   MinusIcon
 } from '@heroicons/react/20/solid';
-import Link from 'next/link';
 import {
   useCallback,
   useEffect,
@@ -43,8 +43,6 @@ import {
 } from 'react';
 
 export const AdminTable = ( {data, url} ) => {
-
-  console.log( 'data', data, 'url', url );
 
   const [dbId, setDbId] = useState( '' );
   const [dbIdValid, setDbIdValid] = useState( false );
@@ -104,7 +102,7 @@ export const AdminTable = ( {data, url} ) => {
         body: JSON.stringify( { 
           [PARAM_ROSTERS_DB_ID]: dbId
         } )
-      });
+      } );
       const text = await response.text();
       const data = JSON.parse(text);
 
@@ -115,13 +113,24 @@ export const AdminTable = ( {data, url} ) => {
     dbId
   ] );
 
-  const cbDeleteRosterEntry = useCallback( () => {
-    console.log( 'delete' );
+  const cbDeleteRosterEntry = useCallback( event => {
+    const post = async() => {
+      const apiDelUrl = new URL( `/api/rosters/`, url );
+      const rosterId = event.target.getAttribute( 'data-roster-id' );
+      apiDelUrl.searchParams.append( PARAM_ROSTERS_ROSTER_ID, rosterId );
+      const response = await fetch( apiDelUrl.href, {
+        method: 'DELETE'
+      });
+      const text = await response.text();
+      const data = JSON.parse(text);
+
+      rAddingNotionRoom.current = false;
+    };
+    post();
   }, [
   ] );
 
-  const cbRefreshRoster = useCallback( () => {
-    console.log( 'refresh' );
+  const cbRefreshRoster = useCallback( async(e) => {
   }, [
   ] );
 
@@ -174,10 +183,11 @@ export const AdminTable = ( {data, url} ) => {
                       >
                         <ArrowPathIcon
                           className={ getRoundButtonIconClasses() }
-                          alt="refresh data"
+                          alt="refresh roster"
                         />
                       </button>
                       <button
+                        data-roster-id={ row[KEY_DB_ID] }
                         className={ getRoundButtonClasses(false) }
                         onClick={ cbDeleteRosterEntry }
                       >

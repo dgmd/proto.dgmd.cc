@@ -41,21 +41,23 @@ import {
 import {
   KEY_ROSTERS_DATA,
   KEY_ROSTER_AUTH,
-  PARAM_ROSTERS_DB_ID
+  PARAM_ROSTERS_DB_ID,
+  PARAM_ROSTERS_ROSTER_ID
 } from './keys.js';
 
 export async function GET( req ) {
-
   const rjson = {
     [KEY_ROSTER_AUTH]: false
   };
 
-  const asc = await getAuthServerCache( );
-  if (isAuthUser(asc)) {
+  try {
+    const asc = await getAuthServerCache( );
+    if (!isAuthUser(asc)) {
+      throw new Error( 'not authenticated' );
+    }
 
     const user = getAuthUser( asc );
     const userId = getAuthId( user);
-
     const supabase = createClient( );
 
     const activeRosters = await supabase
@@ -64,13 +66,54 @@ export async function GET( req ) {
       .eq( 'active', true )
       .eq( 'user_id', userId );
     
-    if (isNil(activeRosters.error)) {
-      const rosters = activeRosters.data;
-      rjson[KEY_ROSTER_AUTH] = true;
-      rjson[KEY_ROSTERS_DATA] = rosters;
+    if (!isNil(activeRosters.error)) {
+      throw new Error( 'error getting active rosters' );
     }
+    
+    const rosters = activeRosters.data;
+    rjson[KEY_ROSTER_AUTH] = true;
+    rjson[KEY_ROSTERS_DATA] = rosters;
+  }
+  catch (e) {
+    console.log( 'e', e );
   }
 
+  return NextResponse.json( rjson );
+};
+
+export async function DELETE( request ) {
+  const rjson = {
+    [KEY_ROSTER_AUTH]: false
+  };
+  try {
+    const asc = await getAuthServerCache( );
+    if (!isAuthUser(asc)) {
+      throw new Error( 'not authenticated' );
+    }
+    const user = getAuthUser( asc );
+    const userId = getAuthId( user);
+
+    const params = request.nextUrl.searchParams;
+    if (!params.has( PARAM_ROSTERS_ROSTER_ID )) {
+      throw new Error( 'no roster id' );
+    }
+    const rosterId = params.get( PARAM_ROSTERS_ROSTER_ID );
+
+
+    const supabase = createClient( );
+    const deleteRosters = await supabase
+      .from( 'rosters' )
+      .update( { active: false } )
+      .eq( 'notion_id', rosterId );
+
+    if (!isNil(deleteRosters.error)) {
+      throw new Error( 'error deleting active rosters' );
+    }
+
+  }
+  catch (e) {
+    console.log( 'e', e );
+  }
   return NextResponse.json( rjson );
 };
 

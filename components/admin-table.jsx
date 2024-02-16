@@ -12,6 +12,7 @@ import {
 import {
   buttonClassNames,
   cellClassNames,
+  cellHoverClassNames,
   getRoundButtonClasses,
   getRoundButtonIconClasses
 } from '@/components/look.js';
@@ -32,6 +33,7 @@ import {
   ArrowPathIcon,
   MinusIcon
 } from '@heroicons/react/20/solid';
+import Link from 'next/link';
 import {
   useCallback,
   useEffect,
@@ -40,7 +42,7 @@ import {
   useState
 } from 'react';
 
-export const AdminTable = ( {data} ) => {
+export const AdminTable = ( {data, url} ) => {
 
   const [dbId, setDbId] = useState( '' );
   const [dbIdValid, setDbIdValid] = useState( false );
@@ -57,9 +59,9 @@ export const AdminTable = ( {data} ) => {
   const rAddingNotionRoom = useRef( addingNotionRoom );
 
   const KEY_NAME = 'name';
-  const KEY_DB_ID = 'dbId';
+  const KEY_DB_ID = 'notion id';
   const KEY_URL = 'url';
-  const KEY_UPDATE = 'update';
+  const KEY_UPDATE = 'date updated';
   const KEY_ACTIONS = 'actions';
   const [headers, setHeaders] = useState( x => [ 
     { [TABLE_HEADER_NAME]: KEY_NAME, [TABLE_HEADER_HIDE]: null },
@@ -70,10 +72,11 @@ export const AdminTable = ( {data} ) => {
   ] );
   const [cells, setCells] = useState( x => {
     return data.map( cur => {
+      const linkUrl = new URL( `group/${ cur.notion_id }`, url );
       return {
         [KEY_NAME]: cur.snapshot_name,
         [KEY_DB_ID]: cur.notion_id,
-        [KEY_URL]: 'http://' + cur.notion_id,
+        [KEY_URL]: linkUrl,
         [KEY_UPDATE]: cur.created_at,
         [KEY_ACTIONS]: []
       };
@@ -149,14 +152,28 @@ export const AdminTable = ( {data} ) => {
             headers.map((header, j) => {
               const key = header[TABLE_HEADER_NAME];
               const cell = row[key];
-              return (
-                <div
-                  key={`row-${i}-cell-${j}`}
-                  className={ cellClassNames }
-                >
-                  {cell}
-                </div>
-              );
+              if (key === KEY_URL) {
+                return (
+                  <div
+                    key={`row-${i}-cell-${j}`}
+                    className={ [cellClassNames, cellHoverClassNames].join(' ') }
+                  >
+                    <Link href={ cell.pathname }>
+                      { cell.href }
+                    </Link>
+                  </div>
+                );
+              }
+              else {
+                return (
+                  <div
+                    key={`row-${i}-cell-${j}`}
+                    className={ [cellClassNames, cellHoverClassNames].join(' ') }
+                  >
+                    { cell }
+                  </div>
+                );
+              }
             })
           )
         }

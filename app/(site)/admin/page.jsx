@@ -42,7 +42,9 @@ async function AdminPage() {
 
   return (
     <AdminTable
-      data={data} />
+      url={ urlObject.origin }
+      data={ data }
+    />
   );
 };
 

@@ -3,6 +3,7 @@ export const buttonClassNames = buttonClassBase + ' bg-indigo-600 text-sm font-s
 export const buttonCancelClassNames = buttonClassBase + ' bg-white text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:ring-gray-400';
 
 export const cellClassNames = 'box-content border border-transparent inline-block relative w-full whitespace-nowrap overflow-hidden overflow-ellipsis align-top';
+export const cellHoverClassNames = 'transition duration-300 ease-in-out hover:z-10 hover:w-auto hover:bg-indigo-200 hover:border-indigo-500 hover:padding-10 hover:shadow-md';
 
 export const getRoundButtonClasses = ( disabledTw ) => {
   const txt = `rounded-full bg-indigo-600 p-1 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`;

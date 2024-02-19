@@ -1,19 +1,6 @@
 export const maxDuration = 300;
 
 import {
-  NextResponse
-} from 'next/server';
-
-import {
-  Client
-} from "@notionhq/client";
-
-import {
-  removeHyphens
-} from '../../../utils/strings.js';
-
-import {
-
   EXPORT_DATA_KEY,
   EXPORT_DATA_METADATA,
   EXPORT_DATA_PROPERTIES,
@@ -22,35 +9,44 @@ import {
   NOTION_RESULT,
   NOTION_RESULT_BLOCKS,
   NOTION_RESULT_BLOCK_DBS,
-  NOTION_RESULT_COLUMN_LISTS,
-  NOTION_RESULT_PAGE_DATA,
   NOTION_RESULT_BLOCK_KEY,
+  NOTION_RESULT_COLUMN_LISTS,
+  NOTION_RESULT_COVER,
   NOTION_RESULT_DATABASE_ID,
-  NOTION_RESULT_PARENT_ID,
-  NOTION_RESULT_PARENT_TITLE,
-  NOTION_RESULT_PARENT_TYPE,
   NOTION_RESULT_DATABASE_TITLE,
   NOTION_RESULT_ERROR,
   NOTION_RESULT_ICON,
-  NOTION_RESULT_COVER,
+  NOTION_RESULT_PAGE_DATA,
+  NOTION_RESULT_PARENT_ID,
+  NOTION_RESULT_PARENT_TITLE,
+  NOTION_RESULT_PARENT_TYPE,
   NOTION_RESULT_PRIMARY_DATABASE,
   NOTION_RESULT_RELATION_BLOCK_ID,
-  NOTION_RESULT_RELATION_PAGE_ID,
   NOTION_RESULT_RELATION_DATABASES,
   NOTION_RESULT_RELATION_DATABASE_ID,
+  NOTION_RESULT_RELATION_PAGE_ID,
   NOTION_RESULT_SUCCESS,
-  URL_SEARCH_PARAM_BLOCKS_REQUEST,
-  URL_SEARCH_PARAM_DATABASE,
-  URL_SEARCH_PARAM_PAGE_CURSOR_TYPE_REQUEST,
-  URL_SEARCH_PARAM_PAGE_CURSOR_ID_REQUEST,
   URL_PAGE_CURSOR_TYPE_ALL,
   URL_PAGE_CURSOR_TYPE_DEFAULT,
-  URL_PAGE_CURSOR_TYPE_SPECIFIC
+  URL_PAGE_CURSOR_TYPE_SPECIFIC,
+  URL_SEARCH_PARAM_BLOCKS_REQUEST,
+  URL_SEARCH_PARAM_DATABASE,
+  URL_SEARCH_PARAM_PAGE_CURSOR_ID_REQUEST,
+  URL_SEARCH_PARAM_PAGE_CURSOR_TYPE_REQUEST
 } from './keys.js';
 
 import {
+  Client
+} from "@notionhq/client";
+import {
+  NextResponse
+} from 'next/server';
+import {
   getApiCoriHeaders
 } from '../../../utils/coriHeaders.js';
+import {
+  removeHyphens
+} from '../../../utils/strings.js';
 
 const NOTION_ID = 'id';
 const DGMDCC_ID = 'id';
@@ -534,10 +530,9 @@ const getNotionDbaseProperties = (notionDatas, relMap) => {
                   }
                   return acc;
                  }, [] );
-                const file = files.length > 0 ? files[0] : null;
                 propdata[propertyKey] = {
                   [EXPORT_DATA_TYPE]: NOTION_DATA_TYPE_FILES,
-                  [EXPORT_DATA_VALUE]: file
+                  [EXPORT_DATA_VALUE]: files.length > 0 ? files : null
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_NUMBER) {

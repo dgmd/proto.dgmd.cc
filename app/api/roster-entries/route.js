@@ -79,3 +79,28 @@ export async function GET( request ) {
 
   return NextResponse.json( rjson );
 };
+
+export async function POST( request ) {
+    //
+    // talk to notion to get all roster-entries
+    // and then create 
+    //
+    const dbBlocks = db[DGMD_PRIMARY_DATABASE][DGMD_BLOCKS];
+    dbBlocks.forEach( async x => {
+      const xProps = x[DGMD_PROPERTIES];
+      console.log( 'xProps', xProps );
+      // const studentId = xProps['Student ID'][DGMD_VALUE];
+      const studentName = xProps['Name'][DGMD_VALUE];
+      const notionId = x[DGMD_METADATA][DGMD_BLOCK_TYPE_ID][DGMD_VALUE];
+      const result = await supabase
+        .from( 'roster_entries' )
+        .insert( {
+          notion_id: notionId, 
+          snapshot_name: studentName,
+          active: true,
+          roster: rosterId
+        } );
+      console.log( 'roster', result );
+
+    } );
+};

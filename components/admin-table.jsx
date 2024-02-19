@@ -1,6 +1,9 @@
 "use client"
 
 import {
+  KEY_ROSTER_AUTH,
+  KEY_ROSTER_DELETED,
+  KEY_ROSTER_ID,
   PARAM_ROSTERS_DB_ID,
   PARAM_ROSTERS_ROSTER_ID
 } from '@/api/rosters/keys.js';
@@ -105,6 +108,7 @@ export const AdminTable = ( {data, url} ) => {
       } );
       const text = await response.text();
       const data = JSON.parse(text);
+      console.log( 'cbAdd data', data );
 
       rAddingNotionRoom.current = false;
     };
@@ -115,14 +119,23 @@ export const AdminTable = ( {data, url} ) => {
 
   const cbDeleteRosterEntry = useCallback( event => {
     const post = async() => {
-      const apiDelUrl = new URL( `/api/rosters/`, url );
-      const rosterId = event.target.getAttribute( 'data-roster-id' );
-      apiDelUrl.searchParams.append( PARAM_ROSTERS_ROSTER_ID, rosterId );
-      const response = await fetch( apiDelUrl.href, {
-        method: 'DELETE'
-      });
-      const text = await response.text();
-      const data = JSON.parse(text);
+      try {
+        const apiDelUrl = new URL( `/api/rosters/`, url );
+        const rosterId = event.target.getAttribute( 'data-roster-id' );
+        apiDelUrl.searchParams.append( PARAM_ROSTERS_ROSTER_ID, rosterId );
+        const response = await fetch( apiDelUrl.href, {
+          method: 'DELETE'
+        });
+        const text = await response.text();
+        const data = JSON.parse(text);
+        if (!data[KEY_ROSTER_DELETED] || !data[KEY_ROSTER_AUTH]) {
+          throw new Error( 'error deleting roster' );
+        }
+        const delRosterId = data[KEY_ROSTER_ID];
+        setCells( s => s.filter( cur => cur[KEY_DB_ID] !== delRosterId ) );
+      }
+      catch (e) {
+      }
 
       rAddingNotionRoom.current = false;
     };

@@ -30,6 +30,7 @@ async function AdminPage( x ) {
   let data = [];
   const rostersUrl = new URL('/api/rosters', process.env.SITE_ORIGIN);
   const rosterData = await fetch(rostersUrl.href, {
+    method: 'GET',
     headers: { Cookie: cookies().toString() },
   });
   const rosterJson = await rosterData.json();

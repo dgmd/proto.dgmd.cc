@@ -41,11 +41,13 @@ import {
 import {
   KEY_ROSTERS_DATA,
   KEY_ROSTER_AUTH,
+  KEY_ROSTER_DELETED,
+  KEY_ROSTER_ID,
   PARAM_ROSTERS_DB_ID,
   PARAM_ROSTERS_ROSTER_ID
 } from './keys.js';
 
-export async function GET( req ) {
+export async function GET( request ) {
   const rjson = {
     [KEY_ROSTER_AUTH]: false
   };
@@ -83,13 +85,17 @@ export async function GET( req ) {
 
 export async function DELETE( request ) {
   const rjson = {
-    [KEY_ROSTER_AUTH]: false
+    [KEY_ROSTER_AUTH]: false,
+    [KEY_ROSTER_DELETED]: false,
+    [KEY_ROSTER_ID]: null
   };
   try {
     const asc = await getAuthServerCache( );
     if (!isAuthUser(asc)) {
       throw new Error( 'not authenticated' );
     }
+    rjson[KEY_ROSTER_AUTH] = true;
+
     const user = getAuthUser( asc );
     const userId = getAuthId( user);
 
@@ -98,17 +104,28 @@ export async function DELETE( request ) {
       throw new Error( 'no roster id' );
     }
     const rosterId = params.get( PARAM_ROSTERS_ROSTER_ID );
-
+    rjson[KEY_ROSTER_ID] = rosterId;
 
     const supabase = createClient( );
     const deleteRosters = await supabase
       .from( 'rosters' )
       .update( { active: false } )
+      .eq( 'user_id', userId )
       .eq( 'notion_id', rosterId );
 
     if (!isNil(deleteRosters.error)) {
       throw new Error( 'error deleting active rosters' );
     }
+
+    const deleteRosterEntries = await supabase
+    .from( 'roster-entries' )
+    .update( { active: false } )
+    .eq( 'roster', rosterId );
+    if (!isNil(deleteRosterEntries.error)) {
+      throw new Error( 'error deleting active roster entries' );
+    }
+
+    rjson[KEY_ROSTER_DELETED] = true;
 
   }
   catch (e) {
@@ -121,8 +138,8 @@ export async function POST( req ) {
   const rjson = {
     [KEY_ROSTER_AUTH]: false
   };
-  const asc = await getAuthServerCache( );
   try {
+    const asc = await getAuthServerCache( );
     if (!isAuthUser(asc)) {
       throw new Error( 'not authenticated' );
     }
@@ -146,24 +163,22 @@ export async function POST( req ) {
     const userId = getAuthId( user);
 
     const supabase = createClient( );
-    // not needed
-    // await supabase.auth.getUser();
 
     const getActiveRosters = async () => {
       return await supabase
         .from( 'rosters' )
-        .select( 'id' )
-        .eq( 'user_id', userId )
+        .select( 'id, user_id' )
         .eq( 'notion_id', dbId );
     };
-
-    //first, does this roster already exist?
     let { 
       data: activeRostersData,
       error: activeRostersError
-    } = getActiveRosters();
+    } = await getActiveRosters();
+    if (!isNil(activeRostersError)) {
+      throw new Error( 'error getting active rosters' );
+    }
 
-    if (activeRostersError || activeRostersData.length === 0) {
+    if (activeRostersData.length === 0) {
       const result = await supabase
         .from( 'rosters' )
         .insert( {
@@ -173,34 +188,39 @@ export async function POST( req ) {
           snapshot_name: db[DGMD_PRIMARY_DATABASE][DGMD_DATABASE_TITLE]
         } );
 
-      const newActiveRosters = getActiveRosters();
+      const newActiveRosters = await getActiveRosters();
       activeRostersData = newActiveRosters.data;
       activeRostersError = newActiveRosters.error;
     }
-    const roster = activeRostersData[0];
-    const rosterId = roster.id;
+    else {
+      if (!activeRostersData[0].active) {
+        const updatedRoster = await supabase
+          .from('rosters')
+          .update({ 
+            active: true,
+            user_id: userId
+          })
+          .eq('id', activeRostersData[0].id);
+        if (updatedRoster.error) {
+          throw new Error( 'error reactivating roster' );
+        }
 
-    //
-    // talk to notion to get all roster-entries
-    // and then create 
-    //
-    const dbBlocks = db[DGMD_PRIMARY_DATABASE][DGMD_BLOCKS];
-    dbBlocks.forEach( async x => {
-      const xProps = x[DGMD_PROPERTIES];
-      // const studentId = xProps['Student ID'][DGMD_VALUE];
-      const studentName = xProps['Name'][DGMD_VALUE];
-      const notionId = x[DGMD_METADATA][DGMD_BLOCK_TYPE_ID][DGMD_VALUE];
-      const result = await supabase
-        .from( 'roster-entries' )
-        .insert( {
-          notion_id: notionId, 
-          snapshot_name: studentName,
-          active: true,
-          roster: rosterId
-        } );
+        const selectedRoster = await supabase
+          .from('rosters')
+          .select('id, user_id')
+          .eq('id', activeRostersData[0].id);
+        if (selectedRoster.error) {
+          throw new Error( 'error reactivating roster' );
+        }
+        activeRostersData = [selectedRoster.data];
+      }
+      //does the roster belong to someone else?
+      if (activeRostersData[0].user_id !== userId) {
+        throw new Error( 'roster already exists' );
+      }
+    }
 
-    } );
-
+    rjson[KEY_ROSTER_AUTH] = true;
   }
   catch (e) {
     console.log( 'e', e );

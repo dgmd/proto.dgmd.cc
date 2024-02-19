@@ -418,8 +418,20 @@ const mmPropToNotionBlock = ( block ) => {
     }
   }
   if (type === DGMD_BLOCK_TYPE_FILES) {
-    return {
-      [type]: value
+    if (Array.isArray(value)) {
+      const rvalue = value.reduce( (acc, cur) => {
+        acc.push( {
+          "type": DGMD_BLOCK_TYPE_FILE_EXTERNAL,
+          "name": "_",
+          [DGMD_BLOCK_TYPE_FILE_EXTERNAL]: {
+            "url": cur
+          }
+        } );
+        return acc;
+      }, [] );
+      return {
+        [type]: rvalue
+      };
     }
   }
   
@@ -437,7 +449,8 @@ const mmMetaToNotionBlock = ( block ) => {
   if (type === DGMD_BLOCK_TYPE_FILE_EXTERNAL) {
     return {
       "type": type,
-      "external": {
+      "name": "_",
+      [DGMD_BLOCK_TYPE_FILE_EXTERNAL]: {
         "url": value
       }
     }

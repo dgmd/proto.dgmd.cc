@@ -60,6 +60,7 @@ import {
   DGMD_BLOCK_TYPE_DATE,
   DGMD_BLOCK_TYPE_EMAIL,
   DGMD_BLOCK_TYPE_EMOJI,
+  DGMD_BLOCK_TYPE_FILES,
   DGMD_BLOCK_TYPE_FILE_EXTERNAL,
   DGMD_BLOCK_TYPE_ICON,
   DGMD_BLOCK_TYPE_LAST_EDITED_TIME,
@@ -414,6 +415,11 @@ const mmPropToNotionBlock = ( block ) => {
       return {
         [type]: value
       };
+    }
+  }
+  if (type === DGMD_BLOCK_TYPE_FILES) {
+    return {
+      [type]: value
     }
   }
   

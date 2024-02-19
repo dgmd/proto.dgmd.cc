@@ -442,14 +442,12 @@ export const getNotionDbaseProperties =
 
             if (gotPropertyVal) {
               if (propertyType === NOTION_DATA_TYPE_SELECT) {
-
                 propdata[propertyKey] = {
                   [DGMD_TYPE]: DGMD_BLOCK_TYPE_SELECT,
                   [DGMD_VALUE]: propertyVal[NOTION_KEY_NAME]
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_MULTI_SELECT) {
-                
                 const multis = propertyVal.map( m => m[NOTION_KEY_NAME] );
                 propdata[propertyKey] = {
                   [DGMD_TYPE]: DGMD_BLOCK_TYPE_MULTI_SELECT,
@@ -466,10 +464,9 @@ export const getNotionDbaseProperties =
                   }
                   return acc;
                  }, [] );
-                const file = files.length > 0 ? files[0] : null;
                 propdata[propertyKey] = {
                   [DGMD_TYPE]: DGMD_BLOCK_TYPE_FILE_EXTERNAL,
-                  [DGMD_VALUE]: file
+                  [DGMD_VALUE]: files.length > 0 ? files : null
                 };
               }
               else if (propertyType == NOTION_DATA_TYPE_NUMBER) {

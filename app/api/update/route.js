@@ -319,6 +319,8 @@ const updateMeta = async (nClient, pageId, metaKey, metaValue, responseMetas) =>
 
 //
 //  BLOCK UPDATE CONVERTERS
+
+//todo: DGMD type to Notion type
 const mmPropToNotionBlock = ( block ) => {
   const type = block[DGMD_TYPE];
   const value = block[DGMD_VALUE];

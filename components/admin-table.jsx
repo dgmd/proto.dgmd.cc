@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  KEY_ROSTERS_DATA,
   KEY_ROSTER_AUTH,
   KEY_ROSTER_DELETED,
   KEY_ROSTER_ID,
@@ -45,6 +46,12 @@ import {
   useState
 } from 'react';
 
+const KEY_NAME = 'name';
+const KEY_DB_ID = 'notion id';
+const KEY_URL = 'url';
+const KEY_UPDATE = 'date updated';
+const KEY_ACTIONS = 'actions';
+
 export const AdminTable = ( {data, url} ) => {
 
   const [dbId, setDbId] = useState( '' );
@@ -61,11 +68,7 @@ export const AdminTable = ( {data, url} ) => {
   const [addingNotionRoom, setAddingNotionRoom] = useState( x => false );
   const rAddingNotionRoom = useRef( addingNotionRoom );
 
-  const KEY_NAME = 'name';
-  const KEY_DB_ID = 'notion id';
-  const KEY_URL = 'url';
-  const KEY_UPDATE = 'date updated';
-  const KEY_ACTIONS = 'actions';
+
   const [headers, setHeaders] = useState( x => [ 
     { [TABLE_HEADER_NAME]: KEY_NAME, [TABLE_HEADER_HIDE]: null },
     { [TABLE_HEADER_NAME]: KEY_DB_ID, [TABLE_HEADER_HIDE]: TABLE_COL_HIDE_MD },
@@ -74,16 +77,7 @@ export const AdminTable = ( {data, url} ) => {
     { [TABLE_HEADER_NAME]: KEY_ACTIONS, [TABLE_HEADER_HIDE]: TABLE_COL_HIDE_SM },
   ] );
   const [cells, setCells] = useState( x => {
-    return data.map( cur => {
-      const linkUrl = new URL( `group/${ cur.notion_id }`, url );
-      return {
-        [KEY_NAME]: cur.snapshot_name,
-        [KEY_DB_ID]: cur.notion_id,
-        [KEY_URL]: linkUrl,
-        [KEY_UPDATE]: cur.created_at,
-        [KEY_ACTIONS]: []
-      };
-    } );
+    return data.map( x => updateCellsFromData(x, url) );
   } );
 
   const cbCredentialsChange = useCallback( e => {
@@ -107,14 +101,20 @@ export const AdminTable = ( {data, url} ) => {
         } )
       } );
       const text = await response.text();
-      const data = JSON.parse(text);
-      console.log( 'cbAdd data', data );
+      const data = JSON.parse( text );
+      if (KEY_ROSTERS_DATA in data) {
+        console.log( 'cbAdd data', data );
+        setCells( x => {
+          return data[KEY_ROSTERS_DATA].map( x => updateCellsFromData(x, url) );
+        } );
+      }
 
       rAddingNotionRoom.current = false;
     };
     post();
   }, [
-    dbId
+    dbId,
+    url
   ] );
 
   const cbDeleteRosterEntry = useCallback( event => {
@@ -257,4 +257,15 @@ export const AdminTable = ( {data, url} ) => {
     </div>
 );
 
+};
+
+const updateCellsFromData = (cur, url) => {
+  const linkUrl = new URL( `group/${ cur.notion_id }`, url );
+  return {
+    [KEY_NAME]: cur.snapshot_name,
+    [KEY_DB_ID]: cur.notion_id,
+    [KEY_URL]: linkUrl,
+    [KEY_UPDATE]: cur.created_at,
+    [KEY_ACTIONS]: []
+  };
 };

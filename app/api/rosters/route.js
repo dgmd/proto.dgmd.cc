@@ -32,6 +32,7 @@ import {
   DGMD_VALUE
 } from 'constants.dgmd.cc';
 import {
+  get,
   isNil
 } from 'lodash-es';
 import {
@@ -62,12 +63,7 @@ export async function GET( request ) {
     const userId = getAuthId( user);
     const supabase = createClient( );
 
-    const activeRosters = await supabase
-      .from( 'rosters' )
-      .select( 'notion_id, created_at, snapshot_name' )
-      .eq( 'active', true )
-      .eq( 'user_id', userId );
-    
+    const activeRosters = await getActiveRosters( supabase, userId );
     if (!isNil(activeRosters.error)) {
       throw new Error( 'error getting active rosters' );
     }
@@ -77,7 +73,7 @@ export async function GET( request ) {
     rjson[KEY_ROSTERS_DATA] = rosters;
   }
   catch (e) {
-    console.log( 'e', e );
+    console.log( 'ROSTERS GET ERROR', e );
   }
 
   return NextResponse.json( rjson );
@@ -114,22 +110,28 @@ export async function DELETE( request ) {
       .eq( 'notion_id', rosterId );
 
     if (!isNil(deleteRosters.error)) {
-      throw new Error( 'error deleting active rosters' );
+      throw new Error( 'error deleting active rosters', {cause: deleteRosters} );
     }
 
     const deleteRosterEntries = await supabase
-    .from( 'roster-entries' )
+    .from( 'roster_entries' )
     .update( { active: false } )
     .eq( 'roster', rosterId );
     if (!isNil(deleteRosterEntries.error)) {
-      throw new Error( 'error deleting active roster entries' );
+      throw new Error( 'error deleting active roster entries', {cause: deleteRosterEntries} );
     }
 
+    const activeRosters = await getActiveRosters( supabase, userId );
+    if (!isNil(activeRosters.error)) {
+      throw new Error( 'error getting active rosters' );
+    }
+
+    rjson[KEY_ROSTERS_DATA] = activeRosters.data;
     rjson[KEY_ROSTER_DELETED] = true;
 
   }
   catch (e) {
-    console.log( 'e', e );
+    console.log( 'ROSTERS DELETE ERROR', e );
   }
   return NextResponse.json( rjson );
 };
@@ -164,22 +166,17 @@ export async function POST( req ) {
 
     const supabase = createClient( );
 
-    const getActiveRosters = async () => {
-      return await supabase
-        .from( 'rosters' )
-        .select( 'id, user_id' )
-        .eq( 'notion_id', dbId );
-    };
-    let { 
-      data: activeRostersData,
-      error: activeRostersError
-    } = await getActiveRosters();
-    if (!isNil(activeRostersError)) {
-      throw new Error( 'error getting active rosters' );
+    const notionRoster = await supabase
+      .from( 'rosters' )
+      .select( 'id, user_id' )
+      .eq( 'notion_id', dbId );
+
+    if (!isNil(notionRoster.error)) {
+      throw new Error( 'error getting notion roster', {cause: {notionRoster}} );
     }
 
-    if (activeRostersData.length === 0) {
-      const result = await supabase
+    if (notionRoster.data.length === 0) {
+      const addRosterResult = await supabase
         .from( 'rosters' )
         .insert( {
           notion_id: dbId, 
@@ -187,43 +184,54 @@ export async function POST( req ) {
           user_id: userId,
           snapshot_name: db[DGMD_PRIMARY_DATABASE][DGMD_DATABASE_TITLE]
         } );
-
-      const newActiveRosters = await getActiveRosters();
-      activeRostersData = newActiveRosters.data;
-      activeRostersError = newActiveRosters.error;
+      if (!isNil(addRosterResult.error)) {
+        throw new Error( 'error adding roster' );
+      }
     }
     else {
-      if (!activeRostersData[0].active) {
+      if (!notionRoster.data[0].active) {
         const updatedRoster = await supabase
           .from('rosters')
           .update({ 
             active: true,
             user_id: userId
           })
-          .eq('id', activeRostersData[0].id);
-        if (updatedRoster.error) {
+          .eq('id', notionRoster.data[0].id);
+        if (!isNil(updatedRoster.error)) {
           throw new Error( 'error reactivating roster' );
         }
 
         const selectedRoster = await supabase
           .from('rosters')
           .select('id, user_id')
-          .eq('id', activeRostersData[0].id);
-        if (selectedRoster.error) {
+          .eq('id', notionRoster.data[0].id);
+        if (!isNil(selectedRoster.error)) {
           throw new Error( 'error reactivating roster' );
         }
-        activeRostersData = [selectedRoster.data];
       }
       //does the roster belong to someone else?
-      if (activeRostersData[0].user_id !== userId) {
-        throw new Error( 'roster already exists' );
+      if (notionRoster.data[0].user_id !== userId) {
+        throw new Error( `roster already exists ${notionRoster.data[0].user_id} !== ${userId}` );
       }
     }
 
+    const activeRosters = await getActiveRosters( supabase, userId );
+    if (!isNil(activeRosters.error)) {
+      throw new Error( 'error getting active rosters' );
+    }
+    rjson[KEY_ROSTERS_DATA] = activeRosters.data;
     rjson[KEY_ROSTER_AUTH] = true;
   }
   catch (e) {
-    console.log( 'e', e );
+    console.log( 'ROSTERS POST ERROR', e );
   }
   return NextResponse.json( rjson );
+};
+
+const getActiveRosters = async ( supabase, userId ) => {
+  return supabase
+  .from( 'rosters' )
+  .select( 'notion_id, created_at, snapshot_name' )
+  .eq( 'active', true )
+  .eq( 'user_id', userId );
 };

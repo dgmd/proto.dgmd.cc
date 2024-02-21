@@ -1,8 +1,8 @@
 "use server"
 
 import {
-  KEY_ROSTERS_DATA,
-  KEY_ROSTER_AUTH
+  KEY_ROSTERS_AUTH,
+  KEY_ROSTERS_DATA
 } from '@/api/rosters/keys';
 import {
   AdminTable
@@ -35,7 +35,7 @@ async function AdminPage( x ) {
     next: { revalidate: 10 }
   });
   const rosterJson = await rosterData.json();
-  if (rosterJson[KEY_ROSTER_AUTH]) {
+  if (rosterJson[KEY_ROSTERS_AUTH]) {
     data = rosterJson[KEY_ROSTERS_DATA];
   }
 

@@ -34,18 +34,18 @@ import {
 } from 'next/server';
 
 import {
+  KEY_ROSTERS_AUTH,
   KEY_ROSTERS_DATA,
-  KEY_ROSTER_AUTH,
-  KEY_ROSTER_DELETED,
-  KEY_ROSTER_ERROR,
-  KEY_ROSTER_ID,
+  KEY_ROSTERS_DELETED,
+  KEY_ROSTERS_ERROR,
+  KEY_ROSTERS_ID,
   PARAM_ROSTERS_DB_ID,
   PARAM_ROSTERS_ROSTER_ID
 } from './keys.js';
 
 export async function GET( request ) {
   const rjson = {
-    [KEY_ROSTER_AUTH]: false
+    [KEY_ROSTERS_AUTH]: false
   };
 
   try {
@@ -64,7 +64,7 @@ export async function GET( request ) {
     }
     
     const rosters = activeRosters.data;
-    rjson[KEY_ROSTER_AUTH] = true;
+    rjson[KEY_ROSTERS_AUTH] = true;
     rjson[KEY_ROSTERS_DATA] = rosters;
   }
   catch (e) {
@@ -76,16 +76,16 @@ export async function GET( request ) {
 
 export async function DELETE( request ) {
   const rjson = {
-    [KEY_ROSTER_AUTH]: false,
-    [KEY_ROSTER_DELETED]: false,
-    [KEY_ROSTER_ID]: null
+    [KEY_ROSTERS_AUTH]: false,
+    [KEY_ROSTERS_DELETED]: false,
+    [KEY_ROSTERS_ID]: null
   };
   try {
     const asc = await getAuthServerCache( );
     if (!isAuthUser(asc)) {
       throw new Error( 'not authenticated' );
     }
-    rjson[KEY_ROSTER_AUTH] = true;
+    rjson[KEY_ROSTERS_AUTH] = true;
 
     const user = getAuthUser( asc );
     const userId = getAuthId( user);
@@ -95,7 +95,7 @@ export async function DELETE( request ) {
       throw new Error( 'no roster id' );
     }
     const rosterId = params.get( PARAM_ROSTERS_ROSTER_ID );
-    rjson[KEY_ROSTER_ID] = rosterId;
+    rjson[KEY_ROSTERS_ID] = rosterId;
 
     const supabase = createClient( );
     const deleteRosters = await supabase
@@ -115,7 +115,7 @@ export async function DELETE( request ) {
     if (!isNil(deleteRosterEntries.error)) {
       throw new Error( 'error deleting active roster entries', {cause: deleteRosterEntries} );
     }
-    rjson[KEY_ROSTER_DELETED] = true;
+    rjson[KEY_ROSTERS_DELETED] = true;
 
     const activeRosters = await getActiveRosters( supabase, userId );
     if (!isNil(activeRosters.error)) {
@@ -131,14 +131,14 @@ export async function DELETE( request ) {
 
 export async function POST( request ) {
   const rjson = {
-    [KEY_ROSTER_AUTH]: false
+    [KEY_ROSTERS_AUTH]: false
   };
   try {
     const asc = await getAuthServerCache( );
     if (!isAuthUser(asc)) {
       throw new Error( 'not authenticated' );
     }
-    rjson[KEY_ROSTER_AUTH] = true;
+    rjson[KEY_ROSTERS_AUTH] = true;
 
     const data = await request.json();
     const dbId = data[PARAM_ROSTERS_DB_ID];
@@ -207,10 +207,10 @@ export async function POST( request ) {
       throw new Error( 'error getting active rosters' );
     }
     rjson[KEY_ROSTERS_DATA] = activeRosters.data;
-    rjson[KEY_ROSTER_AUTH] = true;
+    rjson[KEY_ROSTERS_AUTH] = true;
   }
   catch (e) {
-    rjson[KEY_ROSTER_ERROR] = e.message;
+    rjson[KEY_ROSTERS_ERROR] = e.message;
     console.log( 'ROSTERS POST ERROR', e.message );
   }
   return NextResponse.json( rjson );

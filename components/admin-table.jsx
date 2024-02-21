@@ -1,11 +1,11 @@
 "use client"
 
 import {
+  KEY_ROSTERS_AUTH,
   KEY_ROSTERS_DATA,
-  KEY_ROSTER_AUTH,
-  KEY_ROSTER_DELETED,
-  KEY_ROSTER_ERROR,
-  KEY_ROSTER_ID,
+  KEY_ROSTERS_DELETED,
+  KEY_ROSTERS_ERROR,
+  KEY_ROSTERS_ID,
   PARAM_ROSTERS_DB_ID,
   PARAM_ROSTERS_ROSTER_ID
 } from '@/api/rosters/keys.js';
@@ -105,8 +105,8 @@ export const AdminTable = ( {data, url} ) => {
       } );
       const text = await response.text();
       const data = JSON.parse( text );
-      if (KEY_ROSTER_ERROR in data) {
-        throw new Error( data[KEY_ROSTER_ERROR] );
+      if (KEY_ROSTERS_ERROR in data) {
+        throw new Error( data[KEY_ROSTERS_ERROR] );
       }
       if (KEY_ROSTERS_DATA in data) {
         setCells( x => {
@@ -139,10 +139,10 @@ export const AdminTable = ( {data, url} ) => {
       });
       const text = await response.text();
       const data = JSON.parse(text);
-      if (!data[KEY_ROSTER_DELETED] || !data[KEY_ROSTER_AUTH]) {
+      if (!data[KEY_ROSTERS_DELETED] || !data[KEY_ROSTERS_AUTH]) {
         throw new Error( 'error deleting roster' );
       }
-      const delRosterId = data[KEY_ROSTER_ID];
+      const delRosterId = data[KEY_ROSTERS_ID];
       setCells( s => s.filter( cur => cur[KEY_DB_ID] !== delRosterId ) );
     }
     catch (e) {

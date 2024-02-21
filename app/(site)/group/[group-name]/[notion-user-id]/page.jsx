@@ -25,7 +25,6 @@ async function RosterEntryProjects( {params} ) {
   const data = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_DATA ];
   const groupName = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_GROUP_NAME ];
   const name = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_NAME ];
-  console.log( 'NAME', name, groupName );
   return (
     <RosterEntryProjectsTable
       dbId={ dbId }

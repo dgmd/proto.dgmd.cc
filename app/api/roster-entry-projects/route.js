@@ -73,7 +73,6 @@ export async function GET( request ) {
         }
       }
       catch (e) {
-        console.log( 'e', e );
         throw new Error( 'unable to retrieve user page' );
       }
 

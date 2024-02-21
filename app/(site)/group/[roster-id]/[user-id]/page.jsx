@@ -16,6 +16,8 @@ async function RosterEntryProjects( {params} ) {
   const rostersUrl = new URL('/api/roster-entry-projects', process.env.SITE_ORIGIN);
   rostersUrl.searchParams.append( PARAM_ROSTER_ENTRY_PROJECTS_USER_ID, userId );
   const rosterData = await fetch(rostersUrl.href, {
+    method: 'GET',
+    next: { revalidate: 10 }
   });
   const rosterJson = await rosterData.json();
   const data = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_DATA ];

@@ -60,7 +60,7 @@ export const Table = props => {
                 key={ headerIdx }
                 scope="col"
                 className={ 
-                  `truncate sticky ${ hideStr } h-16 top-0 bg-gray-200 border-2 border-solid border-transparent text-left text-sm font-semibold text-gray-900`}
+                  `truncate sticky ${ hideStr } h-16 top-0 bg-gray-200 border-2 border-solid border-transparent text-left text-sm font-semibold text-gray-900 capitalize`}
               >
                 { headerName }
               </th>

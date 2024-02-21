@@ -11,8 +11,8 @@ import {
 } from 'next/server';
 
 import {
-  KEY_PROJECTS_DATA,
-  KEY_PROJECTS_ERROR,
+  KEY_PROJECT_DATA,
+  KEY_PROJECT_ERROR,
   PARAM_PROJECT_ID,
   PARAM_PROJECT_ROSTER_ID,
   PARAM_PROJECT_USER_ID
@@ -20,6 +20,7 @@ import {
 
 export async function GET( request ) {
   const rjson = {
+    [KEY_PROJECT_DATA]: []
   };
 
   try {
@@ -40,11 +41,11 @@ export async function GET( request ) {
       throw new Error( 'cannot connect to snapshots' );
     }
     const snaps = snapsQuery.data;
-    rjson[KEY_PROJECTS_DATA] = snaps;
+    rjson[KEY_PROJECT_DATA] = snaps;
 
   }
   catch (e) {
-    rjson[KEY_PROJECTS_ERROR] = e.message;
+    rjson[KEY_PROJECT_ERROR] = e.message;
     console.log( 'PROJECT GET ERROR', e.message );
   }
 

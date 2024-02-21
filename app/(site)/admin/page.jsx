@@ -32,6 +32,7 @@ async function AdminPage( x ) {
   const rosterData = await fetch(rostersUrl.href, {
     method: 'GET',
     headers: { Cookie: cookies().toString() },
+    next: { revalidate: 10 }
   });
   const rosterJson = await rosterData.json();
   if (rosterJson[KEY_ROSTER_AUTH]) {

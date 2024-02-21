@@ -30,7 +30,6 @@ export const getNotionPageBlocks =
       [NOTION_RESULT_BLOCK_DBS]: [],
       [NOTION_RESULT_COLUMN_LISTS]: []
     };
-    console.log( 'x', x );
     return getNotionPageBlockPromise( nClient, x, blocksCollector );
   } );
   const notionBlockResults = await Promise.all( notionPagePromises );
@@ -115,7 +114,7 @@ const getNotionBlockKeyedDatabases =
           propertyType === 'toggle' ||
           propertyType === 'child_page'
         ) {
-          console.log( 'propertyType', propertyType, propertyVal );
+          // console.log( 'propertyType', propertyType, propertyVal );
         }
         else {
           // console.log( 'what is it?', propertyType, propertyVal );

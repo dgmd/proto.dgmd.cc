@@ -23,7 +23,7 @@ import {
   redirect
 } from 'next/navigation';
 
-async function GroupName( {params} ) {
+async function Roster( {params} ) {
   const auth = await getAuthServerCache();
   if (!isAuthUser(auth)) {
     redirect('/');
@@ -54,4 +54,4 @@ async function GroupName( {params} ) {
   );    
 };
 
-export default GroupName;
+export default Roster;

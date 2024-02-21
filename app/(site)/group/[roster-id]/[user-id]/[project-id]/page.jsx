@@ -16,11 +16,14 @@ import {
   ProjectTable
 } from '@/components/project-table';
 import {
+  QUERY_PARAM_DATABASE
+} from 'constants.dgmd.cc';
+import {
   find,
   isNil
 } from 'lodash-es';
 
-async function Projects( {params} ) {
+async function Project( {params} ) {
   const rosterId = params[ 'roster-id' ];
   const userId = params[ 'user-id' ];
   const projectId = params[ 'project-id' ];
@@ -52,20 +55,27 @@ async function Projects( {params} ) {
   const rosterName = rosterJson[KEY_ROSTER_ENTRY_PROJECTS_ROSTER_NAME];
   const userName = rosterJson[KEY_ROSTER_ENTRY_USER_NAME];
 
+  const liveUrl = new URL('/api/query', process.env.SITE_ORIGIN);
+  liveUrl.searchParams.append( QUERY_PARAM_DATABASE, projectId );
+  const data = [{
+    name: 'live data',
+    url: liveUrl.href
+  }];
+  data.push( ...projectList );
+
   const projectObj = find(projectsList, { 
     PAGE_ID: projectId
   });
   const projectName = isNil(projectObj) ? '' : projectObj.VALUE;
-
-  console.log('projectName', projectName);
 
   return (
     <ProjectTable
       projectName={ projectName }
       userName={ userName }
       rosterName={ rosterName }
+      data={ data }
     />
   );    
 };
 
-export default Projects;
+export default Project;

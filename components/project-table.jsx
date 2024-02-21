@@ -7,6 +7,7 @@ import {
   LinkButton
 } from '@/components/link-button.jsx';
 import {
+  buttonClassNames,
   cellClassNames,
   cellHoverClassNames
 } from '@/components/look.js';
@@ -22,14 +23,14 @@ import {
   useState
 } from 'react';
 
-const KEY_SNAPSHOT_DATE = 'snapshot date';
+const KEY_SNAPSHOT_NAME = 'snapshot date';
 const KEY_SNAPSHOT_LINK = 'snapshot link';
 
 export const ProjectTable =
-  ({rosterName, userName, projectName}) => {
+  ({rosterName, userName, projectName, data}) => {
 
   const [headers, setHeaders] = useState( x => [ 
-    { [TABLE_HEADER_NAME]: KEY_SNAPSHOT_DATE, 
+    { [TABLE_HEADER_NAME]: KEY_SNAPSHOT_NAME, 
       [TABLE_HEADER_HIDE]: null
     },
     { [TABLE_HEADER_NAME]: KEY_SNAPSHOT_LINK,
@@ -37,22 +38,27 @@ export const ProjectTable =
     }
   ] );
 
-//   const [cells, setCells] = useState( x => {
-//     return data.map( cur => {
-//       const notionUrl = new URL( `/group/${dbId}/${cur.notion_id}`, url );
-//       return {
-//         [KEY_STUDENT_NAME]: cur.snapshot_name,
-//         [KEY_STUDENT_LINK]: notionUrl
-//       };
-//     } );
-//   } );
+  const [cells, setCells] = useState( x => {
+    return data.map( cur => {
+      return {
+        [KEY_SNAPSHOT_NAME]: cur.name,
+        [KEY_SNAPSHOT_LINK]: cur.url
+      };
+    } );
+  } );
 
   return (
     <div className='flex-grow'>  
       <Title
         title={ projectName }
         subtitle={ `${rosterName}\u00a0/\u00a0${userName}` }
-      />
+      >
+        <button
+          className={ `${buttonClassNames} mt-2` }
+          onClick={ () => {} }>
+          Add Snapshot
+        </button>
+      </Title>
 
       <div
         className={ `flex flex-col grow sm:px-6 lg:px-8` }
@@ -60,7 +66,7 @@ export const ProjectTable =
         <Table
           headers={headers}
         >
-        {/* {
+        {
           cells.map((row, i) => 
             headers.map((header, j) => {
               const key = header[TABLE_HEADER_NAME];
@@ -68,13 +74,13 @@ export const ProjectTable =
               const classNames = [cellClassNames, cellHoverClassNames].join(' ');
               return (
                 <div key={`row-${i}-cell-${j}`}>
-                  {key === KEY_STUDENT_LINK && (
+                  {key === KEY_SNAPSHOT_LINK && (
                   <div className={ [cellClassNames, 'space-x-1'].join( ' ' )}>
-                    <LinkButton link={row[KEY_STUDENT_LINK].pathname} />
-                    <ClipboardButton text={row[KEY_STUDENT_LINK].href} />
+                    <LinkButton link={row[KEY_SNAPSHOT_LINK]} />
+                    <ClipboardButton text={row[KEY_SNAPSHOT_LINK]} />
                   </div>
                   )}
-                  {key === KEY_STUDENT_NAME && (
+                  {key === KEY_SNAPSHOT_NAME && (
                   <div className={classNames}>
                     { cell }
                   </div>
@@ -83,7 +89,7 @@ export const ProjectTable =
               )
             })
           )
-        } */}
+        }
         </Table>
       </div>
     </div>

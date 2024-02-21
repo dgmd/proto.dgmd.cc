@@ -10,7 +10,7 @@ import {
   RosterEntryProjectsTable
 } from '@/components/roster-entry-projects-table.jsx';
 
-async function RosterEntryProjects( {params} ) {
+async function User( {params} ) {
   const rosterId = params[ 'roster-id' ];
   const userId = params[ 'user-id' ];
   const rostersUrl = new URL('/api/roster-entry-projects', process.env.SITE_ORIGIN);
@@ -35,4 +35,4 @@ async function RosterEntryProjects( {params} ) {
   );    
 };
 
-export default RosterEntryProjects;
+export default User;

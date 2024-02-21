@@ -27,8 +27,6 @@ const KEY_STUDENT_LINK = 'student link';
 
 export const RosterEntriesTable = ({data, name, dbId, url}) => {
 
-  console.log( 'name', name );
-
   const [headers, setHeaders] = useState( x => [ 
     { [TABLE_HEADER_NAME]: KEY_STUDENT_NAME, 
       [TABLE_HEADER_HIDE]: null

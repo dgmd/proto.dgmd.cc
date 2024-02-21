@@ -112,6 +112,7 @@ export async function GET( request ) {
       rjson[KEY_ROSTER_ENTRIES_DATA] = notionEntries;
     }
     catch (e) {
+      console.log( 'e', e );
       throw new Error( 'unable to connect to notion' );
     }
 

@@ -77,11 +77,13 @@ import {
   NOTION_FORMULA_RESULT_DATE,
   NOTION_FORMULA_RESULT_STRING,
   NOTION_HAS_MORE,
-  NOTION_KEY_DATABASE_ID,
+  NOTION_KEY_DBS,
+  NOTION_KEY_DB_ID,
   NOTION_KEY_END_DATE,
   NOTION_KEY_FILE,
   NOTION_KEY_ID,
   NOTION_KEY_NAME,
+  NOTION_KEY_PAGES,
   NOTION_KEY_PAGE_ID,
   NOTION_KEY_PARENT,
   NOTION_KEY_PLAIN_TEXT,
@@ -92,7 +94,7 @@ import {
   NOTION_KEY_VALUE,
   NOTION_NEXT_CURSOR,
   NOTION_PROPERTIES,
-  NOTION_RESULTS,
+  NOTION_RESULTS
 } from './notionConstants.js';
 import {
   NOTION_WRANGLE_KEY_DATA_DB_MAP,
@@ -307,8 +309,8 @@ const trackLoadedPages =
 
 const getNotionDbaseRelationPromise =
   async (nClient, dbId, collector) => {
-  const db = await nClient.databases.retrieve({
-    [NOTION_KEY_DATABASE_ID]: dbId
+  const db = await nClient[NOTION_KEY_DBS].retrieve({
+    [NOTION_KEY_DB_ID]: dbId
   });
 
   const relMap = collector[NOTION_WRANGLE_KEY_RELATIONS_MAP];
@@ -326,7 +328,7 @@ const getNotionDbaseRelationPromise =
     if (ndpPropertyType === NOTION_DATA_TYPE_RELATION) {
       const propertyValId = ndpPropertyVal[NOTION_KEY_ID];
       const relation = ndpPropertyVal[NOTION_DATA_TYPE_RELATION];
-      const dbaseId = relation[NOTION_KEY_DATABASE_ID];
+      const dbaseId = relation[NOTION_KEY_DB_ID];
       const dbaseIdSansHyphens = removeHyphens( dbaseId );
       nextDbIds.add( dbaseIdSansHyphens );
       if (!relMap.has( dbId )) {
@@ -618,7 +620,7 @@ const getNotionDbasePromise =
   (nClient, allPages, relMap, collector, queryObj) => {
   const p = new Promise((resolve, reject) => {
 
-    nClient.databases.query( queryObj )
+    nClient[NOTION_KEY_DBS].query( queryObj )
       .then( result => {
         const properties = getNotionDbaseProperties( result, relMap );
         collector[QUERY_PROPERTIES].push( ...properties );
@@ -647,7 +649,7 @@ const chainNotionDbasePromises =
   
   if (proceed) {
     const queryObj = {
-      [NOTION_KEY_DATABASE_ID]: dbId
+      [NOTION_KEY_DB_ID]: dbId
     };
     if (startCursor) {
       queryObj[NOTION_KEY_START_CURSOR] = startCursor;
@@ -758,7 +760,7 @@ const notionUpdateDbMeta =
     const [primaryParentId, primaryParentType] = getNotionDbaseParentId( nDbase );
     meta[DATABASE_QUERY_PARENT_ID] = primaryParentId;
     if (primaryParentType === NOTION_KEY_PAGE_ID) {
-      const primaryPageParent = await nClient.pages.retrieve({ [NOTION_KEY_PAGE_ID]: primaryParentId });
+      const primaryPageParent = await nClient[NOTION_KEY_PAGES].retrieve({ [NOTION_KEY_PAGE_ID]: primaryParentId });
       const primaryPageParentTitle = getNotionPageTitle( primaryPageParent );
       meta[DATABASE_QUERY_PARENT_TITLE] = primaryPageParentTitle;
       meta[DATABASE_QUERY_PARENT_TYPE] = primaryParentType;

@@ -6,6 +6,8 @@ import {
 
 export const RosterEntryProjectsTable = ({data, name, groupName, dbId, url}) => {
 
+  console.log( 'data', data );
+
   return (
     <div className='flex-grow'>  
 

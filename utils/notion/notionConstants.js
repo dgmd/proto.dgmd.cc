@@ -40,7 +40,6 @@ export const NOTION_KEY_FILE = 'file';
 export const NOTION_KEY_URL = 'url';
 export const NOTION_KEY_EXTERNAL = 'external';
 export const NOTION_KEY_PLAIN_TEXT = 'plain_text';
-export const NOTION_KEY_DATABASE_ID = 'database_id';
 export const NOTION_KEY_ID = 'id';
 export const NOTION_KEY_PARENT = 'parent';
 export const NOTION_KEY_START_DATE = 'start';
@@ -49,6 +48,9 @@ export const NOTION_KEY_TIME_ZONE = 'time_zone';
 
 export const NOTION_KEY_PAGE_ID = 'page_id';
 export const NOTION_KEY_DB_ID = 'database_id';
+
+export const NOTION_KEY_PAGES = 'pages';
+export const NOTION_KEY_DBS = 'databases';
 
 export const NOTION_HAS_MORE = 'has_more';
 export const NOTION_NEXT_CURSOR = 'next_cursor';

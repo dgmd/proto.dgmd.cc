@@ -2,19 +2,23 @@ import {
   getApiCoriHeaders
 } from '@/utils/coriHeaders.js';
 import {
+  NOTION_KEY_PAGE_ID,
+  NOTION_KEY_PAGES
+} from '@/utils/notion/notionConstants.js';
+import {
   removeHyphens
 } from '@/utils/strings.js';
-import {
-  NOTION_KEY_DATABASE_ID,
-  NOTION_KEY_DB_ID,
-  NOTION_KEY_ID,
-  NOTION_KEY_PAGE_ID,
-  NOTION_KEY_PARENT,
-  NOTION_RESULTS
-} from '@api/notion_constants.js';
-import {
-  NOTION_WRANGLE_KEY_RELATIONS_MAP
-} from '@api/notion_wrangler_constants.js';
+// import {
+//   NOTION_KEY_DATABASE_ID,
+//   NOTION_KEY_DB_ID,
+//   NOTION_KEY_ID,
+//   NOTION_KEY_PAGE_ID,
+//   NOTION_KEY_PARENT,
+//   NOTION_RESULTS
+// } from '@api/notion_constants.js';
+// import {
+//   NOTION_WRANGLE_KEY_RELATIONS_MAP
+// } from '@api/notion_wrangler_constants.js';
 import {
   getNotionDbaseProperties,
   getNotionDbaseRelationsIds
@@ -60,8 +64,8 @@ import {
   DGMD_BLOCK_TYPE_DATE,
   DGMD_BLOCK_TYPE_EMAIL,
   DGMD_BLOCK_TYPE_EMOJI,
-  DGMD_BLOCK_TYPE_FILES,
   DGMD_BLOCK_TYPE_FILE_EXTERNAL,
+  DGMD_BLOCK_TYPE_FILES,
   DGMD_BLOCK_TYPE_ICON,
   DGMD_BLOCK_TYPE_LAST_EDITED_TIME,
   DGMD_BLOCK_TYPE_MULTI_SELECT,
@@ -84,6 +88,10 @@ import {
 import {
   NextResponse
 } from 'next/server';
+
+import {
+  NOTION_KEY_PAGE_ID
+} from '@/utils/notion/notionConstants.js';
 
 export async function GET( request ) {
 
@@ -147,7 +155,7 @@ export async function GET( request ) {
         }
       }
 
-      const createObj = await nClient.pages.create({
+      const createObj = await nClient[NOTION_KEY_PAGES].create({
         parent: {
           type: NOTION_KEY_DB_ID,
           [NOTION_KEY_DB_ID]: appendDbId
@@ -168,7 +176,7 @@ export async function GET( request ) {
         }
       }
 
-      const createdPg = await nClient.pages.retrieve({ [NOTION_KEY_PAGE_ID]: createPageId });
+      const createdPg = await nClient[NOTION_KEY_PAGES].retrieve({ [NOTION_KEY_PAGE_ID]: createPageId });
       const x = await getNotionDbaseRelationsIds( nClient, appendDbId );
       const relMap = x[NOTION_WRANGLE_KEY_RELATIONS_MAP];
       const pgs = getNotionDbaseProperties( {[NOTION_RESULTS]: [createdPg]}, relMap );
@@ -226,7 +234,7 @@ export async function GET( request ) {
         }
       }
 
-      const createdPg = await nClient.pages.retrieve({ [NOTION_KEY_PAGE_ID]: updatePageId });
+      const createdPg = await nClient[NOTION_KEY_PAGES].retrieve({ [NOTION_KEY_PAGE_ID]: updatePageId });
       const parentId = removeHyphens( createdPg[NOTION_KEY_PARENT][NOTION_KEY_DATABASE_ID] );
       const x = await getNotionDbaseRelationsIds( nClient, parentId );
       const relMap = x[NOTION_WRANGLE_KEY_RELATIONS_MAP];
@@ -268,8 +276,8 @@ const updateBlock = async (nClient, pageId, blockKey, blockValue, responseBlocks
     await delay( 50 );
 
     const blockResponse =
-    await nClient.pages.update({
-      page_id: pageId,
+    await nClient[NOTION_KEY_PAGES].update({
+      [NOTION_KEY_PAGE_ID]: pageId,
       properties: {
         [blockKey]: blockValue
       }
@@ -297,8 +305,8 @@ const updateMeta = async (nClient, pageId, metaKey, metaValue, responseMetas) =>
     await delay( 50 );
 
     const metaResponse =
-    await nClient.pages.update({
-      page_id: pageId,
+    await nClient[NOTION_KEY_PAGES].update({
+      [NOTION_KEY_PAGE_ID]: pageId,
       [metaKey]: metaValue
     });
     const metaResponseId = removeHyphens( metaResponse.id );

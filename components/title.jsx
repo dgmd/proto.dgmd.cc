@@ -11,13 +11,13 @@ export const Title = props => {
         {
         pTitle &&
         <h2 className="text-3xl">
-        { `\u00a0${decodeURI(pTitle)}` }
+        { `${decodeURI(pTitle)}` }
         </h2>
         }
         {
         pSubtitle &&
         <h3 className="text-1xl text-gray-500">
-        { `\u00a0${decodeURI(pSubtitle)}` }
+        { `${decodeURI(pSubtitle)}` }
         </h3>
         }
         { pChildren }

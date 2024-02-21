@@ -9,9 +9,6 @@ import {
 import {
   RosterEntryProjectsTable
 } from '@/components/roster-entry-projects-table.jsx';
-import {
-  cookies
-} from "next/headers";
 
 async function RosterEntryProjects( {params} ) {
   const rosterId = params[ 'roster-id' ];
@@ -19,7 +16,6 @@ async function RosterEntryProjects( {params} ) {
   const rostersUrl = new URL('/api/roster-entry-projects', process.env.SITE_ORIGIN);
   rostersUrl.searchParams.append( PARAM_ROSTER_ENTRY_PROJECTS_USER_ID, userId );
   const rosterData = await fetch(rostersUrl.href, {
-    headers: { Cookie: cookies().toString() },
   });
   const rosterJson = await rosterData.json();
   const data = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_DATA ];

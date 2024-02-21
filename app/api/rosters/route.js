@@ -59,7 +59,6 @@ export async function GET( request ) {
     const supabase = createClient( );
 
     const activeRosters = await getActiveRosters( supabase, userId );
-    console.log( 'activeRosters', activeRosters, 'userId', userId );
     if (!isNil(activeRosters.error)) {
       throw new Error( 'error getting active rosters' );
     }

@@ -18,9 +18,8 @@ async function Projects( {params} ) {
   projectUrl.searchParams.append( PARAM_PROJECT_USER_ID, userId );
   projectUrl.searchParams.append( PARAM_PROJECT_ID, projectId );
 
-
+  console.log( 'projectUrl.href', projectUrl.href );
   const projectData = await fetch(projectUrl.href, {
-    // headers: { Cookie: cookies().toString() },
   });
   const projectJson = await projectData.json();
   console.log( 'projectJson', projectJson );

@@ -4,6 +4,14 @@ import {
   PARAM_ROSTERS_DB_ID
 } from '@/api/rosters/keys.js';
 import {
+  DATABASE_QUERY_DATABASE_ID_REQUEST,
+  DATABASE_QUERY_PAGE_CURSOR_ID_REQUEST,
+  DATABASE_QUERY_PAGE_CURSOR_REQUEST,
+  DATABASE_QUERY_PAGE_CURSOR_TYPE_ALL,
+  DATABASE_QUERY_PAGE_CURSOR_TYPE_REQUEST,
+  getNotionDatabases
+} from '@/utils/notion/queryDatabases.js';
+import {
   getAuthServerCache
 } from '@/utils/supabase/auth/authServerCache.js';
 import {
@@ -15,6 +23,18 @@ import {
   createClient
 } from '@/utils/supabase/server.js';
 import {
+  Client
+} from "@notionhq/client";
+import {
+  DGMD_BLOCKS,
+  DGMD_BLOCK_TYPE_ID,
+  DGMD_DATABASE_TITLE,
+  DGMD_METADATA,
+  DGMD_PRIMARY_DATABASE,
+  DGMD_PROPERTIES,
+  DGMD_VALUE
+} from 'constants.dgmd.cc';
+import {
   isNil
 } from 'lodash-es';
 import {
@@ -23,7 +43,9 @@ import {
 
 import {
   KEY_ROSTER_ENTRIES_AUTH,
-  KEY_ROSTER_ENTRIES_DATA
+  KEY_ROSTER_ENTRIES_DATA,
+  KEY_ROSTER_ENTRIES_ERROR,
+  KEY_ROSTER_ENTRIES_NAME
 } from './keys.js';
 
 export async function GET( request ) {
@@ -36,9 +58,7 @@ export async function GET( request ) {
     if (!isAuthUser(asc)) {
       throw new Error( 'not authenticated' );
     }
-    const user = getAuthUser( asc );
-    const userId = getAuthId( user);
-    const supabase = createClient( );
+    rjson[KEY_ROSTER_ENTRIES_AUTH] = true;
 
     const params = request.nextUrl.searchParams;
     if (!params.has(PARAM_ROSTERS_DB_ID)) {
@@ -46,61 +66,70 @@ export async function GET( request ) {
     }
     const dbId = params.get(PARAM_ROSTERS_DB_ID);
 
+    const user = getAuthUser( asc );
+    const userId = getAuthId( user);
+    const supabase = createClient( );
     const { 
-      data: rostersData,
-      error: rostersError
+      data: rosterData,
+      error: rosterError
     } = await supabase
     .from( 'rosters' )
-    .select( 'id' )
-    .eq( 'user_id', userId )
-    .eq( 'notion_id', dbId );
-    if (!isNil(rostersError)) {
-      throw new Error( 'roster retrieval error' );
-    }
-
-    const rostersDataId = rostersData[0].id;
-    const {
-      data: rosterEntriesData,
-      error: rosterEntriesError
-    } = await supabase
-    .from( 'roster_entries' )
     .select( 'snapshot_name' )
     .eq( 'active', true )
-    .eq( 'roster', rostersDataId );
-    if (!isNil(rosterEntriesError)) {
-      throw new Error( 'roster entries retrieval error' );
+    .eq( 'user_id', userId )
+    .eq( 'notion_id', dbId );
+    if (!isNil(rosterError) || rosterData.length === 0) {
+      throw new Error( 'roster retrieval error' );
     }
-    rjson[KEY_ROSTER_ENTRIES_AUTH] = true;
-    rjson[KEY_ROSTER_ENTRIES_DATA] = rosterEntriesData;
+    const rosterDataName = rosterData[0].snapshot_name;
+
+    try {
+      const requests = {
+        [DATABASE_QUERY_DATABASE_ID_REQUEST]: dbId,
+        [DATABASE_QUERY_PAGE_CURSOR_REQUEST]: {
+          [DATABASE_QUERY_PAGE_CURSOR_TYPE_REQUEST]: DATABASE_QUERY_PAGE_CURSOR_TYPE_ALL,
+          [DATABASE_QUERY_PAGE_CURSOR_ID_REQUEST]: null
+        },
+      };
+      const nClient = new Client({ 
+        auth: process.env.NOTION_SECRET
+      });
+      const db = await getNotionDatabases( nClient, requests );
+      const dbp = db[DGMD_PRIMARY_DATABASE];
+      const dbpTitle = dbp[DGMD_DATABASE_TITLE];
+      const dbpBlocks = dbp[DGMD_BLOCKS];
+      const notionEntries = dbpBlocks.map( x => {
+        const xProps = x[DGMD_PROPERTIES];
+        // const studentId = xProps['Student ID'][DGMD_VALUE];
+        const studentName = xProps['Name'][DGMD_VALUE];
+        const notionId = x[DGMD_METADATA][DGMD_BLOCK_TYPE_ID][DGMD_VALUE];
+        return {
+          'snapshot_name': studentName,
+          'notion_id': notionId
+        }
+      } );
+      rjson[KEY_ROSTER_ENTRIES_NAME] = dbpTitle;
+      rjson[KEY_ROSTER_ENTRIES_DATA] = notionEntries;
+    }
+    catch (e) {
+      throw new Error( 'unable to connect to notion' );
+    }
+
+    if (rjson[KEY_ROSTER_ENTRIES_NAME] !== rosterDataName) {
+      await supabase
+        .from( 'rosters' )
+        .update( {
+          'snapshot_name': rjson[KEY_ROSTER_ENTRIES_NAME]
+        } )
+        .eq( 'active', true )
+        .eq( 'user_id', userId )
+        .eq( 'notion_id', dbId );        
+    }
   }
   catch (e) {
-    console.error( 'roster entries error', e );
+    rjson[KEY_ROSTER_ENTRIES_ERROR] = e.message;
+    console.error( 'roster entries error', e.message );
   }
 
   return NextResponse.json( rjson );
-};
-
-export async function POST( request ) {
-    //
-    // talk to notion to get all roster-entries
-    // and then create 
-    //
-    const dbBlocks = db[DGMD_PRIMARY_DATABASE][DGMD_BLOCKS];
-    dbBlocks.forEach( async x => {
-      const xProps = x[DGMD_PROPERTIES];
-      console.log( 'xProps', xProps );
-      // const studentId = xProps['Student ID'][DGMD_VALUE];
-      const studentName = xProps['Name'][DGMD_VALUE];
-      const notionId = x[DGMD_METADATA][DGMD_BLOCK_TYPE_ID][DGMD_VALUE];
-      const result = await supabase
-        .from( 'roster_entries' )
-        .insert( {
-          notion_id: notionId, 
-          snapshot_name: studentName,
-          active: true,
-          roster: rosterId
-        } );
-      console.log( 'roster', result );
-
-    } );
 };

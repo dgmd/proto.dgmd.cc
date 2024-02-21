@@ -23,16 +23,10 @@ import {
   Client
 } from "@notionhq/client";
 import {
-  DGMD_BLOCKS,
-  DGMD_BLOCK_TYPE_ID,
   DGMD_DATABASE_TITLE,
-  DGMD_METADATA,
-  DGMD_PRIMARY_DATABASE,
-  DGMD_PROPERTIES,
-  DGMD_VALUE
+  DGMD_PRIMARY_DATABASE
 } from 'constants.dgmd.cc';
 import {
-  get,
   isNil
 } from 'lodash-es';
 import {
@@ -43,6 +37,7 @@ import {
   KEY_ROSTERS_DATA,
   KEY_ROSTER_AUTH,
   KEY_ROSTER_DELETED,
+  KEY_ROSTER_ERROR,
   KEY_ROSTER_ID,
   PARAM_ROSTERS_DB_ID,
   PARAM_ROSTERS_ROSTER_ID
@@ -64,6 +59,7 @@ export async function GET( request ) {
     const supabase = createClient( );
 
     const activeRosters = await getActiveRosters( supabase, userId );
+    console.log( 'activeRosters', activeRosters, 'userId', userId );
     if (!isNil(activeRosters.error)) {
       throw new Error( 'error getting active rosters' );
     }
@@ -73,7 +69,7 @@ export async function GET( request ) {
     rjson[KEY_ROSTERS_DATA] = rosters;
   }
   catch (e) {
-    console.log( 'ROSTERS GET ERROR', e );
+    console.log( 'ROSTERS GET ERROR', e.message );
   }
 
   return NextResponse.json( rjson );
@@ -114,29 +110,27 @@ export async function DELETE( request ) {
     }
 
     const deleteRosterEntries = await supabase
-    .from( 'roster_entries' )
-    .update( { active: false } )
-    .eq( 'roster', rosterId );
+      .from( 'roster_entries' )
+      .update( { active: false } )
+      .eq( 'roster', rosterId );
     if (!isNil(deleteRosterEntries.error)) {
       throw new Error( 'error deleting active roster entries', {cause: deleteRosterEntries} );
     }
+    rjson[KEY_ROSTER_DELETED] = true;
 
     const activeRosters = await getActiveRosters( supabase, userId );
     if (!isNil(activeRosters.error)) {
       throw new Error( 'error getting active rosters' );
     }
-
     rjson[KEY_ROSTERS_DATA] = activeRosters.data;
-    rjson[KEY_ROSTER_DELETED] = true;
-
   }
   catch (e) {
-    console.log( 'ROSTERS DELETE ERROR', e );
+    console.log( 'ROSTERS DELETE ERROR', e.message );
   }
   return NextResponse.json( rjson );
 };
 
-export async function POST( req ) {
+export async function POST( request ) {
   const rjson = {
     [KEY_ROSTER_AUTH]: false
   };
@@ -145,8 +139,9 @@ export async function POST( req ) {
     if (!isAuthUser(asc)) {
       throw new Error( 'not authenticated' );
     }
+    rjson[KEY_ROSTER_AUTH] = true;
 
-    const data = await req.json();
+    const data = await request.json();
     const dbId = data[PARAM_ROSTERS_DB_ID];
 
     const requests = {
@@ -168,7 +163,7 @@ export async function POST( req ) {
 
     const notionRoster = await supabase
       .from( 'rosters' )
-      .select( 'id, user_id' )
+      .select( 'id, user_id, active' )
       .eq( 'notion_id', dbId );
 
     if (!isNil(notionRoster.error)) {
@@ -189,29 +184,22 @@ export async function POST( req ) {
       }
     }
     else {
-      if (!notionRoster.data[0].active) {
-        const updatedRoster = await supabase
-          .from('rosters')
-          .update({ 
-            active: true,
-            user_id: userId
-          })
-          .eq('id', notionRoster.data[0].id);
-        if (!isNil(updatedRoster.error)) {
-          throw new Error( 'error reactivating roster' );
-        }
-
-        const selectedRoster = await supabase
-          .from('rosters')
-          .select('id, user_id')
-          .eq('id', notionRoster.data[0].id);
-        if (!isNil(selectedRoster.error)) {
-          throw new Error( 'error reactivating roster' );
-        }
-      }
+      const active = notionRoster.data[0].active;
       //does the roster belong to someone else?
-      if (notionRoster.data[0].user_id !== userId) {
-        throw new Error( `roster already exists ${notionRoster.data[0].user_id} !== ${userId}` );
+      if (active && notionRoster.data[0].user_id !== userId) {
+        throw new Error( `roster already exists with different admin` );
+      }
+
+      const updatedRoster = await supabase
+        .from('rosters')
+        .update({ 
+          active: true,
+          user_id: userId,
+          snapshot_name: db[DGMD_PRIMARY_DATABASE][DGMD_DATABASE_TITLE]
+        })
+        .eq('id', notionRoster.data[0].id);
+      if (!isNil(updatedRoster.error)) {
+        throw new Error( 'error reactivating roster' );
       }
     }
 
@@ -223,7 +211,8 @@ export async function POST( req ) {
     rjson[KEY_ROSTER_AUTH] = true;
   }
   catch (e) {
-    console.log( 'ROSTERS POST ERROR', e );
+    rjson[KEY_ROSTER_ERROR] = e.message;
+    console.log( 'ROSTERS POST ERROR', e.message );
   }
   return NextResponse.json( rjson );
 };

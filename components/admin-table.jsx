@@ -4,6 +4,7 @@ import {
   KEY_ROSTERS_DATA,
   KEY_ROSTER_AUTH,
   KEY_ROSTER_DELETED,
+  KEY_ROSTER_ERROR,
   KEY_ROSTER_ID,
   PARAM_ROSTERS_DB_ID,
   PARAM_ROSTERS_ROSTER_ID
@@ -38,9 +39,9 @@ import {
   ArrowPathIcon,
   MinusIcon
 } from '@heroicons/react/20/solid';
+import { add } from 'lodash-es';
 import {
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState
@@ -68,7 +69,6 @@ export const AdminTable = ( {data, url} ) => {
   const [addingNotionRoom, setAddingNotionRoom] = useState( x => false );
   const rAddingNotionRoom = useRef( addingNotionRoom );
 
-
   const [headers, setHeaders] = useState( x => [ 
     { [TABLE_HEADER_NAME]: KEY_NAME, [TABLE_HEADER_HIDE]: null },
     { [TABLE_HEADER_NAME]: KEY_DB_ID, [TABLE_HEADER_HIDE]: TABLE_COL_HIDE_MD },
@@ -87,13 +87,16 @@ export const AdminTable = ( {data, url} ) => {
     const v = e.target.value;
     setDbId( s => v );
     setDbIdValid( s => v.length > 0 );
-    setAddRosterError( x => false );
+    setAddRosterError( x => null );
   }, [
   ] );
-  
-  const cbAddNotionRoom = useCallback( () => {
+
+  const addRosterEntry = async( dbId, url ) => {
+    if (rAddingNotionRoom.current) {
+      return;
+    }
     rAddingNotionRoom.current = true;
-    const post = async() => {
+    try {
       const response = await fetch( '/api/rosters/', {
         method: 'POST',
         body: JSON.stringify( { 
@@ -102,49 +105,65 @@ export const AdminTable = ( {data, url} ) => {
       } );
       const text = await response.text();
       const data = JSON.parse( text );
+      if (KEY_ROSTER_ERROR in data) {
+        throw new Error( data[KEY_ROSTER_ERROR] );
+      }
       if (KEY_ROSTERS_DATA in data) {
-        console.log( 'cbAdd data', data );
         setCells( x => {
           return data[KEY_ROSTERS_DATA].map( x => updateCellsFromData(x, url) );
         } );
       }
-
-      rAddingNotionRoom.current = false;
-    };
-    post();
+    }
+    catch (e) {
+      setAddRosterError( x => e.message )
+    }
+    rAddingNotionRoom.current = false;
+  };
+  
+  const cbAddNotionRoom = useCallback( event => {
+    addRosterEntry( dbId, url );
   }, [
     dbId,
     url
   ] );
 
-  const cbDeleteRosterEntry = useCallback( event => {
-    const post = async() => {
-      try {
-        const apiDelUrl = new URL( `/api/rosters/`, url );
-        const rosterId = event.target.getAttribute( 'data-roster-id' );
-        apiDelUrl.searchParams.append( PARAM_ROSTERS_ROSTER_ID, rosterId );
-        const response = await fetch( apiDelUrl.href, {
-          method: 'DELETE'
-        });
-        const text = await response.text();
-        const data = JSON.parse(text);
-        if (!data[KEY_ROSTER_DELETED] || !data[KEY_ROSTER_AUTH]) {
-          throw new Error( 'error deleting roster' );
-        }
-        const delRosterId = data[KEY_ROSTER_ID];
-        setCells( s => s.filter( cur => cur[KEY_DB_ID] !== delRosterId ) );
+  const deleteRosterEntry = async( apiDeleteUrl, rosterId ) => {
+    if (rAddingNotionRoom.current) {
+      return;
+    }
+    rAddingNotionRoom.current = true;
+    try {
+      apiDeleteUrl.searchParams.append( PARAM_ROSTERS_ROSTER_ID, rosterId );
+      const response = await fetch( apiDeleteUrl.href, {
+        method: 'DELETE'
+      });
+      const text = await response.text();
+      const data = JSON.parse(text);
+      if (!data[KEY_ROSTER_DELETED] || !data[KEY_ROSTER_AUTH]) {
+        throw new Error( 'error deleting roster' );
       }
-      catch (e) {
-      }
+      const delRosterId = data[KEY_ROSTER_ID];
+      setCells( s => s.filter( cur => cur[KEY_DB_ID] !== delRosterId ) );
+    }
+    catch (e) {
+      console.log( e.message );
+    }
+    rAddingNotionRoom.current = false;
+  };
 
-      rAddingNotionRoom.current = false;
-    };
-    post();
+  const cbDeleteRosterEntry = useCallback( event => {
+    const apiDeleteUrl = new URL( `/api/rosters/`, url );
+    const rosterId = event.target.getAttribute( 'data-roster-id' );
+    deleteRosterEntry( apiDeleteUrl, rosterId );
   }, [
+    url
   ] );
 
-  const cbRefreshRoster = useCallback( async(e) => {
+  const cbRefreshRoster = useCallback( event => {
+    const rosterId = event.target.getAttribute( 'data-roster-id' );
+    addRosterEntry( rosterId, url );
   }, [
+    url
   ] );
 
   const mInputTw = useMemo( () => {
@@ -193,6 +212,7 @@ export const AdminTable = ( {data, url} ) => {
                       <button
                         className={ getRoundButtonClasses(false) }
                         onClick={ cbRefreshRoster }
+                        data-roster-id={ row[KEY_DB_ID] }
                       >
                         <ArrowPathIcon
                           className={ getRoundButtonIconClasses() }
@@ -249,6 +269,13 @@ export const AdminTable = ( {data, url} ) => {
               placeholder="Enter Notion Roster ID"
               className={ mInputTw }
             />
+            {
+              addRosterError && (
+              <div className="text-red-500 text-xs italic mt-2">
+                { addRosterError }
+              </div>
+              )
+            }
           </div>
 
         </div>

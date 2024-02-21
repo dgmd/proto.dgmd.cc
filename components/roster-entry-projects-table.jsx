@@ -26,7 +26,7 @@ const KEY_PROJECT_LINK = 'Link';
 const KEY_PROJECT_NAME = 'Name';
 
 export const RosterEntryProjectsTable = 
-  ({data, name, groupName, dbId, userId, url}) => {
+  ({data, name, groupName, rosterId, userId, url}) => {
 
   const [headers, setHeaders] = useState( x => [ 
     { [TABLE_HEADER_NAME]: KEY_PROJECT_NAME, 
@@ -39,7 +39,7 @@ export const RosterEntryProjectsTable =
 
   const [cells, setCells] = useState( x => {
     return data.map( cur => {
-      const notionUrl = new URL( `/group/${dbId}/${userId}/${cur.PAGE_ID}`, url );
+      const notionUrl = new URL( `/group/${rosterId}/${userId}/${cur.PAGE_ID}`, url );
       return {
         [KEY_PROJECT_NAME]: cur.VALUE,
         [KEY_PROJECT_LINK]: notionUrl

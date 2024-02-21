@@ -25,7 +25,7 @@ import {
 const KEY_STUDENT_NAME = 'student name';
 const KEY_STUDENT_LINK = 'student link';
 
-export const RosterEntriesTable = ({data, name, dbId, url}) => {
+export const RosterEntriesTable = ({data, name, rosterId, url}) => {
 
   const [headers, setHeaders] = useState( x => [ 
     { [TABLE_HEADER_NAME]: KEY_STUDENT_NAME, 
@@ -38,7 +38,7 @@ export const RosterEntriesTable = ({data, name, dbId, url}) => {
 
   const [cells, setCells] = useState( x => {
     return data.map( cur => {
-      const notionUrl = new URL( `/group/${dbId}/${cur.notion_id}`, url );
+      const notionUrl = new URL( `/group/${rosterId}/${cur.notion_id}`, url );
       return {
         [KEY_STUDENT_NAME]: cur.snapshot_name,
         [KEY_STUDENT_LINK]: notionUrl

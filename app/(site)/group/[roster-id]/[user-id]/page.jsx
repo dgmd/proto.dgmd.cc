@@ -14,8 +14,8 @@ import {
 } from "next/headers";
 
 async function RosterEntryProjects( {params} ) {
-  const dbId = params[ 'group-name' ];
-  const userId = params[ 'notion-user-id' ];
+  const rosterId = params[ 'roster-id' ];
+  const userId = params[ 'user-id' ];
   const rostersUrl = new URL('/api/roster-entry-projects', process.env.SITE_ORIGIN);
   rostersUrl.searchParams.append( PARAM_ROSTER_ENTRY_PROJECTS_USER_ID, userId );
   const rosterData = await fetch(rostersUrl.href, {
@@ -27,7 +27,7 @@ async function RosterEntryProjects( {params} ) {
   const name = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_NAME ];
   return (
     <RosterEntryProjectsTable
-      dbId={ dbId }
+      rosterId={ rosterId }
       userId={ userId }
       data={ data }
       name={ name }

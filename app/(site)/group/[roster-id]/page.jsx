@@ -30,9 +30,9 @@ async function GroupName( {params} ) {
   }
 
   let data = []
-  const dbId = params[ 'group-name' ];
+  const rosterId = params[ 'roster-id' ];
   const rostersUrl = new URL('/api/roster-entries', process.env.SITE_ORIGIN);
-  rostersUrl.searchParams.append( PARAM_ROSTERS_DB_ID, dbId );
+  rostersUrl.searchParams.append( PARAM_ROSTERS_DB_ID, rosterId );
   const rosterData = await fetch(rostersUrl.href, {
     headers: { Cookie: cookies().toString() },
   });
@@ -44,7 +44,7 @@ async function GroupName( {params} ) {
 
   return (
     <RosterEntriesTable
-      dbId={ dbId }
+      rosterId={ rosterId }
       name={ rosterName }
       data={ data }
       url={ process.env.SITE_ORIGIN }

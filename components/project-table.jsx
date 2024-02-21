@@ -25,7 +25,8 @@ import {
 const KEY_SNAPSHOT_DATE = 'snapshot date';
 const KEY_SNAPSHOT_LINK = 'snapshot link';
 
-export const ProjectTable = ({data, name, dbId, url}) => {
+export const ProjectTable =
+  ({rosterName, userName, projectName}) => {
 
   const [headers, setHeaders] = useState( x => [ 
     { [TABLE_HEADER_NAME]: KEY_SNAPSHOT_DATE, 
@@ -49,7 +50,8 @@ export const ProjectTable = ({data, name, dbId, url}) => {
   return (
     <div className='flex-grow'>  
       <Title
-        title={ name }
+        title={ projectName }
+        subtitle={ `${rosterName}\u00a0/\u00a0${userName}` }
       />
 
       <div

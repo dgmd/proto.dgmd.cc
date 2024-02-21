@@ -31,8 +31,8 @@ import {
 import {
   KEY_ROSTER_ENTRY_PROJECTS_DATA,
   KEY_ROSTER_ENTRY_PROJECTS_ERROR,
-  KEY_ROSTER_ENTRY_PROJECTS_GROUP_NAME,
-  KEY_ROSTER_ENTRY_PROJECTS_NAME,
+  KEY_ROSTER_ENTRY_PROJECTS_ROSTER_NAME,
+  KEY_ROSTER_ENTRY_USER_NAME,
   PARAM_ROSTER_ENTRY_PROJECTS_USER_ID
 } from './keys.js';
 
@@ -48,12 +48,12 @@ export async function GET( request ) {
         auth: process.env.NOTION_SECRET
       });
 
-      rjson[ KEY_ROSTER_ENTRY_PROJECTS_GROUP_NAME ] = 'Group Name';
+      rjson[ KEY_ROSTER_ENTRY_PROJECTS_ROSTER_NAME ] = 'Group Name';
 
       try {
         const userPg = await nClient[NOTION_KEY_PAGES].retrieve({ 
           [NOTION_KEY_PAGE_ID]: paramUserId });
-        rjson[ KEY_ROSTER_ENTRY_PROJECTS_NAME ] = 
+        rjson[ KEY_ROSTER_ENTRY_USER_NAME ] = 
           userPg[NOTION_PROPERTIES].Name[NOTION_DATA_TYPE_TITLE][0][NOTION_KEY_PLAIN_TEXT];
         const parentType = userPg[NOTION_KEY_PARENT][NOTION_KEY_TYPE];
         const parentZone = {
@@ -65,11 +65,11 @@ export async function GET( request ) {
           [parentType]: parentId });
         if (parentType === NOTION_KEY_DB_ID) {
           const parentTitle = getNotionDbaseTitle( parentPg );
-          rjson[ KEY_ROSTER_ENTRY_PROJECTS_GROUP_NAME ] = parentTitle;
+          rjson[ KEY_ROSTER_ENTRY_PROJECTS_ROSTER_NAME ] = parentTitle;
         }
         else if (parentType === NOTION_KEY_PAGE_ID) {
           const parentTitle = getNotionPageTitle( parentPg );
-          rjson[ KEY_ROSTER_ENTRY_PROJECTS_GROUP_NAME ] = parentTitle;
+          rjson[ KEY_ROSTER_ENTRY_PROJECTS_ROSTER_NAME ] = parentTitle;
         }
       }
       catch (e) {

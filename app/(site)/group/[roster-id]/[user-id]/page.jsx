@@ -2,8 +2,8 @@
 
 import {
   KEY_ROSTER_ENTRY_PROJECTS_DATA,
-  KEY_ROSTER_ENTRY_PROJECTS_GROUP_NAME,
-  KEY_ROSTER_ENTRY_PROJECTS_NAME,
+  KEY_ROSTER_ENTRY_PROJECTS_ROSTER_NAME,
+  KEY_ROSTER_ENTRY_USER_NAME,
   PARAM_ROSTER_ENTRY_PROJECTS_USER_ID
 } from '@/api/roster-entry-projects/keys.js';
 import {
@@ -21,8 +21,8 @@ async function RosterEntryProjects( {params} ) {
   });
   const rosterJson = await rosterData.json();
   const data = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_DATA ];
-  const groupName = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_GROUP_NAME ];
-  const name = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_NAME ];
+  const groupName = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_ROSTER_NAME ];
+  const name = rosterJson[ KEY_ROSTER_ENTRY_USER_NAME ];
   return (
     <RosterEntryProjectsTable
       rosterId={ rosterId }

@@ -8,42 +8,63 @@ import {
 } from '@/api/project/keys.js';
 import {
   KEY_ROSTER_ENTRY_PROJECTS_DATA,
-  KEY_ROSTER_ENTRY_PROJECTS_GROUP_NAME,
-  KEY_ROSTER_ENTRY_PROJECTS_NAME,
+  KEY_ROSTER_ENTRY_PROJECTS_ROSTER_NAME,
+  KEY_ROSTER_ENTRY_USER_NAME,
   PARAM_ROSTER_ENTRY_PROJECTS_USER_ID
 } from '@/api/roster-entry-projects/keys.js';
 import {
   ProjectTable
 } from '@/components/project-table';
+import {
+  find,
+  isNil
+} from 'lodash-es';
 
 async function Projects( {params} ) {
   const rosterId = params[ 'roster-id' ];
   const userId = params[ 'user-id' ];
   const projectId = params[ 'project-id' ];
+
   const projectUrl = new URL('/api/project', process.env.SITE_ORIGIN);
-  projectUrl.searchParams.append( PARAM_PROJECT_ROSTER_ID, rosterId );
-  projectUrl.searchParams.append( PARAM_PROJECT_USER_ID, userId );
-  projectUrl.searchParams.append( PARAM_PROJECT_ID, projectId );
-  const projectData = await fetch(projectUrl.href, {
-    next: { revalidate: 10 }
-  });
-  const projectJson = await projectData.json();
-  const projectList = projectJson[ KEY_PROJECT_DATA ];
+  projectUrl.searchParams.append(PARAM_PROJECT_ROSTER_ID, rosterId);
+  projectUrl.searchParams.append(PARAM_PROJECT_USER_ID, userId);
+  projectUrl.searchParams.append(PARAM_PROJECT_ID, projectId);
 
   const rostersUrl = new URL('/api/roster-entry-projects', process.env.SITE_ORIGIN);
-  rostersUrl.searchParams.append( PARAM_ROSTER_ENTRY_PROJECTS_USER_ID, userId );
-  const rosterData = await fetch(rostersUrl.href, {
+  rostersUrl.searchParams.append(PARAM_ROSTER_ENTRY_PROJECTS_USER_ID, userId);
+
+  const fetchProjectData = fetch(projectUrl.href, {
+    next: { revalidate: 10 }
+  }).then(response => response.json());
+
+  const fetchRosterData = fetch(rostersUrl.href, {
     method: 'GET',
     next: { revalidate: 10 }
-  });
-  const rosterJson = await rosterData.json();
-  const rosterList = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_DATA ];
-  const groupName = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_GROUP_NAME ];
-  const userName = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_NAME ];
+  }).then(response => response.json());
 
-  console.log( 'projectJson', projectList, groupName, userName );
+  const [projectJson, rosterJson] = await Promise.all([
+    fetchProjectData,
+    fetchRosterData
+  ]);
+
+  const projectList = projectJson[KEY_PROJECT_DATA];
+  const projectsList = rosterJson[KEY_ROSTER_ENTRY_PROJECTS_DATA];
+  const rosterName = rosterJson[KEY_ROSTER_ENTRY_PROJECTS_ROSTER_NAME];
+  const userName = rosterJson[KEY_ROSTER_ENTRY_USER_NAME];
+
+  const projectObj = find(projectsList, { 
+    PAGE_ID: projectId
+  });
+  const projectName = isNil(projectObj) ? '' : projectObj.VALUE;
+
+  console.log('projectName', projectName);
+
   return (
-    <ProjectTable/>
+    <ProjectTable
+      projectName={ projectName }
+      userName={ userName }
+      rosterName={ rosterName }
+    />
   );    
 };
 

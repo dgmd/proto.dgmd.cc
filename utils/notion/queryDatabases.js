@@ -364,8 +364,8 @@ export const getNotionDbaseRelationsIds =
 
 //all of this nonsense because title is not in the typescript
 //https://github.com/makenotion/notion-sdk-js/issues/471
-const getNotionDbaseTitle = notionDbases => {
-  for (const [key, value] of Object.entries(notionDbases)) {
+export const getNotionDbaseTitle = nDatabase => {
+  for (const [key, value] of Object.entries(nDatabase)) {
     if (key === NOTION_DATA_TYPE_TITLE) {
       return value[0][NOTION_KEY_PLAIN_TEXT];
     }
@@ -383,7 +383,7 @@ const getNotionDbaseParentId =
   }
 };
 
-const getNotionPageTitle =
+export const getNotionPageTitle =
   nPage => {
   const props = nPage.properties;
   for (const [key, value] of Object.entries(props)) {

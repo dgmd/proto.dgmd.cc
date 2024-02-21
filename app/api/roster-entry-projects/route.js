@@ -15,6 +15,10 @@ import {
   NOTION_RESULT_BLOCK_DBS
 } from '@/utils/notion/notionWranglerConstants.js';
 import {
+  getNotionDbaseTitle,
+  getNotionPageTitle
+} from '@/utils/notion/queryDatabases.js';
+import {
   getNotionPageBlocks
 } from '@/utils/notion/queryPageBlocks.js';
 import {
@@ -52,12 +56,20 @@ export async function GET( request ) {
         rjson[ KEY_ROSTER_ENTRY_PROJECTS_NAME ] = 
           userPg[NOTION_PROPERTIES].Name[NOTION_DATA_TYPE_TITLE][0][NOTION_KEY_PLAIN_TEXT];
         const parentType = userPg[NOTION_KEY_PARENT][NOTION_KEY_TYPE];
+        const parentZone = {
+          [NOTION_KEY_DB_ID]: NOTION_KEY_DBS,
+          [NOTION_KEY_PAGE_ID]: NOTION_KEY_PAGES
+        }[parentType];
+        const parentId = userPg[NOTION_KEY_PARENT][parentType];
+        const parentPg = await nClient[parentZone].retrieve({ 
+          [parentType]: parentId });
         if (parentType === NOTION_KEY_DB_ID) {
-          const parentId = userPg.parent[parentType];
-          const parentPg = await nClient[NOTION_KEY_DBS].retrieve({ 
-            [parentType]: parentId });
-          rjson[ KEY_ROSTER_ENTRY_PROJECTS_GROUP_NAME ] =
-            parentPg[NOTION_DATA_TYPE_TITLE][0][NOTION_KEY_PLAIN_TEXT];
+          const parentTitle = getNotionDbaseTitle( parentPg );
+          rjson[ KEY_ROSTER_ENTRY_PROJECTS_GROUP_NAME ] = parentTitle;
+        }
+        else if (parentType === NOTION_KEY_PAGE_ID) {
+          const parentTitle = getNotionPageTitle( parentPg );
+          rjson[ KEY_ROSTER_ENTRY_PROJECTS_GROUP_NAME ] = parentTitle;
         }
       }
       catch (e) {

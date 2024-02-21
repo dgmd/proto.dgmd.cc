@@ -84,7 +84,7 @@ export async function GET( request ) {
     const rosterDataName = rosterData[0].snapshot_name;
 
     try {
-      const requests = {
+      const request = {
         [DATABASE_QUERY_DATABASE_ID_REQUEST]: dbId,
         [DATABASE_QUERY_PAGE_CURSOR_REQUEST]: {
           [DATABASE_QUERY_PAGE_CURSOR_TYPE_REQUEST]: DATABASE_QUERY_PAGE_CURSOR_TYPE_ALL,
@@ -94,7 +94,7 @@ export async function GET( request ) {
       const nClient = new Client({ 
         auth: process.env.NOTION_SECRET
       });
-      const db = await getNotionDatabases( nClient, requests );
+      const db = await getNotionDatabases( nClient, request );
       const dbp = db[DGMD_PRIMARY_DATABASE];
       const dbpTitle = dbp[DGMD_DATABASE_TITLE];
       const dbpBlocks = dbp[DGMD_BLOCKS];

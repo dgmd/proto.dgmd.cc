@@ -1,18 +1,37 @@
+import {
+  NOTION_DATA_TYPE_CHILD_DATABASE,
+  NOTION_DATA_TYPE_COLUMN,
+  NOTION_DATA_TYPE_COLUMN_LIST,
+  NOTION_DATA_TYPE_TITLE,
+  NOTION_KEY_ID,
+  NOTION_KEY_TYPE,
+  NOTION_RESULTS
+} from '@/utils/notion/notionConstants.js';
+import {
+  NOTION_RESULT_BLOCK_DBS,
+  NOTION_RESULT_BLOCK_KEY,
+  NOTION_RESULT_COLUMN_LISTS
+} from '@/utils/notion/notionWranglerConstants.js';
+import {
+  removeHyphens
+} from '@/utils/strings.js';
+import {
+  DGMD_PAGE_ID,
+  DGMD_VALUE
+} from 'constants.dgmd.cc';
+import {
+  isNil
+} from 'lodash-es';
+
 export const getNotionPageBlocks = 
-  async ( nClient, allDbResults ) => {
-  const notionPagePromises = [];
-  allDbResults.forEach( dbResult => {
-    const qProps = dbResult[QUERY_PROPERTIES];
-    qProps.forEach( qProp => {
-      const qPropId = qProp[DGMD_METADATA][DGMD_BLOCK_TYPE_ID][DGMD_VALUE];
-      const blocksCollector = {
-        [NOTION_RESULT_BLOCK_DBS]: [],
-        [NOTION_RESULT_COLUMN_LISTS]: []
-      };
-      const blocksResult = getNotionPageBlockPromise( nClient, qPropId, blocksCollector );
-      notionPagePromises.push( blocksResult );
-    });
-  });
+  async ( nClient, xs ) => {
+  const notionPagePromises = xs.map( x => {
+    const blocksCollector = {
+      [NOTION_RESULT_BLOCK_DBS]: [],
+      [NOTION_RESULT_COLUMN_LISTS]: []
+    };
+    return getNotionPageBlockPromise( nClient, x, blocksCollector );
+  } );
   const notionBlockResults = await Promise.all( notionPagePromises );
   const notionBlockResultsIndexed = notionBlockResults.reduce((result, item) => {
     if (NOTION_RESULT_BLOCK_KEY in item && NOTION_RESULT_BLOCK_DBS in item) {

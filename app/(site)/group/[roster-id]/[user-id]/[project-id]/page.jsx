@@ -13,6 +13,9 @@ import {
   PARAM_ROSTER_ENTRY_PROJECTS_USER_ID
 } from '@/api/roster-entry-projects/keys.js';
 import {
+  SNAPSHOT_PARAM_ID
+} from '@/api/snapshot/keys.js';
+import {
   ProjectTable
 } from '@/components/project-table';
 import {
@@ -56,12 +59,20 @@ async function Project( {params} ) {
   const userName = rosterJson[KEY_ROSTER_ENTRY_USER_NAME];
 
   const liveUrl = new URL('/api/query', process.env.SITE_ORIGIN);
-  liveUrl.searchParams.append( QUERY_PARAM_DATABASE, projectId );
+  liveUrl.searchParams.append(QUERY_PARAM_DATABASE, projectId);
   const data = [{
     name: 'live data',
     url: liveUrl.href
   }];
-  data.push( ...projectList );
+  const mProjectList = projectList.map( cur => {
+    const cacheUrl = new URL('/api/snapshot', process.env.SITE_ORIGIN);
+    cacheUrl.searchParams.append(SNAPSHOT_PARAM_ID, cur.id);
+    return {
+      name: cur.created_at,
+      url: cacheUrl.href
+    };
+  });
+  data.push(...mProjectList);
 
   const projectObj = find(projectsList, { 
     PAGE_ID: projectId
@@ -71,6 +82,7 @@ async function Project( {params} ) {
   return (
     <ProjectTable
       projectName={ projectName }
+      projectId={ projectId }
       userName={ userName }
       rosterName={ rosterName }
       data={ data }

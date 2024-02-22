@@ -1,0 +1,1 @@
+export const SNAPSHOT_PARAM_ID = 'i';

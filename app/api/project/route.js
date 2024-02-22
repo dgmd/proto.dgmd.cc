@@ -4,6 +4,10 @@ import {
   createClient
 } from '@/utils/supabase/server.js';
 import {
+  QUERY_PARAM_DATABASE,
+  QUERY_RESPONSE_KEY_SUCCESS
+} from 'constants.dgmd.cc';
+import {
   isNil
 } from 'lodash-es';
 import {
@@ -46,7 +50,49 @@ export async function GET( request ) {
   }
   catch (e) {
     rjson[KEY_PROJECT_ERROR] = e.message;
-    console.log( 'PROJECT GET ERROR', e.message );
+  }
+
+  return NextResponse.json( rjson );
+};
+
+export async function POST( request ) {
+  const rjson = {
+  };
+  try {
+    const data = await request.json();
+    const pjId = data[PARAM_PROJECT_ID];
+    if (isNil(pjId)) {
+      throw new Error( 'missing project id' );
+    }
+    console.log( 'pjId', pjId );
+
+    const liveUrl = new URL('/api/query', process.env.SITE_ORIGIN);
+    liveUrl.searchParams.append(QUERY_PARAM_DATABASE, pjId);
+    const liveQueryData = await fetch( liveUrl.href, {
+      method: 'GET',
+      next: { revalidate: 1 }
+    } );
+    const liveQueryJson = await liveQueryData.json();
+    if (!liveQueryJson[QUERY_RESPONSE_KEY_SUCCESS]) {
+      throw new Error( 'query failed' );
+    }
+    
+    const supabase = createClient( );
+    const insertResult = await supabase
+      .from('project_snapshots')
+      .insert({ 
+        roster_entry_project_id: pjId,
+        snapshot: JSON.stringify(liveQueryJson)
+      })
+      .single();
+    if (!isNil(insertResult.error)) {
+      throw new Error( 'insert failed' );
+    }
+    console.log( 'insertResult', insertResult );
+
+  }
+  catch (e) {
+    rjson[KEY_PROJECT_ERROR] = e.message;
   }
 
   return NextResponse.json( rjson );

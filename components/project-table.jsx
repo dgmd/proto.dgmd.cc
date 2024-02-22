@@ -1,5 +1,6 @@
 "use client"
 
+import { PARAM_PROJECT_ID } from '@/api/project/keys';
 import {
   ClipboardButton
 } from '@/components/clipboard-button.jsx';
@@ -20,6 +21,7 @@ import {
   Title
 } from '@/components/title.jsx';
 import {
+  useCallback,
   useState
 } from 'react';
 
@@ -27,7 +29,9 @@ const KEY_SNAPSHOT_NAME = 'snapshot date';
 const KEY_SNAPSHOT_LINK = 'snapshot link';
 
 export const ProjectTable =
-  ({rosterName, userName, projectName, data}) => {
+  ({rosterName, userName, projectName, projectId, data}) => {
+  
+  console.log( {rosterName, userName, projectName, projectId, data} );
 
   const [headers, setHeaders] = useState( x => [ 
     { [TABLE_HEADER_NAME]: KEY_SNAPSHOT_NAME, 
@@ -47,6 +51,24 @@ export const ProjectTable =
     } );
   } );
 
+  const addSnapshot = async (projectId) => {
+    const response = await fetch( '/api/project/', {
+      method: 'POST',
+      body: JSON.stringify( { 
+        [PARAM_PROJECT_ID]: projectId
+      } )
+    } );
+    const text = await response.text();
+    const data = JSON.parse( text );
+    console.log( 'data', data );
+  };
+
+  const cbAddSnapshot = useCallback( () => {
+    addSnapshot(projectId);
+  }, [
+    projectId
+  ] );
+
   return (
     <div className='flex-grow'>  
       <Title
@@ -55,7 +77,7 @@ export const ProjectTable =
       >
         <button
           className={ `${buttonClassNames} mt-2` }
-          onClick={ () => {} }>
+          onClick={ cbAddSnapshot }>
           Add Snapshot
         </button>
       </Title>

@@ -1,28 +1,19 @@
 import {
+  getNotionDbaseProperties,
+  getNotionDbaseRelationsIds
+} from '@/api/query/route.js';
+import {
   getApiCoriHeaders
 } from '@/utils/coriHeaders.js';
 import {
+  NOTION_KEY_DB_ID,
+  NOTION_KEY_PAGES,
   NOTION_KEY_PAGE_ID,
-  NOTION_KEY_PAGES
+  NOTION_KEY_PARENT
 } from '@/utils/notion/notionConstants.js';
 import {
   removeHyphens
 } from '@/utils/strings.js';
-// import {
-//   NOTION_KEY_DATABASE_ID,
-//   NOTION_KEY_DB_ID,
-//   NOTION_KEY_ID,
-//   NOTION_KEY_PAGE_ID,
-//   NOTION_KEY_PARENT,
-//   NOTION_RESULTS
-// } from '@api/notion_constants.js';
-// import {
-//   NOTION_WRANGLE_KEY_RELATIONS_MAP
-// } from '@api/notion_wrangler_constants.js';
-import {
-  getNotionDbaseProperties,
-  getNotionDbaseRelationsIds
-} from '@api/query/route.js';
 import {
   Client
 } from "@notionhq/client";
@@ -64,8 +55,8 @@ import {
   DGMD_BLOCK_TYPE_DATE,
   DGMD_BLOCK_TYPE_EMAIL,
   DGMD_BLOCK_TYPE_EMOJI,
-  DGMD_BLOCK_TYPE_FILE_EXTERNAL,
   DGMD_BLOCK_TYPE_FILES,
+  DGMD_BLOCK_TYPE_FILE_EXTERNAL,
   DGMD_BLOCK_TYPE_ICON,
   DGMD_BLOCK_TYPE_LAST_EDITED_TIME,
   DGMD_BLOCK_TYPE_MULTI_SELECT,
@@ -88,10 +79,6 @@ import {
 import {
   NextResponse
 } from 'next/server';
-
-import {
-  NOTION_KEY_PAGE_ID
-} from '@/utils/notion/notionConstants.js';
 
 export async function GET( request ) {
 

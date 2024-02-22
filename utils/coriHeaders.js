@@ -14,7 +14,7 @@
   //
   //https://chat.openai.com/share/12422258-e5e2-4b6d-b135-67449f71081a
   
-  export const getApiCoriHeaders = req => {
+  export const getApiCorsHeaders = req => {
     // const res = NextResponse.next();
     const headers = [];
   
@@ -29,7 +29,6 @@
     // }
   
     headers.push( ['Access-Control-Allow-Origin', '*'] );
-  
   
     // add the remaining CORS headers to the response
     headers.push( ['Access-Control-Allow-Credentials', 'true'] );

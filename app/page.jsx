@@ -1,13 +1,13 @@
 "use server";
 
 import {
-    NotionToFramerLogo
+  NotionToFramerLogo
 } from '@/components/logo.jsx';
 import {
-    getAuthServerCache
+  getAuthServerCache
 } from '@/utils/supabase/auth/authServerCache';
 import {
-    isAuthUser
+  isAuthUser
 } from '@/utils/supabase/auth/authUtils';
 import Link from 'next/link';
 

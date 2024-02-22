@@ -1,7 +1,7 @@
 export const maxDuration = 300;
 
 import {
-  getApiCoriHeaders
+  getApiCorsHeaders
 } from '@/utils/coriHeaders.js';
 import {
   DATABASE_QUERY_DATABASE_ID_REQUEST,
@@ -90,7 +90,7 @@ export async function GET( request ) {
 
 const createResponse = (json, request) => {
   const resJson = NextResponse.json( json );
-  const headersList = getApiCoriHeaders( request );
+  const headersList = getApiCorsHeaders( request );
   for (const header of headersList) {
     resJson.headers.set( header[0], header[1] );
   }

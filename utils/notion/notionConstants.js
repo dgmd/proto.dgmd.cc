@@ -52,6 +52,6 @@ export const NOTION_KEY_DB_ID = 'database_id';
 export const NOTION_KEY_PAGES = 'pages';
 export const NOTION_KEY_DBS = 'databases';
 
-export const NOTION_HAS_MORE = 'has_more';
-export const NOTION_NEXT_CURSOR = 'next_cursor';
+export const NOTION_CURSOR_HAS_MORE = 'has_more';
+export const NOTION_CURSOR_NEXT = 'next_cursor';
 export const NOTION_KEY_START_CURSOR = 'start_cursor';

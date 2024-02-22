@@ -1,19 +1,25 @@
 import {
-  getNotionDbaseProperties,
-  getNotionDbaseRelationsIds
-} from '@/api/query/route.js';
-import {
   getApiCoriHeaders
 } from '@/utils/coriHeaders.js';
 import {
   NOTION_KEY_DB_ID,
+  NOTION_KEY_ID,
   NOTION_KEY_PAGES,
   NOTION_KEY_PAGE_ID,
-  NOTION_KEY_PARENT
+  NOTION_KEY_PARENT,
+  NOTION_RESULTS,
 } from '@/utils/notion/notionConstants.js';
 import {
+  NOTION_WRANGLE_KEY_RELATIONS_MAP
+} from '@/utils/notion/notionWranglerConstants.js';
+import {
+  getNotionDbaseProperties,
+  getNotionDbaseRelationsIds
+} from '@/utils/notion/queryDatabases.js';
+import {
+  deriveBoolean,
   removeHyphens
-} from '@/utils/strings.js';
+} from '@/utils/utils.js';
 import {
   Client
 } from "@notionhq/client";
@@ -222,7 +228,7 @@ export async function GET( request ) {
       }
 
       const createdPg = await nClient[NOTION_KEY_PAGES].retrieve({ [NOTION_KEY_PAGE_ID]: updatePageId });
-      const parentId = removeHyphens( createdPg[NOTION_KEY_PARENT][NOTION_KEY_DATABASE_ID] );
+      const parentId = removeHyphens( createdPg[NOTION_KEY_PARENT][NOTION_KEY_DB_ID] );
       const x = await getNotionDbaseRelationsIds( nClient, parentId );
       const relMap = x[NOTION_WRANGLE_KEY_RELATIONS_MAP];
       const pgs = getNotionDbaseProperties( {[NOTION_RESULTS]: [createdPg]}, relMap );

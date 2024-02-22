@@ -14,7 +14,7 @@ import {
 } from '@/utils/notion/notionWranglerConstants.js';
 import {
   removeHyphens
-} from '@/utils/strings.js';
+} from '@/utils/utils.js';
 import {
   DGMD_PAGE_ID,
   DGMD_VALUE

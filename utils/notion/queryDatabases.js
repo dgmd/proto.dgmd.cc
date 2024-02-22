@@ -3,7 +3,7 @@ import {
 } from '@/utils/lists.js';
 import {
   removeHyphens
-} from '@/utils/strings.js';
+} from '@/utils/utils.js';
 import {
   DGMD_BLOCKS,
   DGMD_BLOCK_TYPE_CHECKBOX,
@@ -52,6 +52,8 @@ import {
 } from 'lodash-es';
 
 import {
+  NOTION_CURSOR_HAS_MORE,
+  NOTION_CURSOR_NEXT,
   NOTION_DATA_TYPE_CHECKBOX,
   NOTION_DATA_TYPE_COVER,
   NOTION_DATA_TYPE_CREATED_TIME,
@@ -76,7 +78,6 @@ import {
   NOTION_FORMULA_RESULT_BOOLEAN,
   NOTION_FORMULA_RESULT_DATE,
   NOTION_FORMULA_RESULT_STRING,
-  NOTION_HAS_MORE,
   NOTION_KEY_DBS,
   NOTION_KEY_DB_ID,
   NOTION_KEY_END_DATE,
@@ -92,7 +93,6 @@ import {
   NOTION_KEY_TIME_ZONE,
   NOTION_KEY_TYPE,
   NOTION_KEY_VALUE,
-  NOTION_NEXT_CURSOR,
   NOTION_PROPERTIES,
   NOTION_RESULTS
 } from './notionConstants.js';
@@ -209,7 +209,7 @@ const chainLoadRelatedDbs =
         };
         const db = await getNotionDbase(
           nClient, meta, dbId, relMap.get(dbId) );
-        pageCursorId = db[QUERY_PAGES][NOTION_NEXT_CURSOR];
+        pageCursorId = db[QUERY_PAGES][NOTION_CURSOR_NEXT];
         dbPaginationObj[NOTION_WRANGLE_RELATION_NEXT_CURSOR_ID] = pageCursorId;
 
         const dbProps = db[QUERY_PROPERTIES];
@@ -251,8 +251,8 @@ const makeDbSerialized =
   };
   if (!isNil(cursorData)) {
     s[DGMD_CURSOR_DATA] = {
-      [DGMD_CURSOR_HAS_MORE]: cursorData[NOTION_HAS_MORE],
-      [DGMD_CURSOR_NEXT]: cursorData[NOTION_NEXT_CURSOR]
+      [DGMD_CURSOR_HAS_MORE]: cursorData[NOTION_CURSOR_HAS_MORE],
+      [DGMD_CURSOR_NEXT]: cursorData[NOTION_CURSOR_NEXT]
     };
   }
   return s;
@@ -625,11 +625,11 @@ const getNotionDbasePromise =
         const properties = getNotionDbaseProperties( result, relMap );
         collector[QUERY_PROPERTIES].push( ...properties );
 
-        const has_more = result[NOTION_HAS_MORE];
-        const next_cursor = result[NOTION_NEXT_CURSOR];
+        const has_more = result[NOTION_CURSOR_HAS_MORE];
+        const next_cursor = result[NOTION_CURSOR_NEXT];
 
-        collector[QUERY_PAGES][NOTION_NEXT_CURSOR] = next_cursor;
-        collector[QUERY_PAGES][NOTION_HAS_MORE] = has_more;
+        collector[QUERY_PAGES][NOTION_CURSOR_NEXT] = next_cursor;
+        collector[QUERY_PAGES][NOTION_CURSOR_HAS_MORE] = has_more;
 
         const next = allPages ? next_cursor : null;
         resolve( {
@@ -682,8 +682,8 @@ const getNotionDbase =
   const collector = {
     [QUERY_PROPERTIES]: [],
     [QUERY_PAGES]: {
-      [NOTION_HAS_MORE]: false,
-      [NOTION_NEXT_CURSOR]: null
+      [NOTION_CURSOR_HAS_MORE]: false,
+      [NOTION_CURSOR_NEXT]: null
     }
   };
 

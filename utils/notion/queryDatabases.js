@@ -204,7 +204,7 @@ const chainLoadRelatedDbs =
       let keepSeaching = unloadedSet.size !== 0;
       while( keepSeaching ) {
         const meta = {
-          [DATABASE_QUERY_PAGE_CURSOR_TYPE]: PAGE_CURSOR_TYPE_SPECIFIC,
+          [DATABASE_QUERY_PAGE_CURSOR_TYPE]: DATABASE_QUERY_PAGE_CURSOR_TYPE_SPECIFIC,
           [DATABASE_QUERY_PAGE_CURSOR_ID]: pageCursorId
         };
         const db = await getNotionDbase(

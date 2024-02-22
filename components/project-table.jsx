@@ -1,6 +1,9 @@
 "use client"
 
-import { PARAM_PROJECT_ID } from '@/api/project/keys';
+import {
+  KEY_PROJECT_DATA,
+  PARAM_PROJECT_ID
+} from '@/api/project/keys';
 import {
   ClipboardButton
 } from '@/components/clipboard-button.jsx';
@@ -22,6 +25,7 @@ import {
 } from '@/components/title.jsx';
 import {
   useCallback,
+  useRef,
   useState
 } from 'react';
 
@@ -29,10 +33,10 @@ const KEY_SNAPSHOT_NAME = 'snapshot date';
 const KEY_SNAPSHOT_LINK = 'snapshot link';
 
 export const ProjectTable =
-  ({rosterName, userName, projectName, projectId, data}) => {
-  
-  console.log( {rosterName, userName, projectName, projectId, data} );
+  ({rosterName, userName, projectName, projectId, liveRow, snapshotRows, url}) => {
 
+  const rLoading = useRef( false );
+  
   const [headers, setHeaders] = useState( x => [ 
     { [TABLE_HEADER_NAME]: KEY_SNAPSHOT_NAME, 
       [TABLE_HEADER_HIDE]: null
@@ -43,30 +47,36 @@ export const ProjectTable =
   ] );
 
   const [cells, setCells] = useState( x => {
-    return data.map( cur => {
-      return {
-        [KEY_SNAPSHOT_NAME]: cur.name,
-        [KEY_SNAPSHOT_LINK]: cur.url
-      };
-    } );
+    const data = liveRow.concat( snapshotRows );
+    return data.map( mapRows );
   } );
 
-  const addSnapshot = async (projectId) => {
-    const response = await fetch( '/api/project/', {
+  const cbAddSnapshot = useCallback( async () => {
+    if (rLoading.current) {
+      return;
+    }
+    rLoading.current = true;
+    await fetch( '/api/project/', {
       method: 'POST',
       body: JSON.stringify( { 
         [PARAM_PROJECT_ID]: projectId
       } )
     } );
-    const text = await response.text();
-    const data = JSON.parse( text );
-    console.log( 'data', data );
-  };
 
-  const cbAddSnapshot = useCallback( () => {
-    addSnapshot(projectId);
+    const projectUrl = new URL('/api/project', url);
+    projectUrl.searchParams.append(PARAM_PROJECT_ID, projectId);
+    const projectResult = await fetch( projectUrl.href, {
+      method: 'GET',
+      next: { revalidate: 1 }
+    } );
+    const projectJson = await projectResult.json();
+    const snapshotRows = projectJson[KEY_PROJECT_DATA];
+    setCells( x => liveRow.concat(...snapshotRows).map( mapRows ) );
+    rLoading.current = false;
   }, [
-    projectId
+    projectId,
+    url,
+    liveRow
   ] );
 
   return (
@@ -117,4 +127,12 @@ export const ProjectTable =
     </div>
   )
 
+};
+
+
+const mapRows = cur => {
+  return {
+    [KEY_SNAPSHOT_NAME]: cur.name,
+    [KEY_SNAPSHOT_LINK]: cur.url
+  };
 };

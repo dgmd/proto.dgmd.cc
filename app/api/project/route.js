@@ -1,6 +1,9 @@
 export const maxDuration = 300;
 
 import {
+  SNAPSHOT_PARAM_ID
+} from '@/api/snapshot/keys.js';
+import {
   createClient
 } from '@/utils/supabase/server.js';
 import {
@@ -17,9 +20,7 @@ import {
 import {
   KEY_PROJECT_DATA,
   KEY_PROJECT_ERROR,
-  PARAM_PROJECT_ID,
-  PARAM_PROJECT_ROSTER_ID,
-  PARAM_PROJECT_USER_ID
+  PARAM_PROJECT_ID
 } from './keys.js';
 
 export async function GET( request ) {
@@ -29,11 +30,9 @@ export async function GET( request ) {
 
   try {
     const params = request.nextUrl.searchParams;
-    const rosterId = params.get( PARAM_PROJECT_ROSTER_ID );
-    const userId = params.get( PARAM_PROJECT_USER_ID );
     const projectId = params.get( PARAM_PROJECT_ID );
-    if (isNil(rosterId) || isNil(userId) || isNil(projectId)) {
-      throw new Error( 'missing params' );
+    if (isNil(projectId)) {
+      throw new Error( 'missing project id' );
     }
 
     const supabase = createClient( );
@@ -44,9 +43,20 @@ export async function GET( request ) {
     if (!isNil(snapsQuery.error)) {
       throw new Error( 'cannot connect to snapshots' );
     }
-    const snaps = snapsQuery.data;
-    rjson[KEY_PROJECT_DATA] = snaps;
 
+
+    const mapSnapshotRows = (cur) => {
+      const cacheUrl = new URL('/api/snapshot', process.env.SITE_ORIGIN);
+      cacheUrl.searchParams.append(SNAPSHOT_PARAM_ID, cur.id);
+      return {
+        name: cur.created_at,
+        url: cacheUrl.href
+      };
+    };
+    const snaps = snapsQuery.data;
+    const mSnaps = snaps.map( mapSnapshotRows );
+
+    rjson[KEY_PROJECT_DATA] = mSnaps;
   }
   catch (e) {
     rjson[KEY_PROJECT_ERROR] = e.message;
@@ -56,15 +66,13 @@ export async function GET( request ) {
 };
 
 export async function POST( request ) {
-  const rjson = {
-  };
+  const rjson = {};
   try {
     const data = await request.json();
     const pjId = data[PARAM_PROJECT_ID];
     if (isNil(pjId)) {
       throw new Error( 'missing project id' );
     }
-    console.log( 'pjId', pjId );
 
     const liveUrl = new URL('/api/query', process.env.SITE_ORIGIN);
     liveUrl.searchParams.append(QUERY_PARAM_DATABASE, pjId);
@@ -83,13 +91,10 @@ export async function POST( request ) {
       .insert({ 
         roster_entry_project_id: pjId,
         snapshot: JSON.stringify(liveQueryJson)
-      })
-      .single();
+      });
     if (!isNil(insertResult.error)) {
       throw new Error( 'insert failed' );
     }
-    console.log( 'insertResult', insertResult );
-
   }
   catch (e) {
     rjson[KEY_PROJECT_ERROR] = e.message;

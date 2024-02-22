@@ -2,9 +2,7 @@
 
 import {
   KEY_PROJECT_DATA,
-  PARAM_PROJECT_ID,
-  PARAM_PROJECT_ROSTER_ID,
-  PARAM_PROJECT_USER_ID
+  PARAM_PROJECT_ID
 } from '@/api/project/keys.js';
 import {
   KEY_ROSTER_ENTRY_PROJECTS_DATA,
@@ -13,11 +11,8 @@ import {
   PARAM_ROSTER_ENTRY_PROJECTS_USER_ID
 } from '@/api/roster-entry-projects/keys.js';
 import {
-  SNAPSHOT_PARAM_ID
-} from '@/api/snapshot/keys.js';
-import {
   ProjectTable
-} from '@/components/project-table';
+} from '@/components/project-table.jsx';
 import {
   QUERY_PARAM_DATABASE
 } from 'constants.dgmd.cc';
@@ -32,9 +27,8 @@ async function Project( {params} ) {
   const projectId = params[ 'project-id' ];
 
   const projectUrl = new URL('/api/project', process.env.SITE_ORIGIN);
-  projectUrl.searchParams.append(PARAM_PROJECT_ROSTER_ID, rosterId);
-  projectUrl.searchParams.append(PARAM_PROJECT_USER_ID, userId);
   projectUrl.searchParams.append(PARAM_PROJECT_ID, projectId);
+  console.log( 'projectUrl', projectUrl.href );
 
   const rostersUrl = new URL('/api/roster-entry-projects', process.env.SITE_ORIGIN);
   rostersUrl.searchParams.append(PARAM_ROSTER_ENTRY_PROJECTS_USER_ID, userId);
@@ -53,26 +47,19 @@ async function Project( {params} ) {
     fetchRosterData
   ]);
 
-  const projectList = projectJson[KEY_PROJECT_DATA];
+  const snapshotRows = projectJson[KEY_PROJECT_DATA];
+
   const projectsList = rosterJson[KEY_ROSTER_ENTRY_PROJECTS_DATA];
   const rosterName = rosterJson[KEY_ROSTER_ENTRY_PROJECTS_ROSTER_NAME];
   const userName = rosterJson[KEY_ROSTER_ENTRY_USER_NAME];
 
   const liveUrl = new URL('/api/query', process.env.SITE_ORIGIN);
   liveUrl.searchParams.append(QUERY_PARAM_DATABASE, projectId);
-  const data = [{
+  const liveRow = [{
     name: 'live data',
     url: liveUrl.href
   }];
-  const mProjectList = projectList.map( cur => {
-    const cacheUrl = new URL('/api/snapshot', process.env.SITE_ORIGIN);
-    cacheUrl.searchParams.append(SNAPSHOT_PARAM_ID, cur.id);
-    return {
-      name: cur.created_at,
-      url: cacheUrl.href
-    };
-  });
-  data.push(...mProjectList);
+
 
   const projectObj = find(projectsList, { 
     PAGE_ID: projectId
@@ -85,7 +72,9 @@ async function Project( {params} ) {
       projectId={ projectId }
       userName={ userName }
       rosterName={ rosterName }
-      data={ data }
+      liveRow={ liveRow }
+      snapshotRows={ snapshotRows }
+      url={ process.env.SITE_ORIGIN }
     />
   );    
 };

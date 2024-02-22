@@ -1,16 +1,44 @@
 import {
+  createClient
+} from '@/utils/supabase/server.js';
+import {
+  QUERY_RESPONSE_KEY_SUCCESS
+} from 'constants.dgmd.cc';
+import {
+  isNil
+} from 'lodash-es';
+import {
   NextResponse
 } from 'next/server';
 
+import {
+  SNAPSHOT_PARAM_ID
+} from './keys.js';
+
 export async function GET( request ) {
-
-  console.log( 'oh rly' );
-
-  // const params = request.nextUrl.searchParams;
-  // if (params.has(URL_PROTOTYPE_PARAM_ID)) {
-  //   const id = params.get(URL_PROTOTYPE_PARAM_ID);
-  //   values[PROTOTYPE_ID] = id;
-  // }
+  try {
+    const params = request.nextUrl.searchParams;
+    if (!params.has(SNAPSHOT_PARAM_ID)) {
+      throw new Error( 'missing snapshot id' );
+    }
+    const id = params.get(SNAPSHOT_PARAM_ID);
+    const supabase = createClient( );
+    const snapsQuery = await supabase
+      .from( 'project_snapshots' )
+      .select( 'snapshot' )
+      .eq( 'id', id );
+    if (!isNil(snapsQuery.error)) {
+      throw new Error( 'cannot connect to snapshots' );
+    }
+    const snapshot = JSON.parse( snapsQuery.data[0].snapshot );
+    return NextResponse.json( snapshot );
+  }
+  catch (e) {
+    console.error( e );
+  }
+  return NextResponse.json( {
+    [QUERY_RESPONSE_KEY_SUCCESS]: false
+  } );
 
   // const protoSupa = await supabase
   // .from( 'project_archive' )
@@ -30,6 +58,6 @@ export async function GET( request ) {
   //   resJson.headers.set( header[0], header[1] );
   // }
 
-  return NextResponse.json( {} );
+  return NextResponse.json( rjson );
 };
 

@@ -39,6 +39,7 @@ async function Roster( {params} ) {
     next: { revalidate: 10 }
   });
   const rosterJson = await rosterData.json();
+  console.log( 'o?', rostersUrl.href, rosterJson );
   if (rosterJson[KEY_ROSTER_ENTRIES_DATA]) {
     data = rosterJson[KEY_ROSTER_ENTRIES_DATA];
   }

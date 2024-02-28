@@ -579,7 +579,7 @@ export const getNotionDbaseProperties =
                 //   '***',
                 //   'propertyType', propertyType,
                 //   'prototypeKey', propertyKey
-                // ); baba
+                // ); yaya
               }
             }
             else {

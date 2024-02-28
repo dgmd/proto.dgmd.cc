@@ -82,6 +82,7 @@ export async function GET( request ) {
       throw new Error( 'roster retrieval error' );
     }
     const rosterDataName = rosterData[0].snapshot_name;
+    rjson['a'] = rosterDataName;
 
     try {
       const request = {
@@ -115,6 +116,8 @@ export async function GET( request ) {
       console.log( 'e', e );
       throw new Error( 'unable to connect to notion' );
     }
+
+    rjson['b'] = rosterDataName;
 
     if (rjson[KEY_ROSTER_ENTRIES_NAME] !== rosterDataName) {
       await supabase

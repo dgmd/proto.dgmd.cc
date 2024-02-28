@@ -141,7 +141,7 @@ export const getNotionDatabases =
   const dbMap = x[NOTION_WRANGLE_KEY_DATA_DB_MAP];
   const relMap = x[NOTION_WRANGLE_KEY_RELATIONS_MAP];
 
-  const metasMap = new Map();
+  const metasMap = new Map( );
   for (const [dbId, db] of dbMap.entries()) {
     const primary = dbId === primaryDbId;
     const pageReq = primary ? requests[DATABASE_QUERY_PAGE_CURSOR_REQUEST] : {

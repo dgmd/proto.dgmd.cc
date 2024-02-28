@@ -52,12 +52,16 @@ export async function GET( request ) {
   const rjson = {
     [KEY_ROSTER_ENTRIES_AUTH]: false
   };
+  rjson['1'] = true;
 
   try {
+    rjson['2'] = true;
     const asc = await getAuthServerCache( );
+    rjson['3'] = true;
     if (!isAuthUser(asc)) {
       throw new Error( 'not authenticated' );
     }
+    rjson['4'] = true;
     rjson[KEY_ROSTER_ENTRIES_AUTH] = true;
 
     const params = request.nextUrl.searchParams;

@@ -62,7 +62,6 @@ export async function GET( request ) {
     if (!isNil(activeRosters.error)) {
       throw new Error( 'error getting active rosters' );
     }
-    console.log( 'ROSTERS', userId, activeRosters.data );
     
     const rosters = activeRosters.data;
     rjson[KEY_ROSTERS_AUTH] = true;

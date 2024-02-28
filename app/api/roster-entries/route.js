@@ -132,5 +132,7 @@ export async function GET( request ) {
     console.error( 'roster entries error', e.message );
   }
 
+  console.log( 'rosterEntries returning', rjson );
+
   return NextResponse.json( rjson );
 };

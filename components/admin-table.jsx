@@ -99,7 +99,7 @@ export const AdminTable = ( {data, url} ) => {
     try {
       const response = await fetch( '/api/rosters/', {
         method: 'POST',
-        body: JSON.stringify( { 
+        body: JSON.stringify( {
           [PARAM_ROSTERS_DB_ID]: dbId
         } )
       } );

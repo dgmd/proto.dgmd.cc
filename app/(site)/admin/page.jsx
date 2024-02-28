@@ -28,6 +28,7 @@ async function AdminPage( x ) {
 
 
   let data = [];
+  console.log( 'process.env.SITE_ORIGIN?', process.env.SITE_ORIGIN );
   const rostersUrl = new URL('/api/rosters', process.env.SITE_ORIGIN);
   const rosterData = await fetch(rostersUrl.href, {
     method: 'GET',

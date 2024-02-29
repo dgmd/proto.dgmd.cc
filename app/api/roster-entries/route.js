@@ -58,10 +58,11 @@ export async function GET( request ) {
   };
   rjson['1'] = true;
 
+  rjson['2xx'] = true;
+  const cookieStore = cookies();
+  const asc = await getAuthServerCache( cookieStore );
   try {
-    rjson['2x'] = true;
-    const cookieStore = cookies();
-    const asc = await getAuthServerCache( cookieStore );
+
     rjson['3'] = true;
     if (!isAuthUser(asc)) {
       throw new Error( 'not authenticated' );

@@ -1,8 +1,5 @@
 "use server"
 
-// import {
-//   cookies
-// } from 'next/headers';
 import {
   cache
 } from 'react';
@@ -15,7 +12,6 @@ import {
 } from './authKeys.js';
 
 export const getAuthServerCache = cache( async (cookieStore) => {
-  // const cookieStore = cookies();
   const supabase = await createClient( cookieStore );
   try {
     const auth = await supabase.auth.getUser();

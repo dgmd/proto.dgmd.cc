@@ -53,21 +53,14 @@ import {
 
 export async function GET( request ) {
   const rjson = {
-    [KEY_ROSTER_ENTRIES_AUTH]: false,
-    'lalax': true
+    [KEY_ROSTER_ENTRIES_AUTH]: false
   };
-  rjson['1'] = true;
-
-  rjson['2xx'] = true;
   const cookieStore = cookies();
   const asc = await getAuthServerCache( cookieStore );
   try {
-
-    rjson['3'] = true;
     if (!isAuthUser(asc)) {
       throw new Error( 'not authenticated' );
     }
-    rjson['4'] = true;
     rjson[KEY_ROSTER_ENTRIES_AUTH] = true;
 
     const params = request.nextUrl.searchParams;
@@ -92,7 +85,6 @@ export async function GET( request ) {
       throw new Error( 'roster retrieval error' );
     }
     const rosterDataName = rosterData[0].snapshot_name;
-    rjson['a'] = rosterDataName;
 
     try {
       const request = {
@@ -123,11 +115,8 @@ export async function GET( request ) {
       rjson[KEY_ROSTER_ENTRIES_DATA] = notionEntries;
     }
     catch (e) {
-      console.log( 'e', e );
       throw new Error( 'unable to connect to notion' );
     }
-
-    rjson['b'] = rosterDataName;
 
     if (rjson[KEY_ROSTER_ENTRIES_NAME] !== rosterDataName) {
       await supabase

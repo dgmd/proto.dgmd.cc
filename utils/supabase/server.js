@@ -5,23 +5,23 @@ import {
   cookies
 } from 'next/headers';
 
-export const createClient = () => {
+export const createClient = async () => {
 
-  // const cookieStore = cookies();
+  const cookieStore = cookies();
 
-  return createServerClient(
+  return await createServerClient(
     process.env.NEXT_PUBLIC_REACT_APP_SUPABASE_URL, 
     process.env.NEXT_PUBLIC_REACT_APP_SUPABASE_KEY,
     {
       cookies: {
         get(name) {
-          return cookies().get(name)?.value
+          return cookieStore.get(name)?.value
         },
         set(name, value, options) {
-          cookies().set({ name, value, ...options })
+          cookieStore.set({ name, value, ...options })
         },
         remove(name, options) {
-          cookies().set({ name, value: '', ...options })
+          cookieStore.set({ name, value: '', ...options })
         },
       },
     }

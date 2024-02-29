@@ -12,7 +12,7 @@ import {
 } from './authKeys.js';
 
 export const getAuthServerCache = cache( async () => {
-  const supabase = createClient();
+  const supabase = await createClient();
   try {
     const auth = await supabase.auth.getUser();
     if (auth.error) {

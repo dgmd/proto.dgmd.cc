@@ -56,7 +56,7 @@ export async function GET( request ) {
 
     const user = getAuthUser( asc );
     const userId = getAuthId( user);
-    const supabase = createClient( );
+    const supabase = await createClient( );
 
     const activeRosters = await getActiveRosters( supabase, userId );
     if (!isNil(activeRosters.error)) {
@@ -97,7 +97,7 @@ export async function DELETE( request ) {
     const rosterId = params.get( PARAM_ROSTERS_ROSTER_ID );
     rjson[KEY_ROSTERS_ID] = rosterId;
 
-    const supabase = createClient( );
+    const supabase = await createClient( );
     const deleteRosters = await supabase
       .from( 'rosters' )
       .update( { active: false } )
@@ -158,7 +158,7 @@ export async function POST( request ) {
     const user = getAuthUser( asc );
     const userId = getAuthId( user);
 
-    const supabase = createClient( );
+    const supabase = await createClient( );
 
     const notionRoster = await supabase
       .from( 'rosters' )

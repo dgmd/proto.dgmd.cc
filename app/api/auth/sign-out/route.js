@@ -6,7 +6,7 @@ import {
 } from 'next/server';
 
 export async function POST() {
-  const supabase = createClient();
+  const supabase = await createClient();
   await supabase.auth.signOut();
   return NextResponse.json( {message: 'success' } );
 };

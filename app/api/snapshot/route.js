@@ -23,7 +23,7 @@ export async function GET( request ) {
       throw new Error( 'missing snapshot id' );
     }
     const id = params.get(SNAPSHOT_PARAM_ID);
-    const supabase = createClient( );
+    const supabase = await createClient( );
     const snapsQuery = await supabase
       .from( 'project_snapshots' )
       .select( 'snapshot' )

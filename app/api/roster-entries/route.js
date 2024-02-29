@@ -73,7 +73,7 @@ export async function GET( request ) {
 
     const user = getAuthUser( asc );
     const userId = getAuthId( user);
-    const supabase = createClient( );
+    const supabase = await createClient( );
     const { 
       data: rosterData,
       error: rosterError

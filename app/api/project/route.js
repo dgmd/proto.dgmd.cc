@@ -35,7 +35,7 @@ export async function GET( request ) {
       throw new Error( 'missing project id' );
     }
 
-    const supabase = createClient( );
+    const supabase = await createClient( );
     const snapsQuery = await supabase
       .from( 'project_snapshots' )
       .select( 'created_at, id' )
@@ -85,7 +85,7 @@ export async function POST( request ) {
       throw new Error( 'query failed' );
     }
     
-    const supabase = createClient( );
+    const supabase = await createClient( );
     const insertResult = await supabase
       .from('project_snapshots')
       .insert({ 

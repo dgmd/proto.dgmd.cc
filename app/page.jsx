@@ -9,11 +9,15 @@ import {
 import {
   isAuthUser
 } from '@/utils/supabase/auth/authUtils';
+import {
+  cookies
+} from 'next/headers';
 import Link from 'next/link';
 
 export default async function Hero() {
 
-  const auth = await getAuthServerCache();
+  const cookieStore = cookies();
+  const auth = await getAuthServerCache( cookieStore );
 
   return (
     <div className="bg-white">

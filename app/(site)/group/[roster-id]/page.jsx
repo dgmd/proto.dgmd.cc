@@ -24,7 +24,8 @@ import {
 } from 'next/navigation';
 
 async function Roster( {params} ) {
-  const auth = await getAuthServerCache();
+  const cookieStore = cookies();
+  const auth = await getAuthServerCache(cookieStore);
   if (!isAuthUser(auth)) {
     redirect('/');
   }

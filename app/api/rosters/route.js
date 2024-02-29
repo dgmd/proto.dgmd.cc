@@ -52,14 +52,14 @@ export async function GET( request ) {
   };
 
   try {
-    const asc = await getAuthServerCache( );
+    const cookieStore = cookies();
+    const asc = await getAuthServerCache( cookieStore );
     if (!isAuthUser(asc)) {
       throw new Error( 'not authenticated' );
     }
 
     const user = getAuthUser( asc );
     const userId = getAuthId( user);
-    const cookieStore = cookies();
     const supabase = await createClient( cookieStore );
 
     const activeRosters = await getActiveRosters( supabase, userId );
@@ -85,7 +85,8 @@ export async function DELETE( request ) {
     [KEY_ROSTERS_ID]: null
   };
   try {
-    const asc = await getAuthServerCache( );
+    const cookieStore = cookies();
+    const asc = await getAuthServerCache( cookieStore );
     if (!isAuthUser(asc)) {
       throw new Error( 'not authenticated' );
     }
@@ -101,7 +102,7 @@ export async function DELETE( request ) {
     const rosterId = params.get( PARAM_ROSTERS_ROSTER_ID );
     rjson[KEY_ROSTERS_ID] = rosterId;
 
-    const cookieStore = cookies();
+
     const supabase = await createClient( cookieStore );
     const deleteRosters = await supabase
       .from( 'rosters' )
@@ -139,7 +140,8 @@ export async function POST( request ) {
     [KEY_ROSTERS_AUTH]: false
   };
   try {
-    const asc = await getAuthServerCache( );
+    const cookieStore = cookies();
+    const asc = await getAuthServerCache( cookieStore );
     if (!isAuthUser(asc)) {
       throw new Error( 'not authenticated' );
     }
@@ -163,7 +165,6 @@ export async function POST( request ) {
     const user = getAuthUser( asc );
     const userId = getAuthId( user);
 
-    const cookieStore = cookies();
     const supabase = await createClient( cookieStore );
 
     const notionRoster = await supabase

@@ -21,7 +21,8 @@ import {
 } from 'next/navigation';
 
 async function AdminPage( x ) {
-  const auth = await getAuthServerCache();
+  const cookieStore = cookies();
+  const auth = await getAuthServerCache(cookieStore);
   if (!isAuthUser(auth)) {
     redirect('/admin/sign-in');
   }

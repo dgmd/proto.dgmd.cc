@@ -8,6 +8,9 @@ import {
 import {
   getAuthServerCache
 } from '@/utils/supabase/auth/authServerCache.js';
+import {
+  cookies
+} from 'next/headers';
 
 export async function generateMetadata({ params }, parent) {
   return {
@@ -16,7 +19,8 @@ export async function generateMetadata({ params }, parent) {
 };
 
 export default async function Page({ children }) {
-  const auth = await getAuthServerCache();
+  const cookieStore = cookies();
+  const auth = await getAuthServerCache( cookieStore );
 
   return (
     <AuthContextProvider

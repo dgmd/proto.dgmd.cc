@@ -10,6 +10,9 @@ import {
   isAuthUser
 } from '@/utils/supabase/auth/authUtils.js';
 import {
+  cookies
+} from 'next/headers';
+import {
   redirect
 } from 'next/navigation';
 
@@ -23,7 +26,8 @@ import {
 
 export default async function UserSignInPage() {
 
-  const user = await getAuthServerCache();
+  const cookieStore = cookies();
+  const user = await getAuthServerCache( cookieStore );
   if (isAuthUser(user)) {
     redirect('/admin');
   }

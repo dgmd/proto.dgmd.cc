@@ -59,8 +59,9 @@ export async function GET( request ) {
   rjson['1'] = true;
 
   try {
-    rjson['2'] = true;
-    const asc = await getAuthServerCache( );
+    rjson['2x'] = true;
+    const cookieStore = cookies();
+    const asc = await getAuthServerCache( cookieStore );
     rjson['3'] = true;
     if (!isAuthUser(asc)) {
       throw new Error( 'not authenticated' );
@@ -76,7 +77,6 @@ export async function GET( request ) {
 
     const user = getAuthUser( asc );
     const userId = getAuthId( user);
-    const cookieStore = cookies();
     const supabase = await createClient( cookieStore );
     const { 
       data: rosterData,

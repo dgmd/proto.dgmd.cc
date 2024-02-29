@@ -50,7 +50,8 @@ import {
 
 export async function GET( request ) {
   const rjson = {
-    [KEY_ROSTER_ENTRIES_AUTH]: false
+    [KEY_ROSTER_ENTRIES_AUTH]: false,
+    'lalax': true
   };
   rjson['1'] = true;
 

@@ -7,7 +7,7 @@ import {
 
 export const createClient = () => {
 
-  const cookieStore = cookies();
+  // const cookieStore = cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_REACT_APP_SUPABASE_URL, 
@@ -15,13 +15,13 @@ export const createClient = () => {
     {
       cookies: {
         get(name) {
-          return cookieStore.get(name)?.value
+          return cookies().get(name)?.value
         },
         set(name, value, options) {
-          cookieStore.set({ name, value, ...options })
+          cookies().set({ name, value, ...options })
         },
         remove(name, options) {
-          cookieStore.set({ name, value: '', ...options })
+          cookies().set({ name, value: '', ...options })
         },
       },
     }

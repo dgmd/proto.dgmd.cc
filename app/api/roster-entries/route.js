@@ -143,8 +143,5 @@ export async function GET( request ) {
     rjson[KEY_ROSTER_ENTRIES_ERROR] = e.message;
     console.error( 'roster entries error', e.message );
   }
-
-  console.log( 'rosterEntries returning', rjson );
-
   return NextResponse.json( rjson );
 };

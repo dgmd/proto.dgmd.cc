@@ -1,13 +1,13 @@
 import {
   createServerClient
 } from '@supabase/ssr';
-import {
-  cookies
-} from 'next/headers';
+// import {
+//   cookies
+// } from 'next/headers';
 
-export const createClient = async () => {
+export const createClient = async ( cookieStore ) => {
 
-  const cookieStore = cookies();
+  // const cookieStore = cookies();
 
   return await createServerClient(
     process.env.NEXT_PUBLIC_REACT_APP_SUPABASE_URL, 

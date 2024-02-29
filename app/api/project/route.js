@@ -14,6 +14,9 @@ import {
   isNil
 } from 'lodash-es';
 import {
+  cookies
+} from 'next/headers';
+import {
   NextResponse
 } from 'next/server';
 
@@ -35,7 +38,8 @@ export async function GET( request ) {
       throw new Error( 'missing project id' );
     }
 
-    const supabase = await createClient( );
+    const cookieStore = cookies();
+    const supabase = await createClient( cookieStore );
     const snapsQuery = await supabase
       .from( 'project_snapshots' )
       .select( 'created_at, id' )
@@ -85,7 +89,8 @@ export async function POST( request ) {
       throw new Error( 'query failed' );
     }
     
-    const supabase = await createClient( );
+    const cookieStore = cookies();
+    const supabase = await createClient( cookieStore );
     const insertResult = await supabase
       .from('project_snapshots')
       .insert({ 

@@ -9,6 +9,9 @@ import {
   isNil
 } from 'lodash-es';
 import {
+  cookies
+} from 'next/headers';
+import {
   NextResponse
 } from 'next/server';
 
@@ -23,7 +26,8 @@ export async function GET( request ) {
       throw new Error( 'missing snapshot id' );
     }
     const id = params.get(SNAPSHOT_PARAM_ID);
-    const supabase = await createClient( );
+    const cookieStore = cookies();
+    const supabase = await createClient( cookieStore );
     const snapsQuery = await supabase
       .from( 'project_snapshots' )
       .select( 'snapshot' )

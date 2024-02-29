@@ -38,6 +38,9 @@ import {
   isNil
 } from 'lodash-es';
 import {
+  cookies
+} from 'next/headers';
+import {
   NextResponse
 } from 'next/server';
 
@@ -73,7 +76,8 @@ export async function GET( request ) {
 
     const user = getAuthUser( asc );
     const userId = getAuthId( user);
-    const supabase = await createClient( );
+    const cookieStore = cookies();
+    const supabase = await createClient( cookieStore );
     const { 
       data: rosterData,
       error: rosterError

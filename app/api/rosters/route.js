@@ -30,6 +30,9 @@ import {
   isNil
 } from 'lodash-es';
 import {
+  cookies
+} from 'next/headers';
+import {
   NextResponse
 } from 'next/server';
 
@@ -56,7 +59,8 @@ export async function GET( request ) {
 
     const user = getAuthUser( asc );
     const userId = getAuthId( user);
-    const supabase = await createClient( );
+    const cookieStore = cookies();
+    const supabase = await createClient( cookieStore );
 
     const activeRosters = await getActiveRosters( supabase, userId );
     if (!isNil(activeRosters.error)) {
@@ -97,7 +101,8 @@ export async function DELETE( request ) {
     const rosterId = params.get( PARAM_ROSTERS_ROSTER_ID );
     rjson[KEY_ROSTERS_ID] = rosterId;
 
-    const supabase = await createClient( );
+    const cookieStore = cookies();
+    const supabase = await createClient( cookieStore );
     const deleteRosters = await supabase
       .from( 'rosters' )
       .update( { active: false } )
@@ -158,7 +163,8 @@ export async function POST( request ) {
     const user = getAuthUser( asc );
     const userId = getAuthId( user);
 
-    const supabase = await createClient( );
+    const cookieStore = cookies();
+    const supabase = await createClient( cookieStore );
 
     const notionRoster = await supabase
       .from( 'rosters' )

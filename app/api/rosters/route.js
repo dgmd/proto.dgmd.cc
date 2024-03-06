@@ -59,7 +59,7 @@ export async function GET( request ) {
     }
 
     const user = getAuthUser( asc );
-    const userId = getAuthId( user);
+    const userId = getAuthId( user );
     const supabase = await createClient( cookieStore );
 
     const activeRosters = await getActiveRosters( supabase, userId );
@@ -101,7 +101,6 @@ export async function DELETE( request ) {
     }
     const rosterId = params.get( PARAM_ROSTERS_ROSTER_ID );
     rjson[KEY_ROSTERS_ID] = rosterId;
-
 
     const supabase = await createClient( cookieStore );
     const deleteRosters = await supabase

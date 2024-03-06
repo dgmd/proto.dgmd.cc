@@ -20,15 +20,17 @@ import {
   find,
   isNil
 } from 'lodash-es';
+import {
+  redirect
+} from 'next/navigation';
 
-async function Project( {params} ) {
+export default async function Project( {params} ) {
   const rosterId = params[ 'roster-id' ];
   const userId = params[ 'user-id' ];
   const projectId = params[ 'project-id' ];
 
   const projectUrl = new URL('/api/project', process.env.SITE_ORIGIN);
   projectUrl.searchParams.append(PARAM_PROJECT_ID, projectId);
-  console.log( 'projectUrl', projectUrl.href );
 
   const rostersUrl = new URL('/api/roster-entry-projects', process.env.SITE_ORIGIN);
   rostersUrl.searchParams.append(PARAM_ROSTER_ENTRY_PROJECTS_USER_ID, userId);
@@ -48,10 +50,12 @@ async function Project( {params} ) {
   ]);
 
   const snapshotRows = projectJson[KEY_PROJECT_DATA];
-
   const projectsList = rosterJson[KEY_ROSTER_ENTRY_PROJECTS_DATA];
   const rosterName = rosterJson[KEY_ROSTER_ENTRY_PROJECTS_ROSTER_NAME];
   const userName = rosterJson[KEY_ROSTER_ENTRY_USER_NAME];
+  if (isNil(snapshotRows) || isNil(projectsList) || isNil(rosterName) || isNil(userName)) {
+    redirect('/');
+  }
 
   const liveUrl = new URL('/api/query', process.env.SITE_ORIGIN);
   liveUrl.searchParams.append(QUERY_PARAM_DATABASE, projectId);
@@ -60,10 +64,12 @@ async function Project( {params} ) {
     url: liveUrl.href
   }];
 
-
   const projectObj = find(projectsList, { 
     PAGE_ID: projectId
   });
+  if (isNil(projectObj)) {
+    redirect('/');
+  }
   const projectName = isNil(projectObj) ? '' : projectObj.VALUE;
 
   return (
@@ -78,5 +84,3 @@ async function Project( {params} ) {
     />
   );    
 };
-
-export default Project;

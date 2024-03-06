@@ -11,7 +11,7 @@ import {
   KEY_AUTH_CONTEXT_USER
 } from './authKeys.js';
 
-export const getAuthServerCache = cache( async (cookieStore) => {
+export const getAuthServerCache = async (cookieStore) => {
   const supabase = await createClient( cookieStore );
   try {
     const auth = await supabase.auth.getUser();
@@ -23,4 +23,18 @@ export const getAuthServerCache = cache( async (cookieStore) => {
   catch (err) {
   }
   return { [KEY_AUTH_CONTEXT_USER]: null };
-});
+};
+
+// export const getAuthServerCache = cache( async (cookieStore) => {
+//   const supabase = await createClient( cookieStore );
+//   try {
+//     const auth = await supabase.auth.getUser();
+//     if (auth.error) {
+//       auth.error = true; //auth.error.toString();
+//     }
+//     return { [KEY_AUTH_CONTEXT_USER]: auth };
+//   }
+//   catch (err) {
+//   }
+//   return { [KEY_AUTH_CONTEXT_USER]: null };
+// });

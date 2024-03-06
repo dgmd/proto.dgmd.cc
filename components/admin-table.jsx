@@ -56,15 +56,13 @@ const KEY_ACTIONS = 'actions';
 export const AdminTable = ( {data, url} ) => {
 
   const [dbId, setDbId] = useState( '' );
-  const [dbIdValid, setDbIdValid] = useState( false );
+  const [, setDbIdValid] = useState( false );
 
   const [open, setOpen] = useState( x => false );
   const [addRosterError, setAddRosterError] = useState( x => false );
 
-  const [refreshing, setRefreshing] = useState( x => [] );
-  const rRefreshing = useRef( refreshing );
-  const [deleting, setDeleting] = useState( x => [] );
-  const rDeleting = useRef( deleting );
+  const [, setRefreshing] = useState( x => [] );
+  const [, setDeleting] = useState( x => [] );
   
   const [addingNotionRoom, setAddingNotionRoom] = useState( x => false );
   const rAddingNotionRoom = useRef( addingNotionRoom );

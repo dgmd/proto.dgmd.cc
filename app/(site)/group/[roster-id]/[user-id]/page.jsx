@@ -9,20 +9,28 @@ import {
 import {
   RosterEntryProjectsTable
 } from '@/components/roster-entry-projects-table.jsx';
+import {
+  redirect
+} from 'next/navigation';
 
-async function User( {params} ) {
+export default async function User( {params} ) {
   const rosterId = params[ 'roster-id' ];
   const userId = params[ 'user-id' ];
   const rostersUrl = new URL('/api/roster-entry-projects', process.env.SITE_ORIGIN);
   rostersUrl.searchParams.append( PARAM_ROSTER_ENTRY_PROJECTS_USER_ID, userId );
-  const rosterData = await fetch(rostersUrl.href, {
+  const rosterData = await fetch( rostersUrl.href, {
     method: 'GET',
     next: { revalidate: 10 }
-  });
+  } );
   const rosterJson = await rosterData.json();
   const data = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_DATA ];
   const groupName = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_ROSTER_NAME ];
   const name = rosterJson[ KEY_ROSTER_ENTRY_USER_NAME ];
+
+  if (!data || !groupName || !name) {
+    redirect('/');
+  }
+
   return (
     <RosterEntryProjectsTable
       rosterId={ rosterId }
@@ -34,5 +42,3 @@ async function User( {params} ) {
     />
   );    
 };
-
-export default User;

@@ -20,7 +20,7 @@ import {
   redirect
 } from 'next/navigation';
 
-async function AdminPage( x ) {
+export default async function AdminPage( x ) {
   const cookieStore = cookies();
   const auth = await getAuthServerCache(cookieStore);
   if (!isAuthUser(auth)) {
@@ -47,5 +47,3 @@ async function AdminPage( x ) {
     />
   );
 };
-
-export default AdminPage;

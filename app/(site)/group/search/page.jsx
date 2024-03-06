@@ -11,7 +11,7 @@ import {
   KEY_STUDENT_CODE,
 } from './keys.js';
 
-async function SearchPage() {
+export default async function SearchPage() {
 
   return (
     <form
@@ -39,5 +39,3 @@ async function SearchPage() {
   );
 
 };
-
-export default SearchPage;

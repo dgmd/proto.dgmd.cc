@@ -11,30 +11,7 @@ import {
   KEY_STUDENT_CODE,
 } from './keys.js';
 
-const SearchPage = () => {
-
-  // const router = useRouter();
-
-  // const [studentCode, setStudentCode] = useState( "" );
-
-  // const cbChangeStudentCode = useCallback( event => {
-  //   setStudentCode( x => event.target.value.trim() );
-  // }, [
-  // ] );
-
-  // const cbSignIn = useCallback( event => {
-  //   const lastHyphenIndex = studentCode.lastIndexOf('-');
-  //   if (lastHyphenIndex !== -1) {
-  //     const groupName = studentCode.substring(0, lastHyphenIndex);
-  //     const notionUserId = studentCode.substring(lastHyphenIndex + 1);
-  //     if (groupName.length > 0 && notionUserId.length > 0) {
-  //       router.push( `/group/${ groupName }/${ notionUserId }/` );
-  //     }
-  //   }
-  // }, [
-  //   studentCode,
-  //   router
-  // ] );
+async function SearchPage() {
 
   return (
     <form

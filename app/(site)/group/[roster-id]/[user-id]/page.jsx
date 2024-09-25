@@ -20,7 +20,9 @@ export default async function User( {params} ) {
   rostersUrl.searchParams.append( PARAM_ROSTER_ENTRY_PROJECTS_USER_ID, userId );
   const rosterData = await fetch( rostersUrl.href, {
     method: 'GET',
-    next: { revalidate: 10 }
+    headers: {
+      'Cache-Control': 'no-store',
+    },
   } );
   const rosterJson = await rosterData.json();
   const data = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_DATA ];

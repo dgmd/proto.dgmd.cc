@@ -82,7 +82,9 @@ export async function POST( request ) {
     liveUrl.searchParams.append(QUERY_PARAM_DATABASE, pjId);
     const liveQueryData = await fetch( liveUrl.href, {
       method: 'GET',
-      next: { revalidate: 1 }
+      headers: {
+        'Cache-Control': 'no-store'
+      },
     } );
     const liveQueryJson = await liveQueryData.json();
     if (!liveQueryJson[QUERY_RESPONSE_KEY_SUCCESS]) {

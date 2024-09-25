@@ -25,7 +25,7 @@ import {
 } from 'next/navigation';
 
 export default async function Project( {params} ) {
-  const rosterId = params[ 'roster-id' ];
+  // const rosterId = params[ 'roster-id' ];
   const userId = params[ 'user-id' ];
   const projectId = params[ 'project-id' ];
 
@@ -36,12 +36,17 @@ export default async function Project( {params} ) {
   rostersUrl.searchParams.append(PARAM_ROSTER_ENTRY_PROJECTS_USER_ID, userId);
 
   const fetchProjectData = fetch(projectUrl.href, {
-    next: { revalidate: 10 }
+    method: 'GET',
+    headers: {
+      'Cache-Control': 'no-store'
+    },
   }).then(response => response.json());
 
   const fetchRosterData = fetch(rostersUrl.href, {
     method: 'GET',
-    next: { revalidate: 10 }
+    headers: {
+      'Cache-Control': 'no-store'
+    },
   }).then(response => response.json());
 
   const [projectJson, rosterJson] = await Promise.all([

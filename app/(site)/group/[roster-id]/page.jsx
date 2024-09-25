@@ -36,8 +36,10 @@ export default async function Roster( {params} ) {
   rostersUrl.searchParams.append( PARAM_ROSTERS_DB_ID, rosterId );
   const rosterData = await fetch(rostersUrl.href, {
     method: 'GET',
-    headers: { Cookie: cookies().toString() },
-    next: { revalidate: 10 }
+    headers: {
+      Cookie: cookies().toString(),
+      'Cache-Control': 'no-store',
+    },
   });
   const rosterJson = await rosterData.json();
   if (rosterJson[KEY_ROSTER_ENTRIES_DATA]) {

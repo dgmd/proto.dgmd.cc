@@ -27,13 +27,14 @@ export default async function AdminPage( x ) {
     redirect('/admin/sign-in');
   }
 
-
   let data = [];
   const rostersUrl = new URL('/api/rosters', process.env.SITE_ORIGIN);
   const rosterData = await fetch(rostersUrl.href, {
     method: 'GET',
-    headers: { Cookie: cookies().toString() },
-    next: { revalidate: 10 }
+    headers: { 
+      Cookie: cookies().toString(),
+      'Cache-Control': 'no-store'
+    },
   });
   const rosterJson = await rosterData.json();
   if (rosterJson[KEY_ROSTERS_AUTH]) {

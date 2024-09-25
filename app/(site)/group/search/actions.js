@@ -1,14 +1,8 @@
 "use server"
 
 import {
-  createClient
-} from '@/utils/supabase/server.js';
-import {
   isNil
 } from 'lodash-es';
-import {
-  cookies
-} from 'next/headers';
 import {
   redirect
 } from 'next/navigation';
@@ -29,26 +23,26 @@ export async function studentCodeAction( formData ) {
     if (lastHyphenIndex === -1) {
       throw new Error('Invalid student code');
     }
-    const snapshotName = studentCodeTrim.substring(0, lastHyphenIndex);
+    const notionGroupId = studentCodeTrim.substring(0, lastHyphenIndex);
     const notionUserId = studentCodeTrim.substring(lastHyphenIndex + 1);
 
-    const cookieStore = cookies();
-    const supabase = await createClient( cookieStore );
-    const rosterResult = await supabase
-      .from( 'rosters' )
-      .select( 'notion_id' )
-      .eq( 'active', true )
-      .eq( 'snapshot_name', snapshotName );
-    if (!isNil(rosterResult.error)) {
-      throw new Error('Error getting roster');
-    }
-    const rosters = rosterResult.data;
-    if (rosters.length === 0) {
-      throw new Error('Invalid snapshot name');
-    }
-    const roster = rosters[0];
-    const rosterNotionId = roster.notion_id;
-    redirectUrl = `${ rosterNotionId }/${ notionUserId }`;
+    // const cookieStore = cookies();
+    // const supabase = await createClient( cookieStore );
+    // const rosterResult = await supabase
+    //   .from( 'rosters' )
+    //   .select( 'notion_id' )
+    //   .eq( 'active', true )
+    //   .eq( 'snapshot_name', snapshotName );
+    // if (!isNil(rosterResult.error)) {
+    //   throw new Error('Error getting roster');
+    // }
+    // const rosters = rosterResult.data;
+    // if (rosters.length === 0) {
+    //   throw new Error('Invalid snapshot name');
+    // }
+    // const roster = rosters[0];
+    // const rosterNotionId = roster.notion_id;
+    redirectUrl = `${ notionGroupId }/${ notionUserId }`;
   }
   catch (error) {
     console.log( 'error', error );

@@ -83,8 +83,8 @@ export async function POST( request ) {
     const liveQueryData = await fetch( liveUrl.href, {
       method: 'GET',
       headers: {
-        'Cache-Control': 'no-store'
       },
+      cache: 'no-store',
     } );
     const liveQueryJson = await liveQueryData.json();
     if (!liveQueryJson[QUERY_RESPONSE_KEY_SUCCESS]) {

@@ -21,8 +21,8 @@ export default async function User( {params} ) {
   const rosterData = await fetch( rostersUrl.href, {
     method: 'GET',
     headers: {
-      'Cache-Control': 'no-store',
     },
+    cache: 'no-store',
   } );
   const rosterJson = await rosterData.json();
   const data = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_DATA ];

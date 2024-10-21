@@ -33,8 +33,8 @@ export default async function AdminPage( x ) {
     method: 'GET',
     headers: { 
       Cookie: cookies().toString(),
-      'Cache-Control': 'no-store'
     },
+    cache: 'no-store',
   });
   const rosterJson = await rosterData.json();
   if (rosterJson[KEY_ROSTERS_AUTH]) {

@@ -57,13 +57,13 @@ export async function GET( request ) {
     const pcs = params.get(QUERY_PARAM_PAGE_CURSOR_TYPE_REQUEST);
     const cursorReq = queryPagesLookupTable[pcs];
     if (cursorReq) {
-      requests[PAGE_CURSOR_REQUEST][PAGE_CURSOR_TYPE_REQUEST] = cursorReq;
+      requests[DATABASE_QUERY_PAGE_CURSOR_REQUEST][DATABASE_QUERY_PAGE_CURSOR_TYPE_REQUEST] = cursorReq;
     }
   }
 
   if (params.has(QUERY_PARAM_PAGE_CURSOR_ID_REQUEST)) {
     const pcid = params.get(QUERY_PARAM_PAGE_CURSOR_ID_REQUEST);
-    requests[PAGE_CURSOR_REQUEST][PAGE_CURSOR_ID_REQUEST] = pcid;
+    requests[DATABASE_QUERY_PAGE_CURSOR_REQUEST][DATABASE_QUERY_PAGE_CURSOR_ID_REQUEST] = pcid;
   }
 
   try {

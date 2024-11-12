@@ -24,6 +24,7 @@ export default async function User( {params} ) {
     },
     cache: 'no-store',
   } );
+  console.log( 'rostersUrl.href', rostersUrl.href)
   console.log( 'rosterData', rosterData );
   const rosterJson = await rosterData.json();
   console.log( 'rosterJson', rosterJson );

@@ -67,7 +67,11 @@ export const ProjectTable =
     projectUrl.searchParams.append(PARAM_PROJECT_ID, projectId);
     const projectResult = await fetch( projectUrl.href, {
       method: 'GET',
-      next: { revalidate: 1 }
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      next: { revalidate: 60 }
     } );
     const projectJson = await projectResult.json();
     const snapshotRows = projectJson[KEY_PROJECT_DATA];

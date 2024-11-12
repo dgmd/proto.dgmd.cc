@@ -35,25 +35,22 @@ export default async function Project( {params} ) {
   const rostersUrl = new URL('/api/roster-entry-projects', process.env.SITE_ORIGIN);
   rostersUrl.searchParams.append(PARAM_ROSTER_ENTRY_PROJECTS_USER_ID, userId);
 
-  const fetchProjectData = fetch(projectUrl.href, {
+  const fetchProjectData = await fetch(projectUrl.href, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json'
     },
-    next: { revalidate: 60 } // Revalidate every 60 seconds
-
+    next: { revalidate: 60 }
   }).then(response => response.json());
 
-  const fetchRosterData = fetch(rostersUrl.href, {
+  const fetchRosterData = await fetch(rostersUrl.href, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json'
     },
-    next: { revalidate: 60 } // Revalidate every 60 seconds
-
-
+    next: { revalidate: 60 }
   }).then(response => response.json());
 
   const [projectJson, rosterJson] = await Promise.all([
@@ -65,7 +62,6 @@ export default async function Project( {params} ) {
   const projectsList = rosterJson[KEY_ROSTER_ENTRY_PROJECTS_DATA];
   const rosterName = rosterJson[KEY_ROSTER_ENTRY_PROJECTS_ROSTER_NAME];
   const userName = rosterJson[KEY_ROSTER_ENTRY_USER_NAME];
-  console.log( 'snapshotRows', snapshotRows, 'projectsList', projectsList, 'rosterName', rosterName, 'userName', userName );
   if (isNil(snapshotRows) || isNil(projectsList) || isNil(rosterName) || isNil(userName)) {
     redirect('/');
   }

@@ -34,7 +34,7 @@ export default async function AdminPage( x ) {
     headers: { 
       Cookie: cookies().toString(),
     },
-    cache: 'no-store',
+    next: { revalidate: 60 }
   });
   const rosterJson = await rosterData.json();
   if (rosterJson[KEY_ROSTERS_AUTH]) {

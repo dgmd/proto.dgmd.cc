@@ -39,7 +39,7 @@ export default async function Roster( {params} ) {
     headers: {
       Cookie: cookies().toString()
     },
-    cache: 'no-store',
+    next: { revalidate: 60 }
   });
   const rosterJson = await rosterData.json();
   if (rosterJson[KEY_ROSTER_ENTRIES_DATA]) {

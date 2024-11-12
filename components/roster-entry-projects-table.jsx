@@ -40,7 +40,6 @@ export const RosterEntryProjectsTable =
   const [cells, setCells] = useState( x => {
     return data.map( cur => {
       const notionUrl = new URL( `/group/${rosterId}/${userId}/${cur.PAGE_ID}`, url );
-      console.log( 'SET STATE', cur.VALUE, notionUrl );
       return {
         [KEY_PROJECT_NAME]: cur.VALUE,
         [KEY_PROJECT_LINK]: notionUrl

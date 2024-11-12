@@ -84,7 +84,7 @@ export async function POST( request ) {
       method: 'GET',
       headers: {
       },
-      cache: 'no-store',
+      next: { revalidate: 60 }
     } );
     const liveQueryJson = await liveQueryData.json();
     if (!liveQueryJson[QUERY_RESPONSE_KEY_SUCCESS]) {

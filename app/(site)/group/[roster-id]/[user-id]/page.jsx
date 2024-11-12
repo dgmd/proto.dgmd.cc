@@ -24,13 +24,9 @@ export default async function User( {params} ) {
       'Accept': 'application/json',
       'Content-Type': 'application/json'
     },
-    // cache: 'no-store',
-    next: { revalidate: 60 } // Revalidate every 60 seconds
+    next: { revalidate: 60 }
   } );
-  console.log( 'rostersUrl.href3', rostersUrl.href)
-  console.log( 'rosterData3', rosterData );
   const rosterJson = await rosterData.json();
-  console.log( 'rosterJson', rosterJson );
   const data = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_DATA ];
   const groupName = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_ROSTER_NAME ];
   const name = rosterJson[ KEY_ROSTER_ENTRY_USER_NAME ];

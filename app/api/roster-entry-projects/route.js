@@ -41,7 +41,8 @@ export async function GET( request ) {
   };
   const params = request.nextUrl.searchParams;
   const paramUserId = params.get( PARAM_ROSTER_ENTRY_PROJECTS_USER_ID );
-
+  
+  console.log( 'roster-entry-projects', paramUserId );
   try {
     try {
       const nClient = new Client({ 

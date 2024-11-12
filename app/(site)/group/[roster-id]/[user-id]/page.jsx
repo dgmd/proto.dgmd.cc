@@ -21,10 +21,12 @@ export default async function User( {params} ) {
   const rosterData = await fetch( rostersUrl.href, {
     method: 'GET',
     headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
     },
     cache: 'no-store',
   } );
-  console.log( 'rostersUrl.href', rostersUrl.href)
+  console.log( 'rostersUrl.href2', rostersUrl.href)
   console.log( 'rosterData', rosterData );
   const rosterJson = await rosterData.json();
   console.log( 'rosterJson', rosterJson );

@@ -24,7 +24,9 @@ export default async function User( {params} ) {
     },
     cache: 'no-store',
   } );
+  console.log( 'rosterData', rosterData );
   const rosterJson = await rosterData.json();
+  console.log( 'rosterJson', rosterJson );
   const data = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_DATA ];
   const groupName = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_ROSTER_NAME ];
   const name = rosterJson[ KEY_ROSTER_ENTRY_USER_NAME ];

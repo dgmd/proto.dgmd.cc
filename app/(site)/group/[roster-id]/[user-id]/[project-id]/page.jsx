@@ -38,15 +38,22 @@ export default async function Project( {params} ) {
   const fetchProjectData = fetch(projectUrl.href, {
     method: 'GET',
     headers: {
-      'Cache-Control': 'no-store'
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
     },
+    next: { revalidate: 60 } // Revalidate every 60 seconds
+
   }).then(response => response.json());
 
   const fetchRosterData = fetch(rostersUrl.href, {
     method: 'GET',
     headers: {
-      'Cache-Control': 'no-store'
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
     },
+    next: { revalidate: 60 } // Revalidate every 60 seconds
+
+
   }).then(response => response.json());
 
   const [projectJson, rosterJson] = await Promise.all([

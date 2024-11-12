@@ -58,6 +58,7 @@ export default async function Project( {params} ) {
   const projectsList = rosterJson[KEY_ROSTER_ENTRY_PROJECTS_DATA];
   const rosterName = rosterJson[KEY_ROSTER_ENTRY_PROJECTS_ROSTER_NAME];
   const userName = rosterJson[KEY_ROSTER_ENTRY_USER_NAME];
+  console.log( 'snapshotRows', snapshotRows, 'projectsList', projectsList, 'rosterName', rosterName, 'userName', userName );
   if (isNil(snapshotRows) || isNil(projectsList) || isNil(rosterName) || isNil(userName)) {
     redirect('/');
   }

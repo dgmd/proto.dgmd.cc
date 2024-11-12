@@ -24,10 +24,11 @@ export default async function User( {params} ) {
       'Accept': 'application/json',
       'Content-Type': 'application/json'
     },
-    cache: 'no-store',
+    // cache: 'no-store',
+    next: { revalidate: 60 } // Revalidate every 60 seconds
   } );
-  console.log( 'rostersUrl.href2', rostersUrl.href)
-  console.log( 'rosterData', rosterData );
+  console.log( 'rostersUrl.href3', rostersUrl.href)
+  console.log( 'rosterData3', rosterData );
   const rosterJson = await rosterData.json();
   console.log( 'rosterJson', rosterJson );
   const data = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_DATA ];

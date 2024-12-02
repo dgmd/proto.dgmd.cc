@@ -1,7 +1,7 @@
 export const maxDuration = 300;
 
 import {
-  getApiCorsHeaders
+  createCorsHeadedResponse
 } from '@/utils/coriHeaders.js';
 import {
   DATABASE_QUERY_DATABASE_ID_REQUEST,
@@ -27,9 +27,6 @@ import {
   QUERY_VALUE_PAGE_CURSOR_TYPE_DEFAULT,
   QUERY_VALUE_PAGE_CURSOR_TYPE_SPECIFIC
 } from 'constants.dgmd.cc';
-import {
-  NextResponse
-} from 'next/server';
 
 const queryPagesLookupTable = {
   [QUERY_VALUE_PAGE_CURSOR_TYPE_ALL]: DATABASE_QUERY_PAGE_CURSOR_TYPE_ALL,
@@ -73,26 +70,17 @@ export async function GET( request ) {
 
     const orgDbResult = await getNotionDatabases( nClient, requests );
 
-    return createResponse( {
+    return createCorsHeadedResponse( {
       [QUERY_RESPONSE_KEY_SUCCESS]: true,
       [QUERY_RESPONSE_KEY_RESULT]: orgDbResult
     }, request );
   
   }
   catch ( e ) {
-    console.log( e );
-    return createResponse( {
+    return createCorsHeadedResponse( {
       [QUERY_RESPONSE_KEY_SUCCESS]: false,
       [QUERY_RESPONSE_KEY_ERROR]: 'invalid credentials'
     }, request );
   }
 };
 
-const createResponse = (json, request) => {
-  const resJson = NextResponse.json( json );
-  const headersList = getApiCorsHeaders( request );
-  for (const header of headersList) {
-    resJson.headers.set( header[0], header[1] );
-  }
-  return resJson;
-};

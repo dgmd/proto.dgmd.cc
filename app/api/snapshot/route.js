@@ -1,4 +1,7 @@
 import {
+  createCorsHeadedResponse
+} from '@/utils/coriHeaders.js';
+import {
   createClient
 } from '@/utils/supabase/server.js';
 import {
@@ -11,9 +14,6 @@ import {
 import {
   cookies
 } from 'next/headers';
-import {
-  NextResponse
-} from 'next/server';
 
 import {
   SNAPSHOT_PARAM_ID
@@ -36,14 +36,12 @@ export async function GET( request ) {
       throw new Error( 'cannot connect to snapshots' );
     }
     const snapshot = JSON.parse( snapsQuery.data[0].snapshot );
-    return NextResponse.json( snapshot );
+    return createCorsHeadedResponse( snapshot, request );
   }
   catch (e) {
-    return NextResponse.json( {
+    return createCorsHeadedResponse( {
       [QUERY_RESPONSE_KEY_ERROR]: e.message,
       [QUERY_RESPONSE_KEY_SUCCESS]: false
     } );
   }
-
 };
-

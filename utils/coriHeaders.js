@@ -1,5 +1,8 @@
-  
-  const allowedOrigins =
+import {
+  NextResponse
+} from 'next/server';
+
+const allowedOrigins =
     process.env.CORS_ORIGINS.split(',').map(
       origin => process.env[origin]
     );
@@ -14,7 +17,7 @@
   //
   //https://chat.openai.com/share/12422258-e5e2-4b6d-b135-67449f71081a
   
-  export const getApiCorsHeaders = req => {
+  const getApiCorsHeaders = req => {
     // const res = NextResponse.next();
     const headers = [];
   
@@ -67,3 +70,12 @@
   //   console.log('URL does not match any of the specified domains.');
   // }
   
+
+  export const createCorsHeadedResponse = (json, request) => {
+    const resJson = NextResponse.json( json );
+    const headersList = getApiCorsHeaders( request );
+    for (const header of headersList) {
+      resJson.headers.set( header[0], header[1] );
+    }
+    return resJson;
+  };

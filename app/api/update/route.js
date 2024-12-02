@@ -1,5 +1,5 @@
 import {
-  getApiCorsHeaders
+  createCorsHeadedResponse
 } from '@/utils/coriHeaders.js';
 import {
   NOTION_KEY_DB_ID,
@@ -80,12 +80,9 @@ import {
 import {
   isNil
 } from 'lodash-es';
-import {
-  NextResponse
-} from 'next/server';
 
 export async function OPTIONS( request ) {
-  return createResponse( {
+  return createCorsHeadedResponse( {
     [CRUD_RESPONSE_RESULT_TYPE]: CRUD_RESPONSE_OPTIONS,
     [CRUD_RESPONSE_RESULT]: {
       [CRUD_RESPONSE_OPTIONS]: false
@@ -151,7 +148,7 @@ export async function PUT( request ) {
   catch (error) {
     rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_ERROR] = error.message;
   }
-  return createResponse( rObj, request );
+  return createCorsHeadedResponse( rObj, request );
 };
 
 export async function POST( request ) {
@@ -220,7 +217,7 @@ export async function POST( request ) {
   catch (error) {
     rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_ERROR] = error.message;
   }
-  return createResponse( rObj, request );
+  return createCorsHeadedResponse( rObj, request );
 };
 
 export async function DELETE( request ) {
@@ -247,17 +244,9 @@ export async function DELETE( request ) {
     rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_ERROR] = error.message;
   }
 
-  return createResponse( rObj, request );
+  return createCorsResponse( rObj, request );
 };
 
-const createResponse = (json, request) => {
-  const resJson = NextResponse.json( json );
-  const headersList = getApiCorsHeaders( request );
-  for (const header of headersList) {
-    resJson.headers.set( header[0], header[1] );
-  }
-  return resJson;
-};
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 

@@ -55,7 +55,7 @@ export async function GET( request ) {
   const rjson = {
     [KEY_ROSTER_ENTRIES_AUTH]: false
   };
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const asc = await getAuthServerCache( cookieStore );
   try {
     if (!isAuthUser(asc)) {

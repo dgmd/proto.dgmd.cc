@@ -1,16 +1,14 @@
-import {
-  createServerClient
-} from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 
-export const createClient = async ( cookieStore ) => {
-
-  return await createServerClient(
-    process.env.NEXT_PUBLIC_REACT_APP_SUPABASE_URL, 
+export const createClient = async (cookieStore) => {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_REACT_APP_SUPABASE_URL,
     process.env.NEXT_PUBLIC_REACT_APP_SUPABASE_KEY,
     {
       cookies: {
-        get(name) {
-          return cookieStore.get(name)?.value
+        async get(name) {
+          const cookie = await cookieStore.get(name);
+          return cookie?.value;
         },
         set(name, value, options) {
           cookieStore.set({ name, value, ...options })

@@ -1,40 +1,40 @@
 "use client"
 
 import {
-    NotionToFramerLogo
+  NotionToFramerLogo
 } from '@/components/logo.jsx';
 import {
-    buttonClassNames
+  buttonClassNames
 } from '@/components/look.js';
 import {
-    classNames
+  classNames
 } from '@/utils/jsx.js';
 import {
-    AuthContext
+  AuthContext
 } from '@/utils/supabase/auth/authContextProvider.js';
 import {
-    getAuthUser
+  getAuthUser
 } from '@/utils/supabase/auth/authUtils.js';
 import {
-    useServerSignOut
+  useServerSignOut
 } from '@/utils/supabase/client.js';
 import {
-    Menu,
-    Transition
+  Menu,
+  Transition
 } from '@headlessui/react';
 import {
-    UserCircleIcon
+  UserCircleIcon
 } from '@heroicons/react/20/solid';
 import {
-    isNil
+  isNil
 } from 'lodash-es';
 import Link from 'next/link';
 import {
-    usePathname
+  usePathname
 } from "next/navigation";
 import {
-    Fragment,
-    useContext
+  Fragment,
+  useContext
 } from 'react';
 
 export const Header = () => {

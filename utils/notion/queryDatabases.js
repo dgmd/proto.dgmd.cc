@@ -33,6 +33,7 @@ import {
   DGMD_DATABASE_ID,
   DGMD_DATABASE_TITLE,
   DGMD_END_DATE,
+  DGMD_INCLUDE_RELATION_DATABASES,
   DGMD_METADATA,
   DGMD_PARENT_ID,
   DGMD_PARENT_TITLE,
@@ -110,6 +111,8 @@ export const DATABASE_QUERY_PAGE_CURSOR_ID_REQUEST = 'PAGE_CURSOR_ID_REQUEST';
 export const DATABASE_QUERY_PAGE_CURSOR_TYPE_DEFAULT = 'PAGE_CURSOR_TYPE_DEFAULT';
 export const DATABASE_QUERY_PAGE_CURSOR_TYPE_SPECIFIC = 'PAGE_CURSOR_TYPE_SPECIFIC';
 export const DATABASE_QUERY_PAGE_CURSOR_TYPE_ALL = 'PAGE_CURSOR_TYPE_ALL';
+export const DATABASE_QUERY_INCLUDE_RELATIONSHIPS = 'INCLUDE_RELATIONSHIPS';
+export const DATABASE_QUERY_RESULT_COUNT = 'DATABASE_QUERY_RESULT_COUNT';
 
 const QUERY_PROPERTIES = 'QUERY_PROPERTIES';
 const QUERY_PAGES = 'QUERY_PAGES';
@@ -136,8 +139,10 @@ const NOTION_WRANGLE_RELATION_NEXT_CURSOR_ID = 'NOTION_WRANGLE_RELATION_NEXT_CUR
 export const getNotionDatabases =
   async (nClient, requests) => {
 
+  const incRels = requests[DATABASE_QUERY_INCLUDE_RELATIONSHIPS];
+
   const primaryDbId = requests[DATABASE_QUERY_DATABASE_ID_REQUEST];
-  const x = await getNotionDbaseRelationsIds( nClient, primaryDbId );
+  const x = await getNotionDbaseRelationsIds( nClient, primaryDbId, incRels );
   const dbMap = x[NOTION_WRANGLE_KEY_DATA_DB_MAP];
   const relMap = x[NOTION_WRANGLE_KEY_RELATIONS_MAP];
 
@@ -156,15 +161,28 @@ export const getNotionDatabases =
   const nDbResult = await getNotionDbase( 
     nClient, nDbMeta, primaryDbId, relMap.get(primaryDbId) );
   const nDbProps = nDbResult[QUERY_PROPERTIES];
-  const nDbPages = nDbResult[QUERY_PAGES];
+
+  const resultCount = requests[DATABASE_QUERY_RESULT_COUNT];
+  const limitResultCount = resultCount !== Number.POSITIVE_INFINITY && nDbProps.length > resultCount;
+  if (limitResultCount) {
+    // Fisher-Yates shuffle
+    for (let i = nDbProps.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [nDbProps[i], nDbProps[j]] = [nDbProps[j], nDbProps[i]];
+    }
+    nDbProps.length = resultCount;
+  }
+  const nDbPages = limitResultCount ? null : nDbResult[QUERY_PAGES];
 
   const loadedPageIds = new Map();
   const matchedPageIds = new Map();
   const dbPagination = new Map();
 
-  await loadRelatedDbs(
-    nClient, relMap, primaryDbId, nDbProps,
-    loadedPageIds, matchedPageIds, dbPagination );
+  if (incRels) {
+    await loadRelatedDbases(
+      nClient, relMap, primaryDbId, nDbProps,
+      loadedPageIds, matchedPageIds, dbPagination );
+  }
 
   const rDbResults = [];
   const matchedPageIdsArray = Array.from(matchedPageIds.entries());
@@ -178,8 +196,12 @@ export const getNotionDatabases =
   const nDbSerial = makeDbSerialized( nDbProps, nDbPages, nDbMeta );
   const orgDbResult = {
     [DGMD_PRIMARY_DATABASE]: nDbSerial,
-    [DGMD_RELATION_DATABASES]: rDbResults
+    // [DGMD_RELATION_DATABASES]: rDbResults
   };
+  if (incRels) {
+    orgDbResult[DGMD_RELATION_DATABASES] = rDbResults;
+  }
+  orgDbResult[DGMD_INCLUDE_RELATION_DATABASES] = incRels;
 
   return orgDbResult
 };
@@ -188,7 +210,7 @@ export const getNotionDatabases =
 //  todo -- filter results here to only return the relation items we need
 //  or if the primary, just keep on crawling
 //
-const chainLoadRelatedDbs = 
+const chainloadRelatedDbases = 
   async ( nClient, relMap, unloadedPageIds,
     loadedPageIds, dbTracker, dbPagination ) => {
   
@@ -224,19 +246,19 @@ const chainLoadRelatedDbs =
         keepSeaching = unloadedPagesSize !== 0;
       }
     }
-    return chainLoadRelatedDbs( nClient, relMap, unloadedPageIds, loadedPageIds, dbTracker, dbPagination );
+    return chainloadRelatedDbases( nClient, relMap, unloadedPageIds, loadedPageIds, dbTracker, dbPagination );
   }
   else {
     return Promise.resolve();
   }
 };
 
-const loadRelatedDbs =
+const loadRelatedDbases =
   async( nClient, relMap, dbId, dbProps,
     loadedPageIds, dbTracker, dbPagination) => {
   const unloadedPageIds = new Map();
   trackLoadedPages( dbId, dbProps, unloadedPageIds, loadedPageIds, dbTracker );
-  return chainLoadRelatedDbs( nClient, relMap, unloadedPageIds, loadedPageIds, dbTracker, dbPagination );
+  return chainloadRelatedDbases( nClient, relMap, unloadedPageIds, loadedPageIds, dbTracker, dbPagination );
 };
 
 const makeDbSerialized =
@@ -344,24 +366,26 @@ const getNotionDbaseRelationPromise =
 };
 
 const chainNotionDbaseRelationIds =
-  async (nClient, dbId, collector) => {
+  async (nClient, dbId, collector, collectRels) => {
   const nextDbIds = await getNotionDbaseRelationPromise(nClient, dbId, collector);
-  for (const nextDbId of nextDbIds) {
-    if (!collector[NOTION_WRANGLE_KEY_DATA_DB_MAP].has(nextDbId)) {
-      await chainNotionDbaseRelationIds(
-        nClient, nextDbId, collector);
+  if (collectRels) {
+    for (const nextDbId of nextDbIds) {
+      if (!collector[NOTION_WRANGLE_KEY_DATA_DB_MAP].has(nextDbId)) {
+        await chainNotionDbaseRelationIds(
+          nClient, nextDbId, collector, true);
+      }
     }
   }
   return Promise.resolve(collector);
 };
 
 export const getNotionDbaseRelationsIds =
-  ( nClient, dbId ) => {
+  ( nClient, dbId, includeRels ) => {
   const collector = {
     [NOTION_WRANGLE_KEY_RELATIONS_MAP]: new Map(),
     [NOTION_WRANGLE_KEY_DATA_DB_MAP]: new Map()
   };
-  return chainNotionDbaseRelationIds( nClient, dbId, collector );
+  return chainNotionDbaseRelationIds( nClient, dbId, collector, includeRels );
 };
 
 //all of this nonsense because title is not in the typescript

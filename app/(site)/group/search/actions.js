@@ -32,7 +32,7 @@ export async function studentCodeAction( formData ) {
     const notionGroupTitle = studentCodeTrim.substring(0, lastHyphenIndex);
     const notionUserId = studentCodeTrim.substring(lastHyphenIndex + 1);
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient( cookieStore );
     const rosterResult = await supabase
       .from( 'rosters' )

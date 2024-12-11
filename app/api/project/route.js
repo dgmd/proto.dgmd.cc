@@ -1,13 +1,12 @@
 export const maxDuration = 300;
 
 import {
-  SNAPSHOT_PARAM_ID
-} from '@/api/snapshot/keys.js';
-import {
   createClient
 } from '@/utils/supabase/server.js';
 import {
   QUERY_PARAM_DATABASE,
+  QUERY_PARAM_INCLUDE_RELATIONSHIPS,
+  QUERY_PARAM_RESULT_COUNT,
   QUERY_RESPONSE_KEY_SUCCESS
 } from 'constants.dgmd.cc';
 import {
@@ -38,7 +37,7 @@ export async function GET( request ) {
       throw new Error( 'missing project id' );
     }
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient( cookieStore );
     const snapsQuery = await supabase
       .from( 'project_snapshots' )
@@ -50,11 +49,10 @@ export async function GET( request ) {
 
 
     const mapSnapshotRows = (cur) => {
-      const cacheUrl = new URL('/api/snapshot', process.env.SITE_ORIGIN);
-      cacheUrl.searchParams.append(SNAPSHOT_PARAM_ID, cur.id);
       return {
-        name: cur.created_at,
-        url: cacheUrl.href
+        date: cur.created_at,
+        id: cur.id,
+        live: false
       };
     };
     const snaps = snapsQuery.data;
@@ -80,6 +78,8 @@ export async function POST( request ) {
 
     const liveUrl = new URL('/api/query', process.env.SITE_ORIGIN);
     liveUrl.searchParams.append(QUERY_PARAM_DATABASE, pjId);
+    liveUrl.searchParams.append(QUERY_PARAM_INCLUDE_RELATIONSHIPS, true);
+    liveUrl.searchParams.append(QUERY_PARAM_RESULT_COUNT, Number.POSITIVE_INFINITY);
     const liveQueryData = await fetch( liveUrl.href, {
       method: 'GET',
       headers: {
@@ -91,7 +91,7 @@ export async function POST( request ) {
       throw new Error( 'query failed' );
     }
     
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient( cookieStore );
     const insertResult = await supabase
       .from('project_snapshots')

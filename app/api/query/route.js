@@ -5,12 +5,15 @@ import {
 } from '@/utils/coriHeaders.js';
 import {
   DATABASE_QUERY_DATABASE_ID_REQUEST,
+  DATABASE_QUERY_INCLUDE_RELATIONSHIPS,
   DATABASE_QUERY_PAGE_CURSOR_ID_REQUEST,
   DATABASE_QUERY_PAGE_CURSOR_REQUEST,
   DATABASE_QUERY_PAGE_CURSOR_TYPE_ALL,
   DATABASE_QUERY_PAGE_CURSOR_TYPE_DEFAULT,
   DATABASE_QUERY_PAGE_CURSOR_TYPE_REQUEST,
   DATABASE_QUERY_PAGE_CURSOR_TYPE_SPECIFIC,
+  DATABASE_QUERY_RESULT_COUNT,
+  QUERY_VALUE_RESULT_COUNT_ALL,
   getNotionDatabases
 } from '@/utils/notion/queryDatabases.js';
 import {
@@ -18,8 +21,10 @@ import {
 } from "@notionhq/client";
 import {
   QUERY_PARAM_DATABASE,
+  QUERY_PARAM_INCLUDE_RELATIONSHIPS,
   QUERY_PARAM_PAGE_CURSOR_ID_REQUEST,
   QUERY_PARAM_PAGE_CURSOR_TYPE_REQUEST,
+  QUERY_PARAM_RESULT_COUNT,
   QUERY_RESPONSE_KEY_ERROR,
   QUERY_RESPONSE_KEY_RESULT,
   QUERY_RESPONSE_KEY_SUCCESS,
@@ -42,6 +47,8 @@ export async function GET( request ) {
       [DATABASE_QUERY_PAGE_CURSOR_TYPE_REQUEST]: DATABASE_QUERY_PAGE_CURSOR_TYPE_DEFAULT,
       [DATABASE_QUERY_PAGE_CURSOR_ID_REQUEST]: null
     },
+    [DATABASE_QUERY_INCLUDE_RELATIONSHIPS]: true,
+    [DATABASE_QUERY_RESULT_COUNT]: Number.POSITIVE_INFINITY
   };
 
   const params = request.nextUrl.searchParams;
@@ -61,6 +68,24 @@ export async function GET( request ) {
   if (params.has(QUERY_PARAM_PAGE_CURSOR_ID_REQUEST)) {
     const pcid = params.get(QUERY_PARAM_PAGE_CURSOR_ID_REQUEST);
     requests[DATABASE_QUERY_PAGE_CURSOR_REQUEST][DATABASE_QUERY_PAGE_CURSOR_ID_REQUEST] = pcid;
+  }
+
+  if (params.has(QUERY_PARAM_INCLUDE_RELATIONSHIPS)) {
+    const ir = params.get(QUERY_PARAM_INCLUDE_RELATIONSHIPS).toLowerCase();
+    requests[DATABASE_QUERY_INCLUDE_RELATIONSHIPS] = ['true', '1', 't'].includes(ir);
+  }
+
+  if (params.has(QUERY_PARAM_RESULT_COUNT)) {
+    const rc = params.get(QUERY_PARAM_RESULT_COUNT);
+    if (rc === QUERY_VALUE_RESULT_COUNT_ALL) {
+      requests[DATABASE_QUERY_RESULT_COUNT] = Number.POSITIVE_INFINITY;
+    }
+    else {
+      const numValue = parseInt(rc, 10);
+      if (!isNaN(numValue) && numValue > 0) {
+        requests[DATABASE_QUERY_RESULT_COUNT] = numValue;
+      }
+    }
   }
 
   try {

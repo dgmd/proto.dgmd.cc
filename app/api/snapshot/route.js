@@ -5,8 +5,14 @@ import {
   createClient
 } from '@/utils/supabase/server.js';
 import {
+  DGMD_BLOCKS,
+  DGMD_INCLUDE_RELATION_DATABASES,
+  DGMD_PRIMARY_DATABASE,
+  DGMD_RELATION_DATABASES,
   QUERY_RESPONSE_KEY_ERROR,
-  QUERY_RESPONSE_KEY_SUCCESS
+  QUERY_RESPONSE_KEY_RESULT,
+  QUERY_RESPONSE_KEY_SUCCESS,
+  QUERY_VALUE_RESULT_COUNT_ALL
 } from 'constants.dgmd.cc';
 import {
   isNil
@@ -14,9 +20,12 @@ import {
 import {
   cookies
 } from 'next/headers';
+import yn from 'yn';
 
 import {
-  SNAPSHOT_PARAM_ID
+  SNAPSHOT_PARAM_ID,
+  SNAPSHOT_PARAM_INCLUDE_RELATIONSHIPS,
+  SNAPSHOT_PARAM_RESULT_COUNT
 } from './keys.js';
 
 export async function GET( request ) {
@@ -26,7 +35,7 @@ export async function GET( request ) {
       throw new Error( 'missing snapshot id' );
     }
     const id = params.get(SNAPSHOT_PARAM_ID);
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient( cookieStore );
     const snapsQuery = await supabase
       .from( 'project_snapshots' )
@@ -36,6 +45,39 @@ export async function GET( request ) {
       throw new Error( 'cannot connect to snapshots' );
     }
     const snapshot = JSON.parse( snapsQuery.data[0].snapshot );
+
+    let incRels = true;
+    if (params.has(SNAPSHOT_PARAM_INCLUDE_RELATIONSHIPS)) {
+      const paramValue = params.get(SNAPSHOT_PARAM_INCLUDE_RELATIONSHIPS);
+      incRels = yn( paramValue );
+    }
+    if (!incRels) {
+      snapshot[QUERY_RESPONSE_KEY_RESULT][DGMD_INCLUDE_RELATION_DATABASES] = false;
+      delete snapshot[QUERY_RESPONSE_KEY_RESULT][DGMD_RELATION_DATABASES];
+    }
+
+    let resultCount = Number.POSITIVE_INFINITY;
+    if (params.has(SNAPSHOT_PARAM_RESULT_COUNT)) {
+      const rawCount = params.get(SNAPSHOT_PARAM_RESULT_COUNT);
+      if (rawCount !== QUERY_VALUE_RESULT_COUNT_ALL) {
+        resultCount = parseInt(rawCount, 10);
+        if (isNaN(resultCount)) {
+          resultCount = Number.POSITIVE_INFINITY;
+        }
+      }
+    }
+    if (isFinite(resultCount)) {
+      const blocks = snapshot[QUERY_RESPONSE_KEY_RESULT][DGMD_PRIMARY_DATABASE][DGMD_BLOCKS];
+      if (blocks.length > resultCount) {
+        // Fisher-Yates shuffle
+        for (let i = blocks.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [blocks[i], blocks[j]] = [blocks[j], blocks[i]];
+        }
+        // Take first resultCount items
+        snapshot[QUERY_RESPONSE_KEY_RESULT][DGMD_PRIMARY_DATABASE][DGMD_BLOCKS] = blocks.slice(0, resultCount);
+      }
+    }
     return createCorsHeadedResponse( snapshot, request );
   }
   catch (e) {

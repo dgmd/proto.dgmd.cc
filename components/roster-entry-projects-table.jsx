@@ -26,7 +26,7 @@ const KEY_PROJECT_LINK = 'Link';
 const KEY_PROJECT_NAME = 'Name';
 
 export const RosterEntryProjectsTable = 
-  ({data, name, groupName, rosterId, userId, url}) => {
+  ({projectsList, userName, rosterName, rosterId, userId, url}) => {
 
   const [headers, setHeaders] = useState( x => [ 
     { [TABLE_HEADER_NAME]: KEY_PROJECT_NAME, 
@@ -38,7 +38,7 @@ export const RosterEntryProjectsTable =
   ] );
 
   const [cells, setCells] = useState( x => {
-    return data.map( cur => {
+    return projectsList.map( cur => {
       const notionUrl = new URL( `/group/${rosterId}/${userId}/${cur.PAGE_ID}`, url );
       return {
         [KEY_PROJECT_NAME]: cur.VALUE,
@@ -51,8 +51,8 @@ export const RosterEntryProjectsTable =
     <div className='flex-grow'>  
 
       <Title
-        title={ name }
-        subtitle={ groupName }
+        title={ userName }
+        subtitle={ rosterName }
       />
       <div
         className={ `flex flex-col grow sm:px-6 lg:px-8` }

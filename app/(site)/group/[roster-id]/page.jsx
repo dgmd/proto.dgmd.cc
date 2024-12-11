@@ -24,20 +24,23 @@ import {
 } from 'next/navigation';
 
 export default async function Roster( {params} ) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const auth = await getAuthServerCache(cookieStore);
   if (!isAuthUser(auth)) {
     redirect('/');
   }
 
   let data = []
-  const rosterId = params[ 'roster-id' ];
+  const aparams = await params;
+  const rosterId = aparams['roster-id'];
+  
   const rostersUrl = new URL('/api/roster-entries', process.env.SITE_ORIGIN);
   rostersUrl.searchParams.append( PARAM_ROSTERS_DB_ID, rosterId );
+  const cookieHeaders = await cookies();
   const rosterData = await fetch(rostersUrl.href, {
     method: 'GET',
-    headers: {
-      Cookie: cookies().toString()
+    headers: { 
+      Cookie: cookieHeaders.toString()
     },
     next: { revalidate: 60 }
   });

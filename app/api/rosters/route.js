@@ -52,7 +52,7 @@ export async function GET( request ) {
   };
 
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const asc = await getAuthServerCache( cookieStore );
     if (!isAuthUser(asc)) {
       throw new Error( 'not authenticated' );
@@ -85,7 +85,7 @@ export async function DELETE( request ) {
     [KEY_ROSTERS_ID]: null
   };
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const asc = await getAuthServerCache( cookieStore );
     if (!isAuthUser(asc)) {
       throw new Error( 'not authenticated' );
@@ -139,7 +139,7 @@ export async function POST( request ) {
     [KEY_ROSTERS_AUTH]: false
   };
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const asc = await getAuthServerCache( cookieStore );
     if (!isAuthUser(asc)) {
       throw new Error( 'not authenticated' );

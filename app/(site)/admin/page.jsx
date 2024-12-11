@@ -21,7 +21,7 @@ import {
 } from 'next/navigation';
 
 export default async function AdminPage( x ) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const auth = await getAuthServerCache(cookieStore);
   if (!isAuthUser(auth)) {
     redirect('/admin/sign-in');
@@ -29,10 +29,11 @@ export default async function AdminPage( x ) {
 
   let data = [];
   const rostersUrl = new URL('/api/rosters', process.env.SITE_ORIGIN);
+  const cookieHeaders = await cookies();
   const rosterData = await fetch(rostersUrl.href, {
     method: 'GET',
     headers: { 
-      Cookie: cookies().toString(),
+      Cookie: cookieHeaders.toString()
     },
     next: { revalidate: 60 }
   });

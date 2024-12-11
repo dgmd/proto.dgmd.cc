@@ -1,37 +1,35 @@
 "use server"
 
 import {
-  KEY_ROSTER_ENTRY_PROJECTS_DATA,
-  KEY_ROSTER_ENTRY_PROJECTS_ROSTER_NAME,
-  KEY_ROSTER_ENTRY_USER_NAME,
-  PARAM_ROSTER_ENTRY_PROJECTS_USER_ID
-} from '@/api/roster-entry-projects/keys.js';
-import {
   RosterEntryProjectsTable
 } from '@/components/roster-entry-projects-table.jsx';
+import {
+  useProjectDataHook
+} from '@/utils/projectDataHook.js';
+import {
+  isNil
+} from 'lodash-es';
 import {
   redirect
 } from 'next/navigation';
 
 export default async function User( {params} ) {
-  const rosterId = params[ 'roster-id' ];
-  const userId = params[ 'user-id' ];
-  const rostersUrl = new URL('/api/roster-entry-projects', process.env.SITE_ORIGIN);
-  rostersUrl.searchParams.append( PARAM_ROSTER_ENTRY_PROJECTS_USER_ID, userId );
-  const rosterData = await fetch( rostersUrl.href, {
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json'
-    },
-    next: { revalidate: 60 }
-  } );
-  const rosterJson = await rosterData.json();
-  const data = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_DATA ];
-  const groupName = rosterJson[ KEY_ROSTER_ENTRY_PROJECTS_ROSTER_NAME ];
-  const name = rosterJson[ KEY_ROSTER_ENTRY_USER_NAME ];
+  const aparams = await params;
+  const rosterId = aparams[ 'roster-id' ];
+  const userId = aparams[ 'user-id' ];
 
-  if (!data || !groupName || !name) {
+  const {
+    error,
+    projectsList,
+    rosterName,
+    userName
+  } = await useProjectDataHook( userId );
+
+  if (error) {
+    redirect('/');
+  }
+
+  if (isNil(projectsList) || isNil(rosterName) || isNil(userName)) {
     redirect('/');
   }
 
@@ -39,9 +37,9 @@ export default async function User( {params} ) {
     <RosterEntryProjectsTable
       rosterId={ rosterId }
       userId={ userId }
-      data={ data }
-      name={ name }
-      groupName={ groupName }
+      projectsList={ projectsList }
+      userName={ userName }
+      rosterName={ rosterName }
       url={ process.env.SITE_ORIGIN }
     />
   );    

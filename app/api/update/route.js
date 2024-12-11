@@ -17,7 +17,6 @@ import {
   getNotionDbaseRelationsIds
 } from '@/utils/notion/queryDatabases.js';
 import {
-  deriveBoolean,
   removeHyphens
 } from '@/utils/utils.js';
 import {
@@ -80,6 +79,7 @@ import {
 import {
   isNil
 } from 'lodash-es';
+import yn from 'yn';
 
 export async function OPTIONS( request ) {
   return createCorsHeadedResponse( {
@@ -384,7 +384,7 @@ const mmPropToNotionBlock = ( block ) => {
     }
   }
   if (type === DGMD_BLOCK_TYPE_CHECKBOX) {
-    const booleanValue = deriveBoolean( value );
+    const booleanValue = yn( value );
     return {
       [type]: booleanValue
     };

@@ -1,8 +1,8 @@
 "use server"
 
 import {
-  ProjectLinkTable
-} from '@/components/project-link-table.jsx';
+  SnapshotData
+} from '@/components/snapshot-data.jsx';
 import {
   useProjectDataHook
 } from '@/utils/projectDataHook.js';
@@ -15,35 +15,35 @@ export default async function Project( {params} ) {
   const rosterId = aparams[ 'roster-id' ];
   const userId = aparams[ 'user-id' ];
   const projectId = aparams[ 'project-id' ];
+  const snapshotId = aparams[ 'snapshot-id' ];
+  const liveSnapshot = snapshotId.startsWith('live-');
+  const archiveSnapshot = snapshotId.startsWith('snap-');
+
+  if (!liveSnapshot && !archiveSnapshot) {
+    redirect('/');
+  }
 
   const {
     error,
     projectName,
     userName,
-    rosterName,
-    snapshotRows
+    rosterName
   } = await useProjectDataHook( userId, projectId );
 
   if (error) {
     redirect('/');
   }
 
-  const liveRow = [{
-    date: null,
-    id: projectId,
-    live: true
-  }];
+  const snapId = snapshotId.substring(5);
 
   return (
-    <ProjectLinkTable
+    <SnapshotData
       projectName={ projectName }
       projectId={ projectId }
       userName={ userName }
-      userId={ userId }
       rosterName={ rosterName }
-      rosterId={ rosterId }
-      liveRow={ liveRow }
-      snapshotRows={ snapshotRows }
+      snapshotId={ snapId }
+      liveSnapshot={ liveSnapshot }
       url={ process.env.SITE_ORIGIN }
     />
   );    

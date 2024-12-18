@@ -129,7 +129,7 @@ export const AdminTable = ( {data, url} ) => {
     if (rAddingNotionRoom.current) {
       return;
     }
-    rAddingNotionRoom.current = true;
+    rAddingNotionRoom.current = true ;
     try {
       apiDeleteUrl.searchParams.append( PARAM_ROSTERS_ROSTER_ID, rosterId );
       const response = await fetch( apiDeleteUrl.href, {

@@ -1,7 +1,7 @@
 
 
 export const TableRow = props => {
-  const pName = props.name;
+  const pName = props.name ;
   return (
     <div
       className={

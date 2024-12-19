@@ -18,7 +18,8 @@ import {
   Table
 } from '@/components/table.jsx';
 import {
-  Title
+  Title,
+  TitlePath
 } from '@/components/title.jsx';
 import {
   useCallback,
@@ -38,7 +39,8 @@ export const ProjectLinkTable =
     projectId,
     liveRow,
     snapshotRows,
-    url
+    url,
+    admin
   }) => {
 
   const rLoading = useRef( false );
@@ -101,7 +103,14 @@ export const ProjectLinkTable =
     <div className='flex-grow'>  
       <Title
         title={ projectName }
-        subtitle={ `${rosterName}\u00a0/\u00a0${userName}` }
+        subtitle={ 
+          <TitlePath 
+            path={[rosterName, userName]}
+            links={[
+              admin ? `/group/${rosterId}` : null,
+              `/group/${rosterId}/${userId}`
+            ]}
+          /> }
       >
         <button
           className={ `${buttonClassNames} mt-2` }

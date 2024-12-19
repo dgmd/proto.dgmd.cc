@@ -6,6 +6,10 @@ import {
   SNAPSHOT_PARAM_RESULT_COUNT
 } from '@/api/snapshot/keys.js';
 import {
+  Title,
+  TitlePath
+} from '@/components/title.jsx';
+import {
   QUERY_PARAM_DATABASE,
   QUERY_PARAM_INCLUDE_RELATIONSHIPS,
   QUERY_PARAM_RESULT_COUNT,
@@ -15,11 +19,17 @@ import {
   isNil
 } from 'lodash-es';
 import {
+  Fragment,
   useEffect,
   useMemo,
   useState
 } from 'react';
 import ReactJson from 'react-json-view';
+
+import {
+  buttonClassNames,
+  buttonDisabledClassNames
+} from './look';
 
 const KEY_SNAPSHOT_QUERY_PROJECT_ID = 'project id';
 const KEY_SNAPSHOT_QUERY_SHOW_RELATIONS = 'show relations';
@@ -47,10 +57,14 @@ export const SnapshotData = ({
     projectName,
     projectId,
     userName,
+    rosterId,
     rosterName,
     snapshotId,
+    snapshotDate,
+    userId,
     liveSnapshot,
-    url
+    url,
+    admin
 }) => {
 
   const [showRelations, setShowRelations] = useState(x => true);
@@ -169,79 +183,89 @@ export const SnapshotData = ({
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold">{ projectName }</h1>
-      <div className="text-gray-600">{new Date().toLocaleDateString()}</div>
-      
-      <div className="space-y-4">
-        <div className="flex items-center space-x-4">
-          <span className="text-sm font-medium">Relations:</span>
-          <label className="inline-flex items-center">
-            <input
-              type="radio"
-              checked={showRelations}
-              onChange={() => setShowRelations(true)}
-              className="form-radio"
-            />
-            <span className="ml-2">With</span>
-          </label>
-          <label className="inline-flex items-center">
-            <input
-              type="radio"
-              checked={!showRelations}
-              onChange={() => setShowRelations(false)}
-              className="form-radio"
-            />
-            <span className="ml-2">Without</span>
-          </label>
-        </div>
-
-        <div className="flex items-center space-x-4">
-          <span className="text-sm font-medium">Primary Results:</span>
-          {Object.keys(resultCountLookup).map((value) => (
-            <label key={value} className="inline-flex items-center">
+    <div className='flex-grow'>  
+      <Title
+        title={ `Snapshot` }
+        subtitle={ 
+          <TitlePath 
+            path={[rosterName, userName, projectName]}
+            links={[
+              admin ? `/group/${rosterId}` : null,
+              `/group/${rosterId}/${userId}`,
+              `/group/${rosterId}/${userId}/${projectId}`
+            ]}
+          /> }
+      />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <br/>
+        <div className="text-gray-600">{snapshotDate}</div>
+        <div className="space-y-4">
+          <div className="flex items-center space-x-4">
+            <span className="text-sm font-medium">Relations:</span>
+            <label className="inline-flex items-center">
               <input
                 type="radio"
-                value={value}
-                checked={resultCount === value}
-                onChange={(e) => setResultCount(e.target.value)}
+                checked={showRelations}
+                onChange={() => setShowRelations(true)}
                 className="form-radio"
               />
-              <span className="ml-2">{value}</span>
+              <span className="ml-2">With</span>
             </label>
-          ))}
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                checked={!showRelations}
+                onChange={() => setShowRelations(false)}
+                className="form-radio"
+              />
+              <span className="ml-2">Without</span>
+            </label>
+          </div>
+          <div className="flex items-center space-x-4">
+            <span className="text-sm font-medium">Primary Results:</span>
+            {Object.keys(resultCountLookup).map((value) => (
+              <label key={value} className="inline-flex items-center">
+                <input
+                  type="radio"
+                  value={value}
+                  checked={resultCount === value}
+                  onChange={(e) => setResultCount(e.target.value)}
+                  className="form-radio"
+                />
+                <span className="ml-2">{value}</span>
+              </label>
+            ))}
+          </div>
         </div>
-      </div>
-
-      <div className="flex space-x-4">
-        <button
-          onClick={handleCopyLink}
-          disabled={isNil(jsonData)}
-          className={`px-4 py-2 rounded text-white ${
-            isNil(jsonData) 
-              ? 'bg-blue-300 cursor-not-allowed' 
-              : 'bg-blue-500 hover:bg-blue-600'
-          }`}
-        >
-          Copy Link
-        </button>
-        <button
-          onClick={handleCopyJson}
-          disabled={isNil(jsonData)}
-          className={`px-4 py-2 rounded text-white ${
-            isNil(jsonData) 
-              ? 'bg-blue-300 cursor-not-allowed' 
-              : 'bg-blue-500 hover:bg-blue-600'
-          }`}
-        >
-          Copy JSON
-        </button>
-      </div>
-
-      <div className="bg-gray-100 p-4 rounded overflow-auto 
-        h-[600px] w-[768px] max-w-full
-        min-h-[300px] min-w-[300px]">
-        { mJsonData }
+        <div className="flex space-x-4">
+          <button
+            onClick={handleCopyLink}
+            disabled={isNil(jsonData)}
+            className={
+              isNil(jsonData) 
+                ? buttonDisabledClassNames
+                : buttonClassNames
+            }
+          >
+            Copy Link
+          </button>
+          <button
+            onClick={handleCopyJson}
+            disabled={isNil(jsonData)}
+            className={
+              isNil(jsonData) 
+              ? buttonDisabledClassNames
+              : buttonClassNames
+            }
+          >
+            Copy JSON
+          </button>
+        </div>
+        <div className="bg-gray-100 p-4 rounded overflow-auto 
+          h-[600px] w-[768px] max-w-full
+          min-h-[300px] min-w-[300px]">
+          { mJsonData }
+        </div>
       </div>
     </div>
   );

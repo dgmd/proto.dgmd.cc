@@ -16,7 +16,8 @@ import {
   Table
 } from '@/components/table.jsx';
 import {
-  Title
+  Title,
+  TitlePath
 } from '@/components/title.jsx';
 import {
   useState
@@ -25,8 +26,14 @@ import {
 const KEY_PROJECT_LINK = 'Link';
 const KEY_PROJECT_NAME = 'Name';
 
-export const RosterEntryProjectsTable = 
-  ({projectsList, userName, rosterName, rosterId, userId, url}) => {
+export const RosterEntryProjectsTable = ({
+  projectsList,
+  userName,
+  rosterName,
+  rosterId,
+  userId,
+  url,
+  admin}) => {
 
   const [headers, setHeaders] = useState( x => [ 
     { [TABLE_HEADER_NAME]: KEY_PROJECT_NAME, 
@@ -52,7 +59,14 @@ export const RosterEntryProjectsTable =
 
       <Title
         title={ userName }
-        subtitle={ rosterName }
+        subtitle={ 
+          <TitlePath
+            path={ [rosterName] }
+            links={ [
+              admin ? `/group/${rosterId}/` : null
+            ] }
+          /> 
+        }
       />
       <div
         className={ `flex flex-col grow sm:px-6 lg:px-8` }

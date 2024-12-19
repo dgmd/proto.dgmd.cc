@@ -7,6 +7,15 @@ import {
   useProjectDataHook
 } from '@/utils/projectDataHook.js';
 import {
+  getAuthServerCache
+} from '@/utils/supabase/auth/authServerCache.js';
+import {
+  isAuthUser
+} from '@/utils/supabase/auth/authUtils.js';
+import {
+  cookies
+} from "next/headers";
+import {
   redirect
 } from 'next/navigation';
 
@@ -15,7 +24,7 @@ export default async function Project( {params} ) {
   const rosterId = aparams[ 'roster-id' ];
   const userId = aparams[ 'user-id' ];
   const projectId = aparams[ 'project-id' ];
-
+  
   const {
     error,
     projectName,
@@ -27,6 +36,10 @@ export default async function Project( {params} ) {
   if (error) {
     redirect('/');
   }
+
+  const cookieStore = await cookies();
+  const auth = await getAuthServerCache(cookieStore);
+  const authUser = isAuthUser(auth);
 
   const liveRow = [{
     date: null,
@@ -45,6 +58,7 @@ export default async function Project( {params} ) {
       liveRow={ liveRow }
       snapshotRows={ snapshotRows }
       url={ process.env.SITE_ORIGIN }
+      admin={ authUser }
     />
   );    
 };

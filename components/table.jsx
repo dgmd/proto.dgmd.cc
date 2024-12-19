@@ -11,13 +11,13 @@ export const TABLE_HEADER_NAME = 'TABLE_HEADER_NAME';
 const KEY_COL_SPAN = 'KEY_COL_SPAN';
 const KEY_COL_CHILDREN = 'KEY_COL_CHILDREN';
 
-export const Table = props => {
-
-  const pHeaders = props.headers;
-  const pChildren = props.children;
+export const Table = ({
+  headers,
+  children
+}) => {
 
   const mRows = useMemo( () => {
-    const kids = Children.toArray( pChildren );
+    const kids = Children.toArray( children );
     const rows = [];
     for (var k=0; k<kids.length; k++) {
       const kid = kids[k];
@@ -30,15 +30,15 @@ export const Table = props => {
       else {
         rows.push( {
           [KEY_COL_SPAN]: false,
-          [KEY_COL_CHILDREN]: kids.slice( k, k + pHeaders.length )
+          [KEY_COL_CHILDREN]: kids.slice( k, k + headers.length )
         } );
-        k += pHeaders.length - 1;
+        k += headers.length - 1;
       }
     }
 
     return rows;
   }, [
-    pChildren
+    children
   ] );
 
   return (
@@ -50,7 +50,7 @@ export const Table = props => {
     <table className="w-full border-collapse border-spacing-0 table-fixed">
       <thead>
         <tr>
-          { pHeaders.map( (header, headerIdx) => {
+          { headers.map( (header, headerIdx) => {
 
             const hideStr = getColWidthTailwind( header );
             const headerName = header[TABLE_HEADER_NAME];
@@ -78,7 +78,7 @@ export const Table = props => {
               key={ rowIdx }
             >
               {
-                getRowElements( row, rowIdx, pHeaders )
+                getRowElements( row, rowIdx, headers )
               }
             </tr>
           );
@@ -136,14 +136,14 @@ const getColWidthTailwind = header => {
   return hideStr;
 };
 
-const getRowElements = ( row, rowIdx, pHeaders ) => {
+const getRowElements = ( row, rowIdx, headers ) => {
 
   const cells = row[KEY_COL_CHILDREN];
 
   if ( row[KEY_COL_SPAN] ) {
     return (
       <td
-        colSpan={ pHeaders.length }
+        colSpan={ headers.length }
         className={ 'p-0' }
       >
         { cells }
@@ -151,7 +151,7 @@ const getRowElements = ( row, rowIdx, pHeaders ) => {
     );
   }
   return cells.map( ( cell, cellIdx ) => {
-    const header = pHeaders[cellIdx];
+    const header = headers[cellIdx];
     const hideStr = getColWidthTailwind( header );
     return (
       <td

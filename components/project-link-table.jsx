@@ -9,6 +9,7 @@ import {
 } from '@/components/link-button.jsx';
 import {
   buttonClassNames,
+  buttonDisabledClassNames,
   cellClassNames,
   cellHoverClassNames
 } from '@/components/look.js';
@@ -21,6 +22,7 @@ import {
   Title,
   TitlePath
 } from '@/components/title.jsx';
+import { set } from 'lodash-es';
 import {
   useCallback,
   useRef,
@@ -44,6 +46,7 @@ export const ProjectLinkTable =
   }) => {
 
   const rLoading = useRef( false );
+  const [isLoading, setIsLoading] = useState( x => rLoading.current );
   
   const [headers, setHeaders] = useState( x => [ 
     { [TABLE_HEADER_NAME]: KEY_SNAPSHOT_NAME, 
@@ -65,6 +68,7 @@ export const ProjectLinkTable =
       return;
     }
     rLoading.current = true;
+    setIsLoading( x => true );
     await fetch( '/api/project/', {
       method: 'POST',
       headers: {
@@ -92,6 +96,7 @@ export const ProjectLinkTable =
     setCells( x => liveRow.concat(...snapshotRows).map( 
       row => mapRow(row, baseURL) ) );
     rLoading.current = false;
+    setIsLoading( x => false );
   }, [
     projectId,
     url,
@@ -113,9 +118,11 @@ export const ProjectLinkTable =
           /> }
       >
         <button
-          className={ `${buttonClassNames} mt-2` }
-          onClick={ cbAddSnapshot }>
-          Add Snapshot
+          className={ `${isLoading ? buttonDisabledClassNames : buttonClassNames} mt-2` }
+          onClick={ cbAddSnapshot }
+          disabled={ isLoading }
+        >
+          { isLoading ? `Adding Snapshot...` : `Add Snapshot` }
         </button>
       </Title>
 

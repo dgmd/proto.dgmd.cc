@@ -4,7 +4,7 @@ export const buttonCancelClassNames = buttonClassBase + ' bg-white text-gray-900
 export const buttonDisabledClassNames = buttonClassBase + ' bg-gray-400 text-sm font-semibold text-white shadow-sm cursor-not-allowed opacity-50';
 
 export const cellClassNames = 'select-all box-content border border-transparent inline-block relative w-full whitespace-nowrap overflow-hidden overflow-ellipsis align-top';
-export const cellHoverClassNames = 'transition duration-300 ease-in-out hover:z-10 hover:w-auto hover:bg-indigo-200 hover:border-indigo-500 hover:padding-10 hover:shadow-md';
+export const cellHoverClassNames = 'hover:z-10 hover:w-auto hover:bg-indigo-200 hover:border-indigo-500 hover:padding-10 hover:shadow-md';
 
 export const linkClassNames = 'text-indigo-500 underline hover:text-indigo-700 hover:underline';
 

@@ -22,7 +22,8 @@ import {
 import {
   KEY_PROJECT_DATA,
   KEY_PROJECT_ERROR,
-  PARAM_PROJECT_ID
+  PARAM_PROJECT_ID,
+  PARAM_PROJECT_JSON
 } from './keys.js';
 
 export async function GET( request ) {
@@ -75,21 +76,32 @@ export async function POST( request ) {
     if (isNil(pjId)) {
       throw new Error( 'missing project id' );
     }
-
-    const liveUrl = new URL('/api/query', process.env.SITE_ORIGIN);
-    liveUrl.searchParams.append(QUERY_PARAM_DATABASE, pjId);
-    liveUrl.searchParams.append(QUERY_PARAM_INCLUDE_RELATIONSHIPS, true);
-    liveUrl.searchParams.append(QUERY_PARAM_RESULT_COUNT, Number.POSITIVE_INFINITY);
-    const liveQueryData = await fetch( liveUrl.href, {
-      method: 'GET',
-      headers: {
-      },
-      next: { revalidate: 60 }
-    } );
-    const liveQueryJson = await liveQueryData.json();
-    if (!liveQueryJson[QUERY_RESPONSE_KEY_SUCCESS]) {
-      throw new Error( 'query failed' );
+    const pjJson = data[PARAM_PROJECT_JSON];
+    if (isNil(pjJson)) {
+      throw new Error( 'missing project json' );
     }
+    try {
+      const jsonString = JSON.stringify(pjJson);
+      JSON.parse(jsonString);
+    }
+    catch (e) {
+      throw new Error( 'invalid project json' );
+    }
+    
+    // const liveUrl = new URL('/api/query', process.env.SITE_ORIGIN);
+    // liveUrl.searchParams.append(QUERY_PARAM_DATABASE, pjId);
+    // liveUrl.searchParams.append(QUERY_PARAM_INCLUDE_RELATIONSHIPS, true);
+    // liveUrl.searchParams.append(QUERY_PARAM_RESULT_COUNT, Number.POSITIVE_INFINITY);
+    // const liveQueryData = await fetch( liveUrl.href, {
+    //   method: 'GET',
+    //   headers: {
+    //   },
+    //   next: { revalidate: 60 }
+    // } );
+    // const liveQueryJson = await liveQueryData.json();
+    // if (!liveQueryJson[QUERY_RESPONSE_KEY_SUCCESS]) {
+    //   throw new Error( 'query failed' );
+    // }
     
     const cookieStore = await cookies();
     const supabase = await createClient( cookieStore );
@@ -97,7 +109,7 @@ export async function POST( request ) {
       .from('project_snapshots')
       .insert({ 
         roster_entry_project_id: pjId,
-        snapshot: JSON.stringify(liveQueryJson)
+        snapshot: JSON.stringify(pjJson) //(liveQueryJson)
       });
     if (!isNil(insertResult.error)) {
       throw new Error( 'insert failed' );

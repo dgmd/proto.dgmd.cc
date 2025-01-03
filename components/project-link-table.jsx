@@ -2,7 +2,8 @@
 
 import {
   KEY_PROJECT_DATA,
-  PARAM_PROJECT_ID
+  PARAM_PROJECT_ID,
+  PARAM_PROJECT_JSON
 } from '@/api/project/keys';
 import {
   LinkButton
@@ -22,7 +23,23 @@ import {
   Title,
   TitlePath
 } from '@/components/title.jsx';
-import { set } from 'lodash-es';
+import {
+  DGMD_BLOCKS,
+  DGMD_BLOCK_TYPE_ID,
+  DGMD_CURSOR_DATA,
+  DGMD_CURSOR_HAS_MORE,
+  DGMD_CURSOR_NEXT,
+  DGMD_DATABASE_ID,
+  DGMD_METADATA,
+  DGMD_PRIMARY_DATABASE,
+  DGMD_RELATION_DATABASES,
+  DGMD_VALUE,
+  QUERY_PARAM_DATABASE,
+  QUERY_PARAM_PAGE_CURSOR_ID_REQUEST,
+  QUERY_PARAM_PAGE_CURSOR_TYPE_REQUEST,
+  QUERY_RESPONSE_KEY_RESULT,
+  QUERY_VALUE_PAGE_CURSOR_TYPE_SPECIFIC
+} from 'constants.dgmd.cc';
 import {
   useCallback,
   useRef,
@@ -69,15 +86,22 @@ export const ProjectLinkTable =
     }
     rLoading.current = true;
     setIsLoading( x => true );
+
+    const snaps = await fetchAllSnapshots( url, projectId );
+    const isnaps = snaps.length > 1 ? combineSnaps(snaps) : snaps[0];
+    console.log( 'snaps', snaps );
+    console.log( 'isnaps', isnaps );
+
+    //create the snapshot
     await fetch( '/api/project/', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      next: { revalidate: 60 },
       body: JSON.stringify( { 
-        [PARAM_PROJECT_ID]: projectId
+        [PARAM_PROJECT_ID]: projectId,
+        [PARAM_PROJECT_JSON]: isnaps
       } )
     } );
 
@@ -89,7 +113,6 @@ export const ProjectLinkTable =
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      next: { revalidate: 60 }
     } );
     const projectJson = await projectResult.json();
     const snapshotRows = projectJson[KEY_PROJECT_DATA];
@@ -191,4 +214,85 @@ const mapRow = (cur, baseURL) => {
     [KEY_SNAPSHOT_NAME]: getName(),
     [KEY_SNAPSHOT_LINK]: getLink()
   };
+};
+
+const fetchAllSnapshots = async(
+  url, projectId, cursor = null, results = []) => {
+
+  const queryUrl = new URL('/api/query', url);
+  queryUrl.searchParams.append(QUERY_PARAM_DATABASE, projectId);
+  if (cursor) {
+    queryUrl.searchParams.append(
+      QUERY_PARAM_PAGE_CURSOR_TYPE_REQUEST,
+      QUERY_VALUE_PAGE_CURSOR_TYPE_SPECIFIC);
+    queryUrl.searchParams.append(QUERY_PARAM_PAGE_CURSOR_ID_REQUEST, cursor);
+  }
+
+  const queryResult = await fetch(queryUrl.href, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+  });
+  const queryJson = await queryResult.json();
+  results.push(queryJson);
+
+  const nextCursor = queryJson?.[QUERY_RESPONSE_KEY_RESULT]?.[DGMD_PRIMARY_DATABASE]?.[DGMD_CURSOR_DATA]?.[DGMD_CURSOR_NEXT] || null;
+  if (nextCursor) {
+    return fetchAllSnapshots(url, projectId, nextCursor, results);
+  }
+  else {
+    return results;
+  }
+};
+
+
+//todo: move this all to the server
+const combineSnaps = snaps => {
+  const snapZed = structuredClone(snaps[0]);
+
+  const primaryBlocks = snaps.map( 
+    snap => snap[QUERY_RESPONSE_KEY_RESULT][DGMD_PRIMARY_DATABASE][DGMD_BLOCKS] ).flat();
+  const mergedPrimaryPgs = mergeBlocks( primaryBlocks );
+  snapZed[QUERY_RESPONSE_KEY_RESULT][DGMD_PRIMARY_DATABASE][DGMD_BLOCKS] = mergedPrimaryPgs;
+
+  const previewDbIds = snaps[0][QUERY_RESPONSE_KEY_RESULT][DGMD_RELATION_DATABASES].map( 
+    db => db[DGMD_DATABASE_ID] );
+  const mergedPreviewDbs = previewDbIds.reduce( (acc, dbId) => {
+    const previewBlocks = snaps.map( snap => {
+      const db = snap[QUERY_RESPONSE_KEY_RESULT][DGMD_RELATION_DATABASES].find( 
+        db => db[DGMD_DATABASE_ID] === dbId );
+      return db[DGMD_BLOCKS];
+    } ).flat();
+    const mergedPreviewPgs = mergeBlocks( previewBlocks );
+    acc[dbId] = mergedPreviewPgs;
+    return acc;
+  }, {} );
+
+  snapZed[QUERY_RESPONSE_KEY_RESULT][DGMD_RELATION_DATABASES].forEach( db => {
+    const dbId = db[DGMD_DATABASE_ID];
+    db[DGMD_BLOCKS] = mergedPreviewDbs[dbId];
+  } );
+
+  snapZed[QUERY_RESPONSE_KEY_RESULT][DGMD_PRIMARY_DATABASE][DGMD_CURSOR_DATA] = {
+    [DGMD_CURSOR_NEXT]: null,
+    [DGMD_CURSOR_HAS_MORE]: false
+  };
+
+  return snapZed;
+};
+
+const getBlockId = obj => obj[DGMD_METADATA][DGMD_BLOCK_TYPE_ID][DGMD_VALUE];
+
+const mergeBlocks = lists => {
+  const mergedList = Array.from(
+    lists.reduce((map, obj) => {
+      const id = getBlockId(obj);
+      map.set(id, obj);
+      return map;
+    }, new Map()).values()
+  );
+
+  return mergedList;
 };

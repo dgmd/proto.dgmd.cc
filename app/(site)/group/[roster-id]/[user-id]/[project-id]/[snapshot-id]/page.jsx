@@ -10,8 +10,6 @@ import {
   getAuthServerCache
 } from '@/utils/supabase/auth/authServerCache.js';
 import {
-  getAuthId,
-  getAuthUser,
   isAuthUser
 } from '@/utils/supabase/auth/authUtils.js';
 import {
@@ -70,7 +68,8 @@ export default async function Project( {params} ) {
   );    
 };
 
-function getDateText(liveSnapshot, snapshotRows, snapId) {
+const getDateText = 
+  (liveSnapshot, snapshotRows, snapId) => {
   if (liveSnapshot) {
     return 'Live Data';
   }
@@ -78,16 +77,17 @@ function getDateText(liveSnapshot, snapshotRows, snapId) {
     const snapshot = snapshotRows.find(row => row.id === snapId);
     if (snapshot && snapshot.date) {
       const date = new Date(snapshot.date);
-      return date.toLocaleString('en-US', {
+      const dateStr = date.toLocaleString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
       });
+      return `Snapshot ${dateStr}`;
     }
     else {
-      return 'Unknown Date';
+      return 'Snapshot';
     }
   }
 }

@@ -1,6 +1,36 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-primary-50: #F5E0E5;
+  --color-primary-100: #F1B3C3;
+  --color-primary-200: #EC809E;
+  --color-primary-300: #E34D78;
+  --color-primary-400: #D9305D;
+  --color-primary-500: #A41034;  /* harvard crimson */
+  --color-primary-600: #8A0E2D;
+  --color-primary-700: #710A26;
+  --color-primary-800: #59071F;
+  --color-primary-900: #400514;
+  --color-primary-950: #2B020D;
+
+  --color-secondary-500: #68666F; /* harvard gray2 */
+  --color-secondary-600: #5C5A63;
+  --color-secondary-700: #504E56;
+  
+  /*
+  --color-harvard-red2: #E80538;
+  --color-harvard-red3: #ED5541;
+  --color-harvard-red4: #E0B2A7;
+  --color-harvard-blue1: #3B2883;
+  --color-harvard-blue2: #6578B4;
+  --color-harvard-blue3: #7FA4D1;
+  --color-harvard-blue4: #AAC8EB;
+  --color-harvard-black: #000000;
+  --color-harvard-gray2: #68666F;
+  --color-harvard-gray4: #D5D0CA;
+  --color-harvard-white: #FFFFFF;
+  */
+}
 
 :root {
   --bg-color: #fff;
@@ -13,3 +43,4 @@ body {
   margin: 0;
   padding: 0;
 }
+

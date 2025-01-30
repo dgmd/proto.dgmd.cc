@@ -68,7 +68,7 @@ export const SnapshotData = ({
 }) => {
 
   const [showRelations, setShowRelations] = useState(x => true);
-  const [resultCount, setResultCount] = useState(x => KEY_RESULT_COUNT_ALL);
+  const [resultCount, setResultCount] = useState(x => KEY_RESULT_COUNT_RANDOM_1);
   const [jsonData, setJsonData] = useState(x => null);
   const [error, setError] = useState( x => null);
 
@@ -185,7 +185,7 @@ export const SnapshotData = ({
   return (
     <div className='flex-grow'>  
       <Title
-        title={ `Snapshot` }
+        title={ snapshotDate }
         subtitle={ 
           <TitlePath 
             path={[rosterName, userName, projectName]}
@@ -196,46 +196,43 @@ export const SnapshotData = ({
             ]}
           /> }
       />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <br/>
-        <div className="text-gray-600">{snapshotDate}</div>
-        <div className="space-y-4">
-          <div className="flex items-center space-x-4">
-            <span className="text-sm font-medium">Relations:</span>
-            <label className="inline-flex items-center">
+
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col space-y-4 my-4">
+        <div className="flex items-center space-x-4">
+          <span className="font-medium">Relations:</span>
+          <label className="inline-flex items-center">
+            <input
+              type="radio"
+              checked={showRelations}
+              onChange={() => setShowRelations(true)}
+              className="form-radio"
+            />
+            <span className="ml-2">With</span>
+          </label>
+          <label className="inline-flex items-center">
+            <input
+              type="radio"
+              checked={!showRelations}
+              onChange={() => setShowRelations(false)}
+              className="form-radio"
+            />
+            <span className="ml-2">Without</span>
+          </label>
+        </div>
+        <div className="flex items-center space-x-4">
+          <span className="font-medium">Primary Results:</span>
+          {Object.keys(resultCountLookup).map((value) => (
+            <label key={value} className="inline-flex items-center">
               <input
                 type="radio"
-                checked={showRelations}
-                onChange={() => setShowRelations(true)}
+                value={value}
+                checked={resultCount === value}
+                onChange={(e) => setResultCount(e.target.value)}
                 className="form-radio"
               />
-              <span className="ml-2">With</span>
+              <span className="ml-2">{value}</span>
             </label>
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                checked={!showRelations}
-                onChange={() => setShowRelations(false)}
-                className="form-radio"
-              />
-              <span className="ml-2">Without</span>
-            </label>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm font-medium">Primary Results:</span>
-            {Object.keys(resultCountLookup).map((value) => (
-              <label key={value} className="inline-flex items-center">
-                <input
-                  type="radio"
-                  value={value}
-                  checked={resultCount === value}
-                  onChange={(e) => setResultCount(e.target.value)}
-                  className="form-radio"
-                />
-                <span className="ml-2">{value}</span>
-              </label>
-            ))}
-          </div>
+          ))}
         </div>
         <div className="flex space-x-4">
           <button
@@ -267,6 +264,7 @@ export const SnapshotData = ({
           { mJsonData }
         </div>
       </div>
+
     </div>
   );
 };

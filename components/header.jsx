@@ -55,10 +55,7 @@ export const Header = () => {
           <Link 
             href="/" 
             className="-m-1.5 p-1.5">
-            <NotionToFramerLogo
-              // className="h-12 w-auto text-indigo-600"
-              // alt="DGMD"
-            />
+            <NotionToFramerLogo/>
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-end gap-x-6">
@@ -92,7 +89,7 @@ export const Header = () => {
           <Menu as="div" className="relative inline-block text-left">
             <Menu.Button
               type="button"
-              className="inline-flex items-center gap-x-2 rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              className="inline-flex items-center gap-x-2 rounded-md bg-primary-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
             >
               <UserCircleIcon
                 className="-mr-0.5 h-5 w-5"
@@ -113,7 +110,7 @@ export const Header = () => {
               leaveTo="transform opacity-0 scale-95"
             >
             <Menu.Items
-              className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-indigo-200 focus:outline-none">
+              className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-primary-200 focus:outline-none">
               
               <div className="py-1">
                 

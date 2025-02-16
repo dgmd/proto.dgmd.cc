@@ -102,7 +102,8 @@ const getCodeSample = () => {
   return (
 
     <pre className="bg-gray-900 p-4 rounded-md shadow-inner overflow-x-auto text-yellow-400">
-    <code>{'{'}
+    <code>
+      {'{'}
         <span className="text-green-400">"comic_books": [</span>
         <br/>
             {'{'}

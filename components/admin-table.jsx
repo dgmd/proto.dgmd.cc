@@ -39,7 +39,6 @@ import {
   ArrowPathIcon,
   MinusIcon
 } from '@heroicons/react/20/solid';
-import { add } from 'lodash-es';
 import {
   useCallback,
   useMemo,
@@ -49,6 +48,7 @@ import {
 
 const KEY_NAME = 'name';
 const KEY_DB_ID = 'notion id';
+const KEY_NOTE = 'note';
 const KEY_URL = 'url';
 const KEY_UPDATE = 'date updated';
 const KEY_ACTIONS = 'actions';
@@ -69,11 +69,13 @@ export const AdminTable = ( {data, url} ) => {
 
   const [headers, setHeaders] = useState( x => [ 
     { [TABLE_HEADER_NAME]: KEY_NAME, [TABLE_HEADER_HIDE]: null },
+    { [TABLE_HEADER_NAME]: KEY_NOTE, [TABLE_HEADER_HIDE]: null },
     { [TABLE_HEADER_NAME]: KEY_DB_ID, [TABLE_HEADER_HIDE]: TABLE_COL_HIDE_MD },
     { [TABLE_HEADER_NAME]: KEY_URL, [TABLE_HEADER_HIDE]: null },
-    { [TABLE_HEADER_NAME]: KEY_UPDATE, [TABLE_HEADER_HIDE]: null },
+    { [TABLE_HEADER_NAME]: KEY_UPDATE, [TABLE_HEADER_HIDE]: TABLE_COL_HIDE_SM },
     { [TABLE_HEADER_NAME]: KEY_ACTIONS, [TABLE_HEADER_HIDE]: TABLE_COL_HIDE_SM },
   ] );
+
   const [cells, setCells] = useState( x => {
     return data.map( x => updateCellsFromData(x, url) );
   } );
@@ -288,6 +290,7 @@ const updateCellsFromData = (cur, url) => {
   const linkUrl = new URL( `group/${ cur.notion_id }`, url );
   return {
     [KEY_NAME]: cur.snapshot_name,
+    [KEY_NOTE]: cur.note,
     [KEY_DB_ID]: cur.notion_id,
     [KEY_URL]: linkUrl,
     [KEY_UPDATE]: cur.created_at,

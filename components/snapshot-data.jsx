@@ -19,7 +19,6 @@ import {
   isNil
 } from 'lodash-es';
 import {
-  Fragment,
   useEffect,
   useMemo,
   useState
@@ -54,17 +53,17 @@ const buildQueryUrl = (baseUrl, params) => {
 };
 
 export const SnapshotData = ({
-    projectName,
-    projectId,
-    userName,
-    rosterId,
-    rosterName,
-    snapshotId,
-    snapshotDate,
-    userId,
-    liveSnapshot,
-    url,
-    admin
+  projectName,
+  projectId,
+  userName,
+  rosterId,
+  rosterName,
+  snapshotId,
+  snapshotDate,
+  userId,
+  liveSnapshot,
+  url,
+  admin
 }) => {
 
   const [showRelations, setShowRelations] = useState(x => true);

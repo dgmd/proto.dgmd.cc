@@ -45,23 +45,16 @@ import {
 } from 'next/server';
 
 import {
-  KEY_ROSTER_ENTRIES_AUTH,
   KEY_ROSTER_ENTRIES_DATA,
   KEY_ROSTER_ENTRIES_ERROR,
   KEY_ROSTER_ENTRIES_NAME
 } from './keys.js';
 
 export async function GET( request ) {
-  const rjson = {
-    [KEY_ROSTER_ENTRIES_AUTH]: false
-  };
+  const rjson = {};
   const cookieStore = await cookies();
   const asc = await getAuthServerCache( cookieStore );
   try {
-    if (!isAuthUser(asc)) {
-      throw new Error( 'not authenticated' );
-    }
-    rjson[KEY_ROSTER_ENTRIES_AUTH] = true;
 
     const params = request.nextUrl.searchParams;
     if (!params.has(PARAM_ROSTERS_DB_ID)) {
@@ -70,7 +63,7 @@ export async function GET( request ) {
     const dbId = params.get(PARAM_ROSTERS_DB_ID);
 
     const user = getAuthUser( asc );
-    const userId = getAuthId( user);
+    const userId = user ? getAuthId( user ) : null;
     const supabase = await createClient( cookieStore );
     const { 
       data: rosterData,
@@ -79,7 +72,7 @@ export async function GET( request ) {
     .from( 'rosters' )
     .select( 'snapshot_name' )
     .eq( 'active', true )
-    .eq( 'user_id', userId )
+    .or(userId ? `user_id.eq.${userId},public.eq.true` : 'public.eq.true')
     .eq( 'notion_id', dbId );
     if (!isNil(rosterError) || rosterData.length === 0) {
       throw new Error( 'roster retrieval error' );
@@ -103,7 +96,6 @@ export async function GET( request ) {
       const dbpBlocks = dbp[DGMD_BLOCKS];
       const notionEntries = dbpBlocks.map( x => {
         const xProps = x[DGMD_PROPERTIES];
-        // const studentId = xProps['Student ID'][DGMD_VALUE];
         const studentName = xProps['Name'][DGMD_VALUE];
         const notionId = x[DGMD_METADATA][DGMD_BLOCK_TYPE_ID][DGMD_VALUE];
         return {

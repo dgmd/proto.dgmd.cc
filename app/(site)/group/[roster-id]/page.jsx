@@ -2,6 +2,7 @@
 
 import {
   KEY_ROSTER_ENTRIES_DATA,
+  KEY_ROSTER_ENTRIES_ERROR,
   KEY_ROSTER_ENTRIES_NAME
 } from '@/api/roster-entries/keys';
 import {
@@ -11,12 +12,6 @@ import {
   RosterEntriesTable
 } from '@/components/roster-entries-table.jsx';
 import {
-  getAuthServerCache
-} from '@/utils/supabase/auth/authServerCache.js';
-import {
-  isAuthUser
-} from '@/utils/supabase/auth/authUtils.js';
-import {
   cookies
 } from "next/headers";
 import {
@@ -24,13 +19,6 @@ import {
 } from 'next/navigation';
 
 export default async function Roster( {params} ) {
-  const cookieStore = await cookies();
-  const auth = await getAuthServerCache(cookieStore);
-  if (!isAuthUser(auth)) {
-    redirect('/');
-  }
-
-  let data = []
   const aparams = await params;
   const rosterId = aparams['roster-id'];
   
@@ -45,9 +33,11 @@ export default async function Roster( {params} ) {
     next: { revalidate: 60 }
   });
   const rosterJson = await rosterData.json();
-  if (rosterJson[KEY_ROSTER_ENTRIES_DATA]) {
-    data = rosterJson[KEY_ROSTER_ENTRIES_DATA];
+  if (rosterJson[KEY_ROSTER_ENTRIES_ERROR]) {
+    redirect('/');
   }
+  const rd = rosterJson[KEY_ROSTER_ENTRIES_DATA];
+  const data = rd && Array.isArray(rd) ? rd : [];
   const rosterName = rosterJson[KEY_ROSTER_ENTRIES_NAME];
 
   return (

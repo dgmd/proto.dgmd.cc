@@ -2,6 +2,7 @@
 
 import {
   KEY_ROSTER_ENTRIES_DATA,
+  KEY_ROSTER_ENTRIES_DESCRIPTION,
   KEY_ROSTER_ENTRIES_ERROR,
   KEY_ROSTER_ENTRIES_NAME
 } from '@/api/roster-entries/keys';
@@ -39,6 +40,7 @@ export default async function Roster( {params} ) {
   const rd = rosterJson[KEY_ROSTER_ENTRIES_DATA];
   const data = rd && Array.isArray(rd) ? rd : [];
   const rosterName = rosterJson[KEY_ROSTER_ENTRIES_NAME];
+  const desc = rosterJson[KEY_ROSTER_ENTRIES_DESCRIPTION];
 
   return (
     <RosterEntriesTable

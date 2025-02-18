@@ -7,6 +7,7 @@ import {
   KEY_ROSTERS_ERROR,
   KEY_ROSTERS_ID,
   PARAM_ROSTERS_DB_ID,
+  PARAM_ROSTERS_DB_NOTE,
   PARAM_ROSTERS_ROSTER_ID
 } from '@/api/rosters/keys.js';
 import {
@@ -47,8 +48,9 @@ import {
 } from 'react';
 
 const KEY_NAME = 'name';
+const KEY_PUBLIC = 'public';
 const KEY_DB_ID = 'notion id';
-const KEY_NOTE = 'note';
+const KEY_DESC = 'description';
 const KEY_URL = 'url';
 const KEY_UPDATE = 'date updated';
 const KEY_ACTIONS = 'actions';
@@ -58,8 +60,12 @@ export const AdminTable = ( {data, url} ) => {
   const [dbId, setDbId] = useState( '' );
   const [, setDbIdValid] = useState( false );
 
+  const [dbNote, setDbNote] = useState( '' );
+
   const [open, setOpen] = useState( x => false );
   const [addRosterError, setAddRosterError] = useState( x => false );
+
+  const [updatingPublic, setUpdatingPublic] = useState(false);
 
   const [, setRefreshing] = useState( x => [] );
   const [, setDeleting] = useState( x => [] );
@@ -69,7 +75,8 @@ export const AdminTable = ( {data, url} ) => {
 
   const [headers, setHeaders] = useState( x => [ 
     { [TABLE_HEADER_NAME]: KEY_NAME, [TABLE_HEADER_HIDE]: null },
-    { [TABLE_HEADER_NAME]: KEY_NOTE, [TABLE_HEADER_HIDE]: null },
+    { [TABLE_HEADER_NAME]: KEY_DESC, [TABLE_HEADER_HIDE]: null },
+    { [TABLE_HEADER_NAME]: KEY_PUBLIC, [TABLE_HEADER_HIDE]: TABLE_COL_HIDE_MD },
     { [TABLE_HEADER_NAME]: KEY_DB_ID, [TABLE_HEADER_HIDE]: TABLE_COL_HIDE_MD },
     { [TABLE_HEADER_NAME]: KEY_URL, [TABLE_HEADER_HIDE]: null },
     { [TABLE_HEADER_NAME]: KEY_UPDATE, [TABLE_HEADER_HIDE]: TABLE_COL_HIDE_SM },
@@ -90,21 +97,18 @@ export const AdminTable = ( {data, url} ) => {
     setAddRosterError( x => null );
   }, [
   ] );
-
-  const addRosterEntry = async( dbId, url ) => {
-    if (rAddingNotionRoom.current) {
-      return;
-    }
+  
+  const addRosterEntry = async( dbId, dbNote, url ) => {
     rAddingNotionRoom.current = true;
     try {
       const response = await fetch( '/api/rosters/', {
         method: 'POST',
         body: JSON.stringify( {
-          [PARAM_ROSTERS_DB_ID]: dbId
+          [PARAM_ROSTERS_DB_ID]: dbId,
+          [PARAM_ROSTERS_DB_NOTE]: dbNote
         } )
       } );
-      const text = await response.text();
-      const data = JSON.parse( text );
+      const data = await response.json();
       if (KEY_ROSTERS_ERROR in data) {
         throw new Error( data[KEY_ROSTERS_ERROR] );
       }
@@ -121,9 +125,10 @@ export const AdminTable = ( {data, url} ) => {
   };
   
   const cbAddNotionRoom = useCallback( event => {
-    addRosterEntry( dbId, url );
+    addRosterEntry( dbId, dbNote, url );
   }, [
     dbId,
+    dbNote,
     url
   ] );
 
@@ -139,7 +144,7 @@ export const AdminTable = ( {data, url} ) => {
       });
       const text = await response.text();
       const data = JSON.parse(text);
-      if (!data[KEY_ROSTERS_DELETED] || !data[KEY_ROSTERS_AUTH]) {
+      if (!data[KEY_ROSTERS_AUTH]) {
         throw new Error( 'error deleting roster' );
       }
       const delRosterId = data[KEY_ROSTERS_ID];
@@ -159,10 +164,31 @@ export const AdminTable = ( {data, url} ) => {
     url
   ] );
 
-  const cbRefreshRoster = useCallback( event => {
-    const rosterId = event.target.getAttribute( 'data-roster-id' );
-    addRosterEntry( rosterId, url );
+  const cbTogglePublic = useCallback(async (rosterId) => {
+    if (updatingPublic) {
+      return
+    };
+    setUpdatingPublic( true );
+
+    const apiToggleUrl = new URL( `/api/rosters/`, url );
+    apiToggleUrl.searchParams.append( PARAM_ROSTERS_ROSTER_ID, rosterId );
+    
+    const response = await fetch(
+      `/api/rosters?${PARAM_ROSTERS_ROSTER_ID}=${rosterId}`, {
+        method: 'PATCH',
+      }
+    );
+    const json = await response.json();
+    if (!json[KEY_ROSTERS_ERROR]) {
+      const data = json[KEY_ROSTERS_DATA];
+      setCells( x => {
+        return data.map( x => updateCellsFromData(x, url) );
+      } );
+    }
+
+    setUpdatingPublic(false);
   }, [
+    updatingPublic,
     url
   ] );
 
@@ -210,16 +236,6 @@ export const AdminTable = ( {data, url} ) => {
                   {key === KEY_ACTIONS && (
                     <div className={ [cellClassNames, 'space-x-1'].join( ' ' )}>
                       <button
-                        className={ getRoundButtonClasses(false) }
-                        onClick={ cbRefreshRoster }
-                        data-roster-id={ row[KEY_DB_ID] }
-                      >
-                        <ArrowPathIcon
-                          className={ getRoundButtonIconClasses() }
-                          alt="refresh roster"
-                        />
-                      </button>
-                      <button
                         data-roster-id={ row[KEY_DB_ID] }
                         className={ getRoundButtonClasses(false) }
                         onClick={ cbDeleteRosterEntry }
@@ -235,6 +251,15 @@ export const AdminTable = ( {data, url} ) => {
                     <div className={classNames}>
                       { key === KEY_URL ? cell.href : cell }
                     </div>
+                  )}
+                  {key === KEY_PUBLIC && (
+                    <input 
+                      type="checkbox"
+                      checked={cell}
+                      onChange={() => cbTogglePublic(row[KEY_DB_ID], cell)}
+                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                      disabled={updatingPublic}
+                    />
                   )}
                 </div>
               );
@@ -282,15 +307,16 @@ export const AdminTable = ( {data, url} ) => {
       </SidePanel>
       
     </div>
-);
+  );
 
 };
 
 const updateCellsFromData = (cur, url) => {
   const linkUrl = new URL( `group/${ cur.notion_id }`, url );
   return {
-    [KEY_NAME]: cur.snapshot_name,
-    [KEY_NOTE]: cur.note,
+    [KEY_NAME]: cur.name,
+    [KEY_PUBLIC]: cur.public,
+    [KEY_DESC]: cur.desc,
     [KEY_DB_ID]: cur.notion_id,
     [KEY_URL]: linkUrl,
     [KEY_UPDATE]: cur.created_at,

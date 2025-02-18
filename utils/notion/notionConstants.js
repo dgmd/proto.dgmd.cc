@@ -9,6 +9,7 @@ export const NOTION_DATA_TYPE_MULTI_SELECT = 'multi_select';
 export const NOTION_DATA_TYPE_FILES = 'files';
 export const NOTION_DATA_TYPE_FILE = 'file';
 export const NOTION_DATA_TYPE_TITLE = 'title';
+export const NOTION_DATA_TYPE_DESCRIPTION = 'description';
 export const NOTION_DATA_TYPE_RICH_TEXT = 'rich_text';
 export const NOTION_DATA_TYPE_CHECKBOX = 'checkbox';
 export const NOTION_DATA_TYPE_EMAIL = 'email';

@@ -17,7 +17,6 @@ import {
 import {
   getAuthId,
   getAuthUser,
-  isAuthUser
 } from '@/utils/supabase/auth/authUtils.js';
 import {
   createClient
@@ -28,6 +27,7 @@ import {
 import {
   DGMD_BLOCKS,
   DGMD_BLOCK_TYPE_ID,
+  DGMD_DATABASE_DESCRIPTION,
   DGMD_DATABASE_TITLE,
   DGMD_METADATA,
   DGMD_PRIMARY_DATABASE,
@@ -46,6 +46,7 @@ import {
 
 import {
   KEY_ROSTER_ENTRIES_DATA,
+  KEY_ROSTER_ENTRIES_DESCRIPTION,
   KEY_ROSTER_ENTRIES_ERROR,
   KEY_ROSTER_ENTRIES_NAME
 } from './keys.js';
@@ -62,23 +63,6 @@ export async function GET( request ) {
     }
     const dbId = params.get(PARAM_ROSTERS_DB_ID);
 
-    const user = getAuthUser( asc );
-    const userId = user ? getAuthId( user ) : null;
-    const supabase = await createClient( cookieStore );
-    const { 
-      data: rosterData,
-      error: rosterError
-    } = await supabase
-    .from( 'rosters' )
-    .select( 'snapshot_name' )
-    .eq( 'active', true )
-    .or(userId ? `user_id.eq.${userId},public.eq.true` : 'public.eq.true')
-    .eq( 'notion_id', dbId );
-    if (!isNil(rosterError) || rosterData.length === 0) {
-      throw new Error( 'roster retrieval error' );
-    }
-    const rosterDataName = rosterData[0].snapshot_name;
-
     try {
       const request = {
         [DATABASE_QUERY_DATABASE_ID_REQUEST]: dbId,
@@ -93,6 +77,7 @@ export async function GET( request ) {
       const db = await getNotionDatabases( nClient, request );
       const dbp = db[DGMD_PRIMARY_DATABASE];
       const dbpTitle = dbp[DGMD_DATABASE_TITLE];
+      const dpbDesc = dbp[DGMD_DATABASE_DESCRIPTION];
       const dbpBlocks = dbp[DGMD_BLOCKS];
       const notionEntries = dbpBlocks.map( x => {
         const xProps = x[DGMD_PROPERTIES];
@@ -104,22 +89,13 @@ export async function GET( request ) {
         }
       } );
       rjson[KEY_ROSTER_ENTRIES_NAME] = dbpTitle;
+      rjson[KEY_ROSTER_ENTRIES_DESCRIPTION] = dpbDesc;
       rjson[KEY_ROSTER_ENTRIES_DATA] = notionEntries;
     }
     catch (e) {
       throw new Error( 'unable to connect to notion' );
     }
 
-    if (rjson[KEY_ROSTER_ENTRIES_NAME] !== rosterDataName) {
-      await supabase
-        .from( 'rosters' )
-        .update( {
-          'snapshot_name': rjson[KEY_ROSTER_ENTRIES_NAME]
-        } )
-        .eq( 'active', true )
-        .eq( 'user_id', userId )
-        .eq( 'notion_id', dbId );        
-    }
   }
   catch (e) {
     rjson[KEY_ROSTER_ENTRIES_ERROR] = e.message;

@@ -5,6 +5,7 @@ import {
   DATABASE_QUERY_PAGE_CURSOR_ID_REQUEST,
   DATABASE_QUERY_PAGE_CURSOR_REQUEST,
   DATABASE_QUERY_PAGE_CURSOR_TYPE_ALL,
+  DATABASE_QUERY_PAGE_CURSOR_TYPE_NONE,
   DATABASE_QUERY_PAGE_CURSOR_TYPE_REQUEST,
   getNotionDatabases
 } from '@/utils/notion/queryDatabases.js';
@@ -23,6 +24,7 @@ import {
   Client
 } from "@notionhq/client";
 import {
+  DGMD_DATABASE_DESCRIPTION,
   DGMD_DATABASE_TITLE,
   DGMD_PRIMARY_DATABASE
 } from 'constants.dgmd.cc';
@@ -39,10 +41,10 @@ import {
 import {
   KEY_ROSTERS_AUTH,
   KEY_ROSTERS_DATA,
-  KEY_ROSTERS_DELETED,
   KEY_ROSTERS_ERROR,
   KEY_ROSTERS_ID,
   PARAM_ROSTERS_DB_ID,
+  PARAM_ROSTERS_DB_NOTE,
   PARAM_ROSTERS_ROSTER_ID
 } from './keys.js';
 
@@ -66,10 +68,9 @@ export async function GET( request ) {
     if (!isNil(activeRosters.error)) {
       throw new Error( 'error getting active rosters' );
     }
-    
-    const rosters = activeRosters.data;
+
     rjson[KEY_ROSTERS_AUTH] = true;
-    rjson[KEY_ROSTERS_DATA] = rosters;
+    rjson[KEY_ROSTERS_DATA] = activeRosters.data;
   }
   catch (e) {
     console.log( 'ROSTERS GET ERROR', e.message );
@@ -81,7 +82,6 @@ export async function GET( request ) {
 export async function DELETE( request ) {
   const rjson = {
     [KEY_ROSTERS_AUTH]: false,
-    [KEY_ROSTERS_DELETED]: false,
     [KEY_ROSTERS_ID]: null
   };
   try {
@@ -113,15 +113,6 @@ export async function DELETE( request ) {
       throw new Error( 'error deleting active rosters', {cause: deleteRosters} );
     }
 
-    const deleteRosterEntries = await supabase
-      .from( 'roster_entries' )
-      .update( { active: false } )
-      .eq( 'roster', rosterId );
-    if (!isNil(deleteRosterEntries.error)) {
-      throw new Error( 'error deleting active roster entries', {cause: deleteRosterEntries} );
-    }
-    rjson[KEY_ROSTERS_DELETED] = true;
-
     const activeRosters = await getActiveRosters( supabase, userId );
     if (!isNil(activeRosters.error)) {
       throw new Error( 'error getting active rosters' );
@@ -148,6 +139,7 @@ export async function POST( request ) {
 
     const data = await request.json();
     const dbId = data[PARAM_ROSTERS_DB_ID];
+    const dbNote = data[PARAM_ROSTERS_DB_NOTE];
 
     const requests = {
       [DATABASE_QUERY_DATABASE_ID_REQUEST]: dbId,
@@ -181,8 +173,8 @@ export async function POST( request ) {
         .insert( {
           notion_id: dbId, 
           active: true,
-          user_id: userId,
-          snapshot_name: db[DGMD_PRIMARY_DATABASE][DGMD_DATABASE_TITLE]
+          public: false,
+          user_id: userId
         } );
       if (!isNil(addRosterResult.error)) {
         throw new Error( 'error adding roster' );
@@ -198,9 +190,7 @@ export async function POST( request ) {
       const updatedRoster = await supabase
         .from('rosters')
         .update({ 
-          active: true,
-          user_id: userId,
-          snapshot_name: db[DGMD_PRIMARY_DATABASE][DGMD_DATABASE_TITLE]
+          active: true
         })
         .eq('id', notionRoster.data[0].id);
       if (!isNil(updatedRoster.error)) {
@@ -222,10 +212,113 @@ export async function POST( request ) {
   return NextResponse.json( rjson );
 };
 
-const getActiveRosters = async ( supabase, userId ) => {
-  return supabase
-  .from( 'rosters' )
-  .select( 'notion_id, created_at, snapshot_name' )
-  .eq( 'active', true )
-  .eq( 'user_id', userId );
+export async function PATCH(request) {
+  const rjson = {
+    [KEY_ROSTERS_AUTH]: false,
+    [KEY_ROSTERS_ID]: null
+  };
+  
+  try {
+    const cookieStore = await cookies();
+    const asc = await getAuthServerCache(cookieStore);
+    if (!isAuthUser(asc)) {
+      throw new Error('not authenticated');
+    }
+    rjson[KEY_ROSTERS_AUTH] = true;
+
+    const user = getAuthUser(asc);
+    const userId = getAuthId(user);
+
+    const params = request.nextUrl.searchParams;
+    if (!params.has(PARAM_ROSTERS_ROSTER_ID)) {
+      throw new Error('no roster id');
+    }
+    const rosterId = params.get(PARAM_ROSTERS_ROSTER_ID);
+    rjson[KEY_ROSTERS_ID] = rosterId;
+
+    const supabase = await createClient(cookieStore);
+
+    // First get the current roster to toggle its public state
+    const currentRoster = await supabase
+      .from('rosters')
+      .select('public')
+      .eq('user_id', userId)
+      .eq('notion_id', rosterId)
+      .single();
+
+    if (currentRoster.error) {
+      throw new Error('Error getting roster: ' + currentRoster.error.message);
+    }
+    if (!currentRoster.data) {
+      throw new Error('Roster not found');
+    }
+
+    const updateResult = await supabase
+      .from('rosters')
+      .update({ public: !currentRoster.data.public })
+      .eq('user_id', userId)
+      .eq('notion_id', rosterId)
+      .select();
+
+    if (updateResult.error) {
+      throw new Error('Error updating roster: ' + updateResult.error.message);
+    }
+
+    const activeRosters = await getActiveRosters(supabase, userId);
+    if (!isNil(activeRosters.error)) {
+      throw new Error('error getting active rosters');
+    }
+    rjson[KEY_ROSTERS_DATA] = activeRosters.data;
+  }
+  catch (e) {
+    rjson[KEY_ROSTERS_ERROR] = e.message;
+  }
+  
+  return NextResponse.json(rjson);
+}
+
+const augmentRosterWithNotionData = async (roster) => {
+  const dbId = roster.notion_id;
+  const requests = {
+    [DATABASE_QUERY_DATABASE_ID_REQUEST]: dbId,
+    [DATABASE_QUERY_PAGE_CURSOR_REQUEST]: {
+      [DATABASE_QUERY_PAGE_CURSOR_TYPE_REQUEST]: DATABASE_QUERY_PAGE_CURSOR_TYPE_NONE,
+      [DATABASE_QUERY_PAGE_CURSOR_ID_REQUEST]: null
+    },
+  };
+  const nClient = new Client({ 
+    auth: process.env.NOTION_SECRET
+  });
+  const db = await getNotionDatabases(nClient, requests);
+  return {
+    ...roster,
+    desc: db[DGMD_PRIMARY_DATABASE][DGMD_DATABASE_DESCRIPTION],
+    name: db[DGMD_PRIMARY_DATABASE][DGMD_DATABASE_TITLE]
+  };
+};
+
+const getActiveRosters = async (supabase, userId) => {
+  const result = await supabase
+    .from('rosters')
+    .select('notion_id, created_at, public')
+    .eq('active', true)
+    .eq('user_id', userId);
+
+  if (!isNil(result.error)) {
+    return result;
+  }
+
+  result.data.sort((a, b) => {
+    return Date.parse(b.created_at) - Date.parse(a.created_at);
+  });
+
+  // Augment each roster with Notion data
+  const augmentedRosters = await Promise.all(
+    result.data.map(roster => augmentRosterWithNotionData(roster))
+  );
+  
+  return {
+    ...result,
+    data: augmentedRosters
+  };
 };

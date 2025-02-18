@@ -30,6 +30,7 @@ import {
   DGMD_CURSOR_DATA,
   DGMD_CURSOR_HAS_MORE,
   DGMD_CURSOR_NEXT,
+  DGMD_DATABASE_DESCRIPTION,
   DGMD_DATABASE_ID,
   DGMD_DATABASE_TITLE,
   DGMD_END_DATE,
@@ -59,6 +60,7 @@ import {
   NOTION_DATA_TYPE_COVER,
   NOTION_DATA_TYPE_CREATED_TIME,
   NOTION_DATA_TYPE_DATE,
+  NOTION_DATA_TYPE_DESCRIPTION,
   NOTION_DATA_TYPE_EMAIL,
   NOTION_DATA_TYPE_EMOJI,
   NOTION_DATA_TYPE_EXTERNAL,
@@ -111,6 +113,7 @@ export const DATABASE_QUERY_PAGE_CURSOR_ID_REQUEST = 'PAGE_CURSOR_ID_REQUEST';
 export const DATABASE_QUERY_PAGE_CURSOR_TYPE_DEFAULT = 'PAGE_CURSOR_TYPE_DEFAULT';
 export const DATABASE_QUERY_PAGE_CURSOR_TYPE_SPECIFIC = 'PAGE_CURSOR_TYPE_SPECIFIC';
 export const DATABASE_QUERY_PAGE_CURSOR_TYPE_ALL = 'PAGE_CURSOR_TYPE_ALL';
+export const DATABASE_QUERY_PAGE_CURSOR_TYPE_NONE = 'PAGE_CURSOR_TYPE_NONE';
 export const DATABASE_QUERY_INCLUDE_RELATIONSHIPS = 'INCLUDE_RELATIONSHIPS';
 export const DATABASE_QUERY_RESULT_COUNT = 'DATABASE_QUERY_RESULT_COUNT';
 
@@ -120,6 +123,7 @@ const QUERY_PAGES = 'QUERY_PAGES';
 const DATABASE_QUERY_PRIMARY = 'DATABASE_QUERY_PRIMARY';
 const DATABASE_QUERY_ID = 'DATABASE_QUERY_ID';
 const DATABASE_QUERY_TITLE = 'DATABASE_QUERY_TITLE';
+const DATABASE_QUERY_DESCRIPTION = 'DATABASE_QUERY_DESCRIPTION';
 const DATABASE_QUERY_PARENT_ID = 'DATABASE_QUERY_PARENT_ID';
 const DATABASE_QUERY_PAGE_CURSOR_TYPE = 'DATABASE_QUERY_PAGE_CURSOR_TYPE';
 const DATABASE_QUERY_PAGE_CURSOR_ID = 'DATABASE_QUERY_PAGE_CURSOR_ID';
@@ -267,6 +271,7 @@ const makeDbSerialized =
     [DGMD_BLOCKS]: props,
     [DGMD_DATABASE_ID]: meta[DATABASE_QUERY_ID],
     [DGMD_DATABASE_TITLE]: meta[DATABASE_QUERY_TITLE],
+    [DGMD_DATABASE_DESCRIPTION]: meta[DATABASE_QUERY_DESCRIPTION],
     [DGMD_PARENT_ID]: meta[DATABASE_QUERY_PARENT_ID],
     [DGMD_PARENT_TITLE]: meta[DATABASE_QUERY_PARENT_TITLE],
     [DGMD_PARENT_TYPE]: meta[DATABASE_QUERY_PARENT_TYPE],
@@ -391,10 +396,28 @@ export const getNotionDbaseRelationsIds =
 //all of this nonsense because title is not in the typescript
 //https://github.com/makenotion/notion-sdk-js/issues/471
 export const getNotionDbaseTitle = nDatabase => {
-  for (const [key, value] of Object.entries(nDatabase)) {
-    if (key === NOTION_DATA_TYPE_TITLE) {
-      return value[0][NOTION_KEY_PLAIN_TEXT];
+  try {
+    for (const [key, value] of Object.entries(nDatabase)) {
+      if (key === NOTION_DATA_TYPE_TITLE) {
+        return value[0][NOTION_KEY_PLAIN_TEXT];
+      }
     }
+  }
+  catch( e ) {
+    return '';
+  }
+};
+
+export const getNotionDbaseDescription = nDatabase => {
+  try {
+    for (const [key, value] of Object.entries(nDatabase)) {
+      if (key === NOTION_DATA_TYPE_DESCRIPTION) {
+        return value[0][NOTION_KEY_PLAIN_TEXT];
+      }
+    }
+  }
+  catch (e) {
+    return '';
   }
 };
 
@@ -700,11 +723,6 @@ const chainNotionDbasePromises =
 
 const getNotionDbase = 
   ( nClient, meta, dbId, relMap ) => {
-  const initStartCursorType = meta[DATABASE_QUERY_PAGE_CURSOR_TYPE];
-  const specificPage = initStartCursorType === DATABASE_QUERY_PAGE_CURSOR_TYPE_SPECIFIC;
-  const allPages = initStartCursorType === DATABASE_QUERY_PAGE_CURSOR_TYPE_ALL;
-  const initStartCursor =
-    specificPage ? meta[DATABASE_QUERY_PAGE_CURSOR_ID] : null;
   const collector = {
     [QUERY_PROPERTIES]: [],
     [QUERY_PAGES]: {
@@ -712,6 +730,15 @@ const getNotionDbase =
       [NOTION_CURSOR_NEXT]: null
     }
   };
+  
+  const initStartCursorType = meta[DATABASE_QUERY_PAGE_CURSOR_TYPE];
+  if (initStartCursorType === DATABASE_QUERY_PAGE_CURSOR_TYPE_NONE) {
+    return Promise.resolve( collector );
+  }
+  const specificPage = initStartCursorType === DATABASE_QUERY_PAGE_CURSOR_TYPE_SPECIFIC;
+  const allPages = initStartCursorType === DATABASE_QUERY_PAGE_CURSOR_TYPE_ALL;
+  const initStartCursor =
+    specificPage ? meta[DATABASE_QUERY_PAGE_CURSOR_ID] : null;
 
   return chainNotionDbasePromises( 
     nClient, dbId, allPages, relMap, initStartCursor, true, collector );
@@ -761,6 +788,7 @@ const getDbMeta =
     [DATABASE_QUERY_PRIMARY]: primary,
     [DATABASE_QUERY_ID]: dbId,
     [DATABASE_QUERY_TITLE]: undefined,
+    [DATABASE_QUERY_DESCRIPTION]: undefined,
     [DATABASE_QUERY_PARENT_ID]: undefined,
     [DATABASE_QUERY_PARENT_TITLE]: undefined,
     [DATABASE_QUERY_PARENT_TYPE]: undefined,
@@ -779,6 +807,8 @@ const notionUpdateDbMeta =
   try {
     const primaryTitle = getNotionDbaseTitle( nDbase );
     meta[DATABASE_QUERY_TITLE] = primaryTitle;
+    const primaryDescription = getNotionDbaseDescription( nDbase );
+    meta[DATABASE_QUERY_DESCRIPTION] = primaryDescription;
     const primaryCover = getCover( nDbase[NOTION_DATA_TYPE_COVER] );
     meta[DATABASE_QUERY_COVER] = primaryCover[NOTION_KEY_VALUE];
     const primaryIcon = getIcon( nDbase[NOTION_DATA_TYPE_ICON] );

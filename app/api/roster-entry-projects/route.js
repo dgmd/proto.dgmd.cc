@@ -83,7 +83,7 @@ export async function GET( request ) {
       rjson[ KEY_ROSTER_ENTRY_PROJECTS_DATA ] = bks[0][NOTION_RESULT_BLOCK_DBS];
     }
     catch (e) {
-      throw new Error( 'unable to connect to notion' );
+      throw new Error( 'unable to connect to notion', e );
     }
   }
   catch (e) {

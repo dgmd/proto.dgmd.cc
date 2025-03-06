@@ -813,6 +813,11 @@ const notionUpdateDbMeta =
     meta[DATABASE_QUERY_COVER] = primaryCover[NOTION_KEY_VALUE];
     const primaryIcon = getIcon( nDbase[NOTION_DATA_TYPE_ICON] );
     meta[DATABASE_QUERY_ICON] = primaryIcon[NOTION_KEY_VALUE];
+  }
+  catch (e) {
+    console.log( 'primary meta collection error', e );
+  }
+  try {
     const [primaryParentId, primaryParentType] = getNotionDbaseParentId( nDbase );
     meta[DATABASE_QUERY_PARENT_ID] = primaryParentId;
     if (primaryParentType === NOTION_KEY_PAGE_ID) {
@@ -823,7 +828,7 @@ const notionUpdateDbMeta =
     }
   }
   catch (e) {
-    console.log( 'primary meta collection error', e );
+    console.log( 'unable to load parent page information' );
   }
 };
 

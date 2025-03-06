@@ -53,8 +53,32 @@ import {
 
 export async function GET( request ) {
   const rjson = {};
-  const cookieStore = await cookies();
-  const asc = await getAuthServerCache( cookieStore );
+
+  const canShowRoster = async (dbId) => {
+    const cookieStore = await cookies();
+    const asc = await getAuthServerCache(cookieStore);
+  
+    const user = getAuthUser(asc);
+    const userId = user ? getAuthId(user) : null;
+    const supabase = await createClient(cookieStore);
+    
+    const { 
+      data: rosterData,
+      error: rosterError
+    } = await supabase
+      .from('rosters')
+      // Only select minimal data, with count
+      .select('id', { count: 'exact'})
+      .eq('active', true)
+      .or(userId ? `user_id.eq.${userId},public.eq.true` : 'public.eq.true')
+      .eq('notion_id', dbId);
+      
+    if (!isNil(rosterError) || rosterData.length === 0) {
+      return false;
+    }
+    return true;
+  };
+
   try {
 
     const params = request.nextUrl.searchParams;
@@ -62,6 +86,11 @@ export async function GET( request ) {
       throw new Error( 'no database id' );
     }
     const dbId = params.get(PARAM_ROSTERS_DB_ID);
+
+    const proceed = await canShowRoster( dbId );
+    if (!proceed) {
+      throw new Error( 'not authorized' );
+    }
 
     try {
       const request = {
@@ -93,7 +122,7 @@ export async function GET( request ) {
       rjson[KEY_ROSTER_ENTRIES_DATA] = notionEntries;
     }
     catch (e) {
-      throw new Error( 'unable to connect to notion' );
+      throw e;
     }
 
   }

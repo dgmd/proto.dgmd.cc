@@ -244,7 +244,7 @@ export async function DELETE( request ) {
     rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_ERROR] = error.message;
   }
 
-  return createCorsResponse( rObj, request );
+  return createCorsHeadedResponse( rObj, request );
 };
 
 

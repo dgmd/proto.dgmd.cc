@@ -86,6 +86,7 @@ import {
   NOTION_KEY_END_DATE,
   NOTION_KEY_EXTERNAL,
   NOTION_KEY_FILE,
+  NOTION_KEY_FILTER,
   NOTION_KEY_ID,
   NOTION_KEY_NAME,
   NOTION_KEY_PAGES,
@@ -104,7 +105,16 @@ import {
 import {
   NOTION_WRANGLE_KEY_DATA_DB_MAP,
   NOTION_WRANGLE_KEY_RELATIONS_MAP,
+  NOTION_WRANGLE_KEY_TITLES_MAP
 } from './notionWranglerConstants.js';
+
+const KEY_SEARCH_DBID = 'dbId';
+const KEY_SEARCH_START_CURSOR = 'startCursor';
+const KEY_SEARCH_TITLE_OBJ = 'titleWord';
+
+const KEY_TITLE_SEARCH_QUERY = 'titleSearchQuery';
+const KEY_TITLE_SEARCH_BLANK = 'titleSearchBlank';
+const KEY_TITLE_SEARCH_PROPERTY = 'titleSearchProperty';
 
 export const DATABASE_QUERY_DATABASE_ID_REQUEST = 'DATABASE_ID_REQUEST';
 export const DATABASE_QUERY_PAGE_CURSOR_REQUEST = 'PAGE_CURSOR_REQUEST';
@@ -116,6 +126,7 @@ export const DATABASE_QUERY_PAGE_CURSOR_TYPE_ALL = 'PAGE_CURSOR_TYPE_ALL';
 export const DATABASE_QUERY_PAGE_CURSOR_TYPE_NONE = 'PAGE_CURSOR_TYPE_NONE';
 export const DATABASE_QUERY_INCLUDE_RELATIONSHIPS = 'INCLUDE_RELATIONSHIPS';
 export const DATABASE_QUERY_RESULT_COUNT = 'DATABASE_QUERY_RESULT_COUNT';
+export const DATABASE_QUERY_PRIMARY_TITLE_PROPERTY = 'PRIMARY_TITLE_PROPERTY';
 
 const QUERY_PROPERTIES = 'QUERY_PROPERTIES';
 const QUERY_PAGES = 'QUERY_PAGES';
@@ -150,6 +161,18 @@ export const getNotionDatabases =
   const dbMap = x[NOTION_WRANGLE_KEY_DATA_DB_MAP];
   const relMap = x[NOTION_WRANGLE_KEY_RELATIONS_MAP];
 
+  const titleMap = x[NOTION_WRANGLE_KEY_TITLES_MAP];
+  let titleSearch = null;
+  const hasPrimaryTitle = DATABASE_QUERY_PRIMARY_TITLE_PROPERTY in requests;
+  if (hasPrimaryTitle) {
+    const primaryTitle = requests[DATABASE_QUERY_PRIMARY_TITLE_PROPERTY];
+    const primaryTitleTrimmed = primaryTitle.trim();
+    titleSearch = {
+      [KEY_TITLE_SEARCH_PROPERTY]: titleMap.get( primaryDbId ),
+      [KEY_TITLE_SEARCH_QUERY]: primaryTitleTrimmed,
+      [KEY_TITLE_SEARCH_BLANK]: primaryTitleTrimmed.length === 0
+    }
+  }
   const metasMap = new Map( );
   for (const [dbId, db] of dbMap.entries()) {
     const primary = dbId === primaryDbId;
@@ -162,9 +185,13 @@ export const getNotionDatabases =
     metasMap.set( dbId, meta );
   }
   const nDbMeta = metasMap.get( primaryDbId );
+
+
+  
   const nDbResult = await getNotionDbase( 
-    nClient, nDbMeta, primaryDbId, relMap.get(primaryDbId) );
+    nClient, nDbMeta, primaryDbId, relMap.get(primaryDbId), titleSearch );
   const nDbProps = nDbResult[QUERY_PROPERTIES];
+
 
   const resultCount = requests[DATABASE_QUERY_RESULT_COUNT];
   const limitResultCount = resultCount !== Number.POSITIVE_INFINITY && nDbProps.length > resultCount;
@@ -344,6 +371,7 @@ const getNotionDbaseRelationPromise =
 
   const relMap = collector[NOTION_WRANGLE_KEY_RELATIONS_MAP];
   const dbMap = collector[NOTION_WRANGLE_KEY_DATA_DB_MAP];
+  const titleMap = collector[NOTION_WRANGLE_KEY_TITLES_MAP];
   dbMap.set( dbId, db );
 
   const nextDbIds = new Set();
@@ -365,6 +393,9 @@ const getNotionDbaseRelationPromise =
       }
       const dbRelMap = relMap.get( dbId );
       dbRelMap.set( propertyValId, dbaseIdSansHyphens );
+    }
+    else if (ndpPropertyType === NOTION_DATA_TYPE_TITLE) {
+      titleMap.set( dbId, ndbPropertiesKey );
     }
   }
   return Array.from(nextDbIds.keys());
@@ -388,7 +419,8 @@ export const getNotionDbaseRelationsIds =
   ( nClient, dbId, includeRels ) => {
   const collector = {
     [NOTION_WRANGLE_KEY_RELATIONS_MAP]: new Map(),
-    [NOTION_WRANGLE_KEY_DATA_DB_MAP]: new Map()
+    [NOTION_WRANGLE_KEY_DATA_DB_MAP]: new Map(),
+    [NOTION_WRANGLE_KEY_TITLES_MAP]: new Map()
   };
   return chainNotionDbaseRelationIds( nClient, dbId, collector, includeRels );
 };
@@ -682,7 +714,7 @@ const getNotionDbasePromise =
 
         const next = allPages ? next_cursor : null;
         resolve( {
-          [NOTION_WRANGLE_LOCAL_NDBP_COLLECTOR]:collector, 
+          [NOTION_WRANGLE_LOCAL_NDBP_COLLECTOR]: collector, 
           [NOTION_WRANGLE_LOCAL_NDBP_NEXT]: next
         } );
       })
@@ -693,15 +725,25 @@ const getNotionDbasePromise =
   return p;
 };
 
-const chainNotionDbasePromises = 
-  (nClient, dbId, allPages, relMap, startCursor, proceed, collector ) => {
+const chainNotionDbasePromises =
+  (nClient, searchObj, allPages, relMap, proceed, collector ) => {
   
   if (proceed) {
     const queryObj = {
-      [NOTION_KEY_DB_ID]: dbId
+      [NOTION_KEY_DB_ID]: searchObj[KEY_SEARCH_DBID]
     };
+    const startCursor = searchObj[KEY_SEARCH_START_CURSOR];
     if (startCursor) {
       queryObj[NOTION_KEY_START_CURSOR] = startCursor;
+    }
+    const titleObj = searchObj[KEY_SEARCH_TITLE_OBJ];
+    if (titleObj) {
+      queryObj[NOTION_KEY_FILTER] = {
+        property: titleObj[KEY_TITLE_SEARCH_PROPERTY],
+        title: {
+          equals: titleObj[KEY_TITLE_SEARCH_QUERY]
+        }
+      };
     }
 
     return getNotionDbasePromise( nClient, allPages, relMap, collector, queryObj )
@@ -711,8 +753,13 @@ const chainNotionDbasePromises =
       const next = obj[NOTION_WRANGLE_LOCAL_NDBP_NEXT];
       const nextProceed = next !== null;
 
+      const nSearchObj = {
+        [KEY_SEARCH_DBID]: searchObj[KEY_SEARCH_DBID],
+        [KEY_SEARCH_START_CURSOR]: next,
+        [KEY_SEARCH_TITLE_OBJ]: searchObj[KEY_SEARCH_TITLE_OBJ]
+      }
       return chainNotionDbasePromises(
-        nClient, dbId, allPages, relMap, next, nextProceed, collector );
+        nClient, nSearchObj, allPages, relMap, nextProceed, collector );
 
     });
   }
@@ -722,7 +769,7 @@ const chainNotionDbasePromises =
 };
 
 const getNotionDbase = 
-  ( nClient, meta, dbId, relMap ) => {
+  ( nClient, meta, dbId, relMap, titleSearchObj ) => {
   const collector = {
     [QUERY_PROPERTIES]: [],
     [QUERY_PAGES]: {
@@ -731,8 +778,9 @@ const getNotionDbase =
     }
   };
   
+  const blankTitleSearch = titleSearchObj ? titleSearchObj[KEY_TITLE_SEARCH_BLANK] : false;
   const initStartCursorType = meta[DATABASE_QUERY_PAGE_CURSOR_TYPE];
-  if (initStartCursorType === DATABASE_QUERY_PAGE_CURSOR_TYPE_NONE) {
+  if (initStartCursorType === DATABASE_QUERY_PAGE_CURSOR_TYPE_NONE || blankTitleSearch) {
     return Promise.resolve( collector );
   }
   const specificPage = initStartCursorType === DATABASE_QUERY_PAGE_CURSOR_TYPE_SPECIFIC;
@@ -740,8 +788,13 @@ const getNotionDbase =
   const initStartCursor =
     specificPage ? meta[DATABASE_QUERY_PAGE_CURSOR_ID] : null;
 
+  const searchObj = {
+    [KEY_SEARCH_DBID]: dbId,
+    [KEY_SEARCH_START_CURSOR]: initStartCursor,
+    [KEY_SEARCH_TITLE_OBJ]: titleSearchObj,
+  }
   return chainNotionDbasePromises( 
-    nClient, dbId, allPages, relMap, initStartCursor, true, collector );
+    nClient, searchObj, allPages, relMap, true, collector );
 };
 
 const getCover =

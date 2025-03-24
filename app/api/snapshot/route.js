@@ -9,10 +9,16 @@ import {
   DGMD_INCLUDE_RELATION_DATABASES,
   DGMD_PRIMARY_DATABASE,
   DGMD_RELATION_DATABASES,
+  DGMD_TYPE,
+  DGMD_VALUE,
   QUERY_RESPONSE_KEY_ERROR,
   QUERY_RESPONSE_KEY_RESULT,
   QUERY_RESPONSE_KEY_SUCCESS,
-  QUERY_VALUE_RESULT_COUNT_ALL
+  QUERY_VALUE_RESULT_COUNT_ALL,
+  SNAPSHOT_PARAM_ID,
+  SNAPSHOT_PARAM_INCLUDE_RELATIONSHIPS,
+  SNAPSHOT_PARAM_PRIMARY_TITLE_PROPERTY,
+  SNAPSHOT_PARAM_RESULT_COUNT
 } from 'constants.dgmd.cc';
 import {
   isNil
@@ -21,12 +27,6 @@ import {
   cookies
 } from 'next/headers';
 import yn from 'yn';
-
-import {
-  SNAPSHOT_PARAM_ID,
-  SNAPSHOT_PARAM_INCLUDE_RELATIONSHIPS,
-  SNAPSHOT_PARAM_RESULT_COUNT
-} from './keys.js';
 
 export async function GET( request ) {
   try {
@@ -56,14 +56,39 @@ export async function GET( request ) {
       delete snapshot[QUERY_RESPONSE_KEY_RESULT][DGMD_RELATION_DATABASES];
     }
 
+    const titleSearch = params.has(SNAPSHOT_PARAM_PRIMARY_TITLE_PROPERTY);
     let resultCount = Number.POSITIVE_INFINITY;
-    if (params.has(SNAPSHOT_PARAM_RESULT_COUNT)) {
+    if (params.has(SNAPSHOT_PARAM_RESULT_COUNT) && !titleSearch) {
       const rawCount = params.get(SNAPSHOT_PARAM_RESULT_COUNT);
       if (rawCount !== QUERY_VALUE_RESULT_COUNT_ALL) {
         resultCount = parseInt(rawCount, 10);
         if (isNaN(resultCount)) {
           resultCount = Number.POSITIVE_INFINITY;
         }
+      }
+    }
+    if (titleSearch) {
+      const titleProperty = params.get(SNAPSHOT_PARAM_PRIMARY_TITLE_PROPERTY);
+      const titlePropTrim = titleProperty.trim();
+      if (titlePropTrim.length !== 0) {
+        const allBlocks = snapshot[QUERY_RESPONSE_KEY_RESULT][DGMD_PRIMARY_DATABASE][DGMD_BLOCKS];
+        const filteredBlocks = allBlocks.filter(block => {
+          // Check each property in the block
+          for (const [key, property] of Object.entries(block.PROPERTIES)) {
+            // If property is of type 'title' and its value contains the search term
+            if (property[DGMD_TYPE] === 'title' && 
+                property[DGMD_VALUE] && 
+                property[DGMD_VALUE].trim() === titlePropTrim) {
+              return true;
+            }
+          }
+          return false;
+        });
+
+        console.log( 'filteredBlocks', filteredBlocks.length, allBlocks.length );
+        
+        // Replace the blocks with filtered results
+        snapshot[QUERY_RESPONSE_KEY_RESULT][DGMD_PRIMARY_DATABASE][DGMD_BLOCKS] = filteredBlocks;
       }
     }
     if (isFinite(resultCount)) {

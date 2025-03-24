@@ -1,3 +1,0 @@
-export const SNAPSHOT_PARAM_ID = 'i';
-export const SNAPSHOT_PARAM_INCLUDE_RELATIONSHIPS = 'r';
-export const SNAPSHOT_PARAM_RESULT_COUNT = 'c';

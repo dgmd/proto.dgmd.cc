@@ -1,24 +1,26 @@
 "use client"
 
 import {
-  SNAPSHOT_PARAM_ID,
-  SNAPSHOT_PARAM_INCLUDE_RELATIONSHIPS,
-  SNAPSHOT_PARAM_RESULT_COUNT
-} from '@/api/snapshot/keys.js';
-import {
   Title,
   TitlePath
 } from '@/components/title.jsx';
 import {
   QUERY_PARAM_DATABASE,
   QUERY_PARAM_INCLUDE_RELATIONSHIPS,
+  QUERY_PARAM_PRIMARY_TITLE_PROPERTY,
   QUERY_PARAM_RESULT_COUNT,
   QUERY_VALUE_RESULT_COUNT_ALL,
+  SNAPSHOT_PARAM_ID,
+  SNAPSHOT_PARAM_INCLUDE_RELATIONSHIPS,
+  SNAPSHOT_PARAM_PRIMARY_TITLE_PROPERTY,
+  SNAPSHOT_PARAM_RESULT_COUNT
 } from 'constants.dgmd.cc';
 import {
+  debounce,
   isNil
 } from 'lodash-es';
 import {
+  useCallback,
   useEffect,
   useMemo,
   useState
@@ -33,23 +35,60 @@ import {
 const KEY_SNAPSHOT_QUERY_PROJECT_ID = 'project id';
 const KEY_SNAPSHOT_QUERY_SHOW_RELATIONS = 'show relations';
 const KEY_SNAPSHOT_QUERY_RESULT_COUNT = 'result count';
+const KEY_SNAPSHOT_QUERY_TITLE = 'title';
 
 const KEY_RESULT_COUNT_ALL = 'all';
 const KEY_RESULT_COUNT_RANDOM_10 = '10 random';
 const KEY_RESULT_COUNT_RANDOM_1 = '1 random';
+const KEY_RESULT_COUNT_TITLE = 'Title';
 const resultCountLookup = {
   [KEY_RESULT_COUNT_ALL]: QUERY_VALUE_RESULT_COUNT_ALL,
   [KEY_RESULT_COUNT_RANDOM_10]: 10,
-  [KEY_RESULT_COUNT_RANDOM_1]: 1
+  [KEY_RESULT_COUNT_RANDOM_1]: 1,
+  [KEY_RESULT_COUNT_TITLE]: 'title'
 };
 
-const buildQueryUrl = (baseUrl, params) => {
-  const queryUrl = new URL('/api/query', baseUrl);
-  queryUrl.searchParams.append(QUERY_PARAM_DATABASE, params[KEY_SNAPSHOT_QUERY_PROJECT_ID]);
-  queryUrl.searchParams.append(QUERY_PARAM_INCLUDE_RELATIONSHIPS, params[KEY_SNAPSHOT_QUERY_SHOW_RELATIONS]);
-  const resultCount = resultCountLookup[params[KEY_SNAPSHOT_QUERY_RESULT_COUNT]];
-  queryUrl.searchParams.append(QUERY_PARAM_RESULT_COUNT, resultCount);
-  return queryUrl;
+const buildUrl = (baseUrl, isLiveSnapshot, params) => {
+  const { projectId, snapshotId, showRelations, resultCount, titleValue = '' } = params;
+  
+  // Set the appropriate endpoint and parameters based on whether it's a live query or snapshot
+  const endpoint = isLiveSnapshot ? '/api/query' : '/api/snapshot';
+  const url = new URL(endpoint, baseUrl);
+  
+  if (isLiveSnapshot) {
+    // Live query parameters
+    url.searchParams.append(QUERY_PARAM_DATABASE, projectId);
+    url.searchParams.append(QUERY_PARAM_INCLUDE_RELATIONSHIPS, showRelations);
+    
+    // Handle the special case for title search
+    if (resultCount === KEY_RESULT_COUNT_TITLE) {
+      url.searchParams.append(QUERY_PARAM_RESULT_COUNT, QUERY_VALUE_RESULT_COUNT_ALL);
+      url.searchParams.append(QUERY_PARAM_PRIMARY_TITLE_PROPERTY, titleValue.trim());
+    }
+    else {
+      // Normal case - use the lookup table for result count
+      const count = resultCountLookup[resultCount];
+      url.searchParams.append(QUERY_PARAM_RESULT_COUNT, count);
+    }
+  }
+  else {
+    // Snapshot parameters
+    url.searchParams.append(SNAPSHOT_PARAM_ID, snapshotId);
+    url.searchParams.append(SNAPSHOT_PARAM_INCLUDE_RELATIONSHIPS, showRelations);
+
+    // Handle the special case for title search
+    if (resultCount === KEY_RESULT_COUNT_TITLE) {
+      url.searchParams.append(SNAPSHOT_PARAM_RESULT_COUNT, QUERY_VALUE_RESULT_COUNT_ALL);
+      url.searchParams.append(SNAPSHOT_PARAM_PRIMARY_TITLE_PROPERTY, titleValue.trim());
+    }
+    else {
+      // Normal case - use the lookup table for result count
+      const count = resultCountLookup[resultCount];
+      url.searchParams.append(SNAPSHOT_PARAM_RESULT_COUNT, count);
+    }
+  }
+  
+  return url;
 };
 
 export const SnapshotData = ({
@@ -68,80 +107,83 @@ export const SnapshotData = ({
 
   const [showRelations, setShowRelations] = useState(x => true);
   const [resultCount, setResultCount] = useState(x => KEY_RESULT_COUNT_RANDOM_1);
+  const [titleValue, setTitleValue] = useState('');
+  const [debouncedTitleValue, setDebouncedTitleValue] = useState('');
+
   const [jsonData, setJsonData] = useState(x => null);
   const [error, setError] = useState( x => null);
+
+  // Create debounced function for title changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debounceTitleChange = useCallback(
+    debounce((value) => {
+      setDebouncedTitleValue(value);
+    }, 500),
+    []
+  );
+
+  // Update debounced value when titleValue changes
+  useEffect(() => {
+    debounceTitleChange(titleValue);
+    
+    // Cancel the debounce callback if unmounted or titleValue changes
+    return () => debounceTitleChange.cancel();
+  }, [
+    titleValue, 
+    debounceTitleChange
+  ]);
 
   useEffect(() => {
     setJsonData(null);
     setError(null); // Reset error state
     const controller = new AbortController();
-  
-    if (liveSnapshot) {
 
-      const queryUrl = buildQueryUrl(url, {
-        [KEY_SNAPSHOT_QUERY_PROJECT_ID]: projectId,
-        [KEY_SNAPSHOT_QUERY_SHOW_RELATIONS]: showRelations, 
-        [KEY_SNAPSHOT_QUERY_RESULT_COUNT]: resultCount
-      });
-  
-      fetch(queryUrl.href, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        signal: controller.signal
-      })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => setJsonData(data))
-      .catch(error => {
-        // Only log/set real errors, not aborts
-        if (error.name !== 'AbortError') {
-          console.error('Error fetching data:', error);
-          setError(error.message);
-        }
-      });
-    }
-    else {
-      const queryUrl = new URL('/api/snapshot', url);
-      queryUrl.searchParams.append(SNAPSHOT_PARAM_ID, snapshotId);
-      queryUrl.searchParams.append(SNAPSHOT_PARAM_INCLUDE_RELATIONSHIPS, showRelations);
-      const spResultCount = resultCountLookup[resultCount];
-      queryUrl.searchParams.append(SNAPSHOT_PARAM_RESULT_COUNT, spResultCount);
+    const queryUrl = buildUrl(
+      url, 
+      liveSnapshot, 
+      {
+        projectId,
+        snapshotId,
+        showRelations,
+        resultCount,
+        titleValue: debouncedTitleValue
+      }
+    );
 
-      fetch(queryUrl.href, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        signal: controller.signal
-      })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => setJsonData(data))
-      .catch(error => {
-        // Only log/set real errors, not aborts
-        if (error.name !== 'AbortError') {
-          console.error('Error fetching data:', error);
-          setError(error.message);
-        }
-      });
-    }
-  
+    fetch(queryUrl.href, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      signal: controller.signal
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => setJsonData(data))
+    .catch(error => {
+      // Only log/set real errors, not aborts
+      if (error.name !== 'AbortError') {
+        console.error('Error fetching data:', error);
+        setError(error.message);
+      }
+    });
+
     return () => controller.abort();
-  }, [url, liveSnapshot, resultCount, showRelations, projectId]);
+  }, [
+    url, 
+    liveSnapshot, 
+    resultCount, 
+    showRelations, 
+    projectId,
+    snapshotId,
+    debouncedTitleValue,
+  ]);
   
-
   const mJsonData = useMemo(() => {
     if (!isNil(error)) {
       return <span className="text-red-500">{error}</span>;
@@ -167,14 +209,29 @@ export const SnapshotData = ({
     jsonData
   ] );
   
-  const handleCopyLink = () => {
-    const queryUrl = buildQueryUrl(url, {
-      [KEY_SNAPSHOT_QUERY_PROJECT_ID]: projectId,
-      [KEY_SNAPSHOT_QUERY_SHOW_RELATIONS]: showRelations, 
-      [KEY_SNAPSHOT_QUERY_RESULT_COUNT]: resultCount
-    });
+  const handleCopyLink = useCallback(() => {
+    const queryUrl = buildUrl(
+      url,
+      liveSnapshot,
+      {
+        projectId,
+        snapshotId,
+        showRelations,
+        resultCount,
+        titleValue: debouncedTitleValue
+      }
+    );
+    
     navigator.clipboard.writeText(queryUrl.href);
-  };
+  }, [
+    url,
+    liveSnapshot,
+    projectId,
+    snapshotId,
+    showRelations,
+    resultCount,
+    debouncedTitleValue
+  ]);
   
   const handleCopyJson = () => {
     const jsonDataString = JSON.stringify(jsonData, null, 2);
@@ -220,18 +277,30 @@ export const SnapshotData = ({
         </div>
         <div className="flex items-center space-x-4">
           <span className="font-medium">Primary Results:</span>
-          {Object.keys(resultCountLookup).map((value) => (
-            <label key={value} className="inline-flex items-center">
+        {Object.keys(resultCountLookup).map((value) => (
+          <label key={value} className="inline-flex items-center">
+            <input
+              type="radio"
+              value={value}
+              checked={resultCount === value}
+              onChange={e => setResultCount(e.target.value)}
+              className="form-radio"
+            />
+            <span className="ml-2">{value}</span>
+            {value === KEY_RESULT_COUNT_TITLE && (
               <input
-                type="radio"
-                value={value}
-                checked={resultCount === value}
-                onChange={(e) => setResultCount(e.target.value)}
-                className="form-radio"
+              type="text"
+              value={titleValue}
+              onChange={e => setTitleValue(e.target.value)}
+              onFocus={() => setResultCount(KEY_RESULT_COUNT_TITLE)}
+              // disabled={resultCount !== KEY_RESULT_COUNT_TITLE}
+              placeholder="Enter title"
+              className={`ml-2 px-2 py-1 border rounded disabled:bg-gray-100 disabled:text-gray-400 
+                ${titleValue !== debouncedTitleValue ? 'bg-yellow-50' : ''}`}
               />
-              <span className="ml-2">{value}</span>
-            </label>
-          ))}
+            )}
+          </label>
+        ))}
         </div>
         <div className="flex space-x-4">
           <button

@@ -4,12 +4,6 @@ import {
   createClient
 } from '@/utils/supabase/server.js';
 import {
-  QUERY_PARAM_DATABASE,
-  QUERY_PARAM_INCLUDE_RELATIONSHIPS,
-  QUERY_PARAM_RESULT_COUNT,
-  QUERY_RESPONSE_KEY_SUCCESS
-} from 'constants.dgmd.cc';
-import {
   isNil
 } from 'lodash-es';
 import {
@@ -87,22 +81,7 @@ export async function POST( request ) {
     catch (e) {
       throw new Error( 'invalid project json' );
     }
-    
-    // const liveUrl = new URL('/api/query', process.env.SITE_ORIGIN);
-    // liveUrl.searchParams.append(QUERY_PARAM_DATABASE, pjId);
-    // liveUrl.searchParams.append(QUERY_PARAM_INCLUDE_RELATIONSHIPS, true);
-    // liveUrl.searchParams.append(QUERY_PARAM_RESULT_COUNT, Number.POSITIVE_INFINITY);
-    // const liveQueryData = await fetch( liveUrl.href, {
-    //   method: 'GET',
-    //   headers: {
-    //   },
-    //   next: { revalidate: 60 }
-    // } );
-    // const liveQueryJson = await liveQueryData.json();
-    // if (!liveQueryJson[QUERY_RESPONSE_KEY_SUCCESS]) {
-    //   throw new Error( 'query failed' );
-    // }
-    
+
     const cookieStore = await cookies();
     const supabase = await createClient( cookieStore );
     const insertResult = await supabase

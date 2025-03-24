@@ -56,3 +56,5 @@ export const NOTION_KEY_DBS = 'databases';
 export const NOTION_CURSOR_HAS_MORE = 'has_more';
 export const NOTION_CURSOR_NEXT = 'next_cursor';
 export const NOTION_KEY_START_CURSOR = 'start_cursor';
+
+export const NOTION_KEY_FILTER = 'filter';

@@ -6,7 +6,9 @@ import {
 } from '@/utils/supabase/server.js';
 import {
   DGMD_BLOCKS,
+  DGMD_BLOCK_TYPE_ID,
   DGMD_INCLUDE_RELATION_DATABASES,
+  DGMD_METADATA,
   DGMD_PRIMARY_DATABASE,
   DGMD_RELATION_DATABASES,
   DGMD_TYPE,
@@ -17,6 +19,7 @@ import {
   QUERY_VALUE_RESULT_COUNT_ALL,
   SNAPSHOT_PARAM_ID,
   SNAPSHOT_PARAM_INCLUDE_RELATIONSHIPS,
+  SNAPSHOT_PARAM_PRIMARY_IDS_PROPERTY,
   SNAPSHOT_PARAM_PRIMARY_TITLE_PROPERTY,
   SNAPSHOT_PARAM_RESULT_COUNT
 } from 'constants.dgmd.cc';
@@ -57,8 +60,9 @@ export async function GET( request ) {
     }
 
     const titleSearch = params.has(SNAPSHOT_PARAM_PRIMARY_TITLE_PROPERTY);
+    const idsSearch = params.has(SNAPSHOT_PARAM_PRIMARY_IDS_PROPERTY);
     let resultCount = Number.POSITIVE_INFINITY;
-    if (params.has(SNAPSHOT_PARAM_RESULT_COUNT) && !titleSearch) {
+    if (params.has(SNAPSHOT_PARAM_RESULT_COUNT) && !titleSearch && !idsSearch) {
       const rawCount = params.get(SNAPSHOT_PARAM_RESULT_COUNT);
       if (rawCount !== QUERY_VALUE_RESULT_COUNT_ALL) {
         resultCount = parseInt(rawCount, 10);
@@ -67,7 +71,25 @@ export async function GET( request ) {
         }
       }
     }
-    if (titleSearch) {
+    if (idsSearch) {
+      const idsProperty = params.get(SNAPSHOT_PARAM_PRIMARY_IDS_PROPERTY);
+      const idsPropTrim = idsProperty.split(',').map(id => id.trim());
+      //filter blocks by METADATA.id.VALUE
+      const allBlocks = snapshot[QUERY_RESPONSE_KEY_RESULT][DGMD_PRIMARY_DATABASE][DGMD_BLOCKS];
+      const filteredBlocks = allBlocks.filter(block => {
+        // Check if block has METADATA with id that matches any of the requested ids
+        if (block[DGMD_METADATA] && 
+            block[DGMD_METADATA][DGMD_BLOCK_TYPE_ID] &&
+            block[DGMD_METADATA][DGMD_BLOCK_TYPE_ID][DGMD_VALUE]) {
+          return idsPropTrim.includes(block[DGMD_METADATA][DGMD_BLOCK_TYPE_ID][DGMD_VALUE]);
+        }
+        return false;
+      });
+      
+      // Replace the blocks with filtered results
+      snapshot[QUERY_RESPONSE_KEY_RESULT][DGMD_PRIMARY_DATABASE][DGMD_BLOCKS] = filteredBlocks;
+    }
+    else if (titleSearch) {
       const titleProperty = params.get(SNAPSHOT_PARAM_PRIMARY_TITLE_PROPERTY);
       const titlePropTrim = titleProperty.trim();
       if (titlePropTrim.length !== 0) {
@@ -85,8 +107,6 @@ export async function GET( request ) {
           return false;
         });
 
-        console.log( 'filteredBlocks', filteredBlocks.length, allBlocks.length );
-        
         // Replace the blocks with filtered results
         snapshot[QUERY_RESPONSE_KEY_RESULT][DGMD_PRIMARY_DATABASE][DGMD_BLOCKS] = filteredBlocks;
       }

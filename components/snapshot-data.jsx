@@ -7,11 +7,13 @@ import {
 import {
   QUERY_PARAM_DATABASE,
   QUERY_PARAM_INCLUDE_RELATIONSHIPS,
+  QUERY_PARAM_PRIMARY_IDS_PROPERTY,
   QUERY_PARAM_PRIMARY_TITLE_PROPERTY,
   QUERY_PARAM_RESULT_COUNT,
   QUERY_VALUE_RESULT_COUNT_ALL,
   SNAPSHOT_PARAM_ID,
   SNAPSHOT_PARAM_INCLUDE_RELATIONSHIPS,
+  SNAPSHOT_PARAM_PRIMARY_IDS_PROPERTY,
   SNAPSHOT_PARAM_PRIMARY_TITLE_PROPERTY,
   SNAPSHOT_PARAM_RESULT_COUNT
 } from 'constants.dgmd.cc';
@@ -19,6 +21,7 @@ import {
   debounce,
   isNil
 } from 'lodash-es';
+import dynamic from 'next/dynamic';
 import {
   useCallback,
   useEffect,
@@ -32,24 +35,21 @@ import {
   buttonDisabledClassNames
 } from './look';
 
-const KEY_SNAPSHOT_QUERY_PROJECT_ID = 'project id';
-const KEY_SNAPSHOT_QUERY_SHOW_RELATIONS = 'show relations';
-const KEY_SNAPSHOT_QUERY_RESULT_COUNT = 'result count';
-const KEY_SNAPSHOT_QUERY_TITLE = 'title';
-
 const KEY_RESULT_COUNT_ALL = 'all';
 const KEY_RESULT_COUNT_RANDOM_10 = '10 random';
 const KEY_RESULT_COUNT_RANDOM_1 = '1 random';
 const KEY_RESULT_COUNT_TITLE = 'Title';
+const KEY_RESULT_COUNT_IDS = 'IDs';
 const resultCountLookup = {
   [KEY_RESULT_COUNT_ALL]: QUERY_VALUE_RESULT_COUNT_ALL,
   [KEY_RESULT_COUNT_RANDOM_10]: 10,
   [KEY_RESULT_COUNT_RANDOM_1]: 1,
-  [KEY_RESULT_COUNT_TITLE]: 'title'
+  [KEY_RESULT_COUNT_TITLE]: 'title',
+  [KEY_RESULT_COUNT_IDS]: 'ids'
 };
 
 const buildUrl = (baseUrl, isLiveSnapshot, params) => {
-  const { projectId, snapshotId, showRelations, resultCount, titleValue = '' } = params;
+  const { projectId, snapshotId, showRelations, resultCount, titleValue = '', idsValue = '' } = params;
   
   // Set the appropriate endpoint and parameters based on whether it's a live query or snapshot
   const endpoint = isLiveSnapshot ? '/api/query' : '/api/snapshot';
@@ -64,6 +64,10 @@ const buildUrl = (baseUrl, isLiveSnapshot, params) => {
     if (resultCount === KEY_RESULT_COUNT_TITLE) {
       url.searchParams.append(QUERY_PARAM_RESULT_COUNT, QUERY_VALUE_RESULT_COUNT_ALL);
       url.searchParams.append(QUERY_PARAM_PRIMARY_TITLE_PROPERTY, titleValue.trim());
+    }
+    else if (resultCount === KEY_RESULT_COUNT_IDS) {
+      url.searchParams.append(QUERY_PARAM_RESULT_COUNT, QUERY_VALUE_RESULT_COUNT_ALL);
+      url.searchParams.append(QUERY_PARAM_PRIMARY_IDS_PROPERTY, idsValue.trim());
     }
     else {
       // Normal case - use the lookup table for result count
@@ -80,6 +84,10 @@ const buildUrl = (baseUrl, isLiveSnapshot, params) => {
     if (resultCount === KEY_RESULT_COUNT_TITLE) {
       url.searchParams.append(SNAPSHOT_PARAM_RESULT_COUNT, QUERY_VALUE_RESULT_COUNT_ALL);
       url.searchParams.append(SNAPSHOT_PARAM_PRIMARY_TITLE_PROPERTY, titleValue.trim());
+    }
+    else if (resultCount === KEY_RESULT_COUNT_IDS) {
+      url.searchParams.append(SNAPSHOT_PARAM_RESULT_COUNT, QUERY_VALUE_RESULT_COUNT_ALL);
+      url.searchParams.append(SNAPSHOT_PARAM_PRIMARY_IDS_PROPERTY, idsValue.trim());
     }
     else {
       // Normal case - use the lookup table for result count
@@ -109,6 +117,8 @@ export const SnapshotData = ({
   const [resultCount, setResultCount] = useState(x => KEY_RESULT_COUNT_RANDOM_1);
   const [titleValue, setTitleValue] = useState('');
   const [debouncedTitleValue, setDebouncedTitleValue] = useState('');
+  const [idsValue, setIdsValue] = useState('');
+  const [debouncedIdsValue, setDebouncedIdsValue] = useState('');
 
   const [jsonData, setJsonData] = useState(x => null);
   const [error, setError] = useState( x => null);
@@ -118,6 +128,15 @@ export const SnapshotData = ({
   const debounceTitleChange = useCallback(
     debounce((value) => {
       setDebouncedTitleValue(value);
+    }, 500),
+    []
+  );
+
+  // Create debounced function for IDs changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debounceIdsChange = useCallback(
+    debounce((value) => {
+      setDebouncedIdsValue(value);
     }, 500),
     []
   );
@@ -133,6 +152,17 @@ export const SnapshotData = ({
     debounceTitleChange
   ]);
 
+  // Update debounced value when idsValue changes
+  useEffect(() => {
+    debounceIdsChange(idsValue);
+    
+    // Cancel the debounce callback if unmounted or idsValue changes
+    return () => debounceIdsChange.cancel();
+  }, [
+    idsValue, 
+    debounceIdsChange
+  ]);
+
   useEffect(() => {
     setJsonData(null);
     setError(null); // Reset error state
@@ -146,7 +176,8 @@ export const SnapshotData = ({
         snapshotId,
         showRelations,
         resultCount,
-        titleValue: debouncedTitleValue
+        titleValue: debouncedTitleValue,
+        idsValue: debouncedIdsValue
       }
     );
 
@@ -182,6 +213,7 @@ export const SnapshotData = ({
     projectId,
     snapshotId,
     debouncedTitleValue,
+    debouncedIdsValue,
   ]);
   
   const mJsonData = useMemo(() => {
@@ -218,7 +250,8 @@ export const SnapshotData = ({
         snapshotId,
         showRelations,
         resultCount,
-        titleValue: debouncedTitleValue
+        titleValue: debouncedTitleValue,
+        idsValue: debouncedIdsValue
       }
     );
     
@@ -230,7 +263,8 @@ export const SnapshotData = ({
     snapshotId,
     showRelations,
     resultCount,
-    debouncedTitleValue
+    debouncedTitleValue,
+    debouncedIdsValue
   ]);
   
   const handleCopyJson = () => {
@@ -293,10 +327,20 @@ export const SnapshotData = ({
               value={titleValue}
               onChange={e => setTitleValue(e.target.value)}
               onFocus={() => setResultCount(KEY_RESULT_COUNT_TITLE)}
-              // disabled={resultCount !== KEY_RESULT_COUNT_TITLE}
               placeholder="Enter title"
               className={`ml-2 px-2 py-1 border rounded disabled:bg-gray-100 disabled:text-gray-400 
                 ${titleValue !== debouncedTitleValue ? 'bg-yellow-50' : ''}`}
+              />
+            )}
+            {value === KEY_RESULT_COUNT_IDS && (
+              <input
+              type="text"
+              value={idsValue}
+              onChange={e => setIdsValue(e.target.value)}
+              onFocus={() => setResultCount(KEY_RESULT_COUNT_IDS)}
+              placeholder="Enter IDs"
+              className={`ml-2 px-2 py-1 border rounded disabled:bg-gray-100 disabled:text-gray-400 
+                ${idsValue !== debouncedIdsValue ? 'bg-yellow-50' : ''}`}
               />
             )}
           </label>

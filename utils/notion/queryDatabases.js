@@ -127,6 +127,7 @@ export const DATABASE_QUERY_PAGE_CURSOR_TYPE_NONE = 'PAGE_CURSOR_TYPE_NONE';
 export const DATABASE_QUERY_INCLUDE_RELATIONSHIPS = 'INCLUDE_RELATIONSHIPS';
 export const DATABASE_QUERY_RESULT_COUNT = 'DATABASE_QUERY_RESULT_COUNT';
 export const DATABASE_QUERY_PRIMARY_TITLE_PROPERTY = 'PRIMARY_TITLE_PROPERTY';
+export const DATABASE_QUERY_PRIMARY_IDS_PROPERTY = 'PRIMARY_IDS_PROPERTY';
 
 const QUERY_PROPERTIES = 'QUERY_PROPERTIES';
 const QUERY_PAGES = 'QUERY_PAGES';
@@ -173,6 +174,15 @@ export const getNotionDatabases =
       [KEY_TITLE_SEARCH_BLANK]: primaryTitleTrimmed.length === 0
     }
   }
+
+  let idsSearch = null;
+  const hasPrimaryIds = DATABASE_QUERY_PRIMARY_IDS_PROPERTY in requests;
+  if (hasPrimaryIds) {
+    const primaryIds = requests[DATABASE_QUERY_PRIMARY_IDS_PROPERTY];
+    const primaryIdsTrimmed = primaryIds.split(',').map( x => removeHyphens(x.trim()) );
+    idsSearch = primaryIdsTrimmed;
+  }
+
   const metasMap = new Map( );
   for (const [dbId, db] of dbMap.entries()) {
     const primary = dbId === primaryDbId;
@@ -186,12 +196,17 @@ export const getNotionDatabases =
   }
   const nDbMeta = metasMap.get( primaryDbId );
 
-
+  let nDbResult;
+  const primaryRel = relMap.get(primaryDbId);
+  if (idsSearch) {
+    nDbResult = await getNotionDbaseByIds(nClient, idsSearch, primaryRel);
+  }
+  else {
+    nDbResult = await getNotionDbase( 
+      nClient, nDbMeta, primaryDbId, primaryRel, titleSearch );
+  }
   
-  const nDbResult = await getNotionDbase( 
-    nClient, nDbMeta, primaryDbId, relMap.get(primaryDbId), titleSearch );
   const nDbProps = nDbResult[QUERY_PROPERTIES];
-
 
   const resultCount = requests[DATABASE_QUERY_RESULT_COUNT];
   const limitResultCount = resultCount !== Number.POSITIVE_INFINITY && nDbProps.length > resultCount;
@@ -235,6 +250,31 @@ export const getNotionDatabases =
   orgDbResult[DGMD_INCLUDE_RELATION_DATABASES] = incRels;
 
   return orgDbResult
+};
+
+// New function to retrieve database entries by specific IDs
+const getNotionDbaseByIds = async (nClient, pageIds, relMap) => {
+  const pgs = [];
+  for (const pageId of pageIds) {
+    try {
+      // Retrieve the page from Notion
+      const page = await nClient.pages.retrieve({
+        page_id: pageId
+      });
+      pgs.push(page);
+    }
+    catch(e) {
+      console.log('cannot retrieve page', pageId, e);
+    }
+  }
+  
+  return {
+    [QUERY_PROPERTIES]: pgs.map(p => mapNotionResults(p, relMap)),
+    [QUERY_PAGES]: {
+      [NOTION_CURSOR_HAS_MORE]: false,
+      [NOTION_CURSOR_NEXT]: null
+    }
+  };
 };
 
 //
@@ -478,220 +518,7 @@ export const getNotionPageTitle =
 export const getNotionDbaseProperties =
   (notionDatas, relMap) => {
   if (NOTION_RESULTS in notionDatas) {
-    const data = notionDatas[NOTION_RESULTS].map( (resultData, index) => {
-      const metadata = {};
-      const propdata = {};
-      const somedata = {
-        [DGMD_METADATA]: metadata,
-        [DGMD_PROPERTIES]: propdata
-      };
-      const keys = Object.keys( resultData );
-      for (const key of keys) {
-        if (key === NOTION_KEY_ID) {
-
-          const id = resultData[key];
-          const idSansHyphens = removeHyphens( id );
-
-          metadata[DGMD_BLOCK_TYPE_ID] = {
-            [DGMD_TYPE]: DGMD_BLOCK_TYPE_ID,
-            [DGMD_VALUE]: idSansHyphens
-          };
-        }
-        else if (key === NOTION_DATA_TYPE_ICON) {
-          //todo: handle type here correctly
-          const iconObj = getIcon( resultData[key] );
-          metadata[DGMD_BLOCK_TYPE_ICON] = {
-            [DGMD_TYPE]: iconObj[NOTION_KEY_TYPE],
-            [DGMD_VALUE]: iconObj[NOTION_KEY_VALUE]
-          };
-        }
-        else if (key === NOTION_DATA_TYPE_COVER) {
-          //todo: handle type here correctly
-          const coverObj = getCover( resultData[key] );
-          metadata[DGMD_BLOCK_TYPE_COVER] = {
-            [DGMD_TYPE]: coverObj[NOTION_KEY_TYPE],
-            [DGMD_VALUE]: coverObj[NOTION_KEY_VALUE]
-          };
-        }
-        else if (key === NOTION_PROPERTIES) {
-          const properties = resultData[key];
-          const propertyKeys = Object.keys( properties );
-          for (const propertyKey of propertyKeys) {
-
-            const propertyObj = properties[propertyKey];
-            const propertyType = propertyObj[NOTION_KEY_TYPE];
-            const propertyVal = propertyObj[propertyType];
-            const gotPropertyVal = propertyVal !== null && propertyVal !== undefined;
-
-            if (gotPropertyVal) {
-              if (propertyType === NOTION_DATA_TYPE_SELECT) {
-                propdata[propertyKey] = {
-                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_SELECT,
-                  [DGMD_VALUE]: propertyVal[NOTION_KEY_NAME]
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_MULTI_SELECT) {
-                const multis = propertyVal.map( m => m[NOTION_KEY_NAME] );
-                propdata[propertyKey] = {
-                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_MULTI_SELECT,
-                  [DGMD_VALUE]: multis
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_FILES) {
-                const files = propertyVal.reduce( (acc, cur) => {
-                  if (NOTION_KEY_EXTERNAL in cur) {
-                    acc.push( cur[NOTION_KEY_EXTERNAL][NOTION_KEY_URL] );
-                  }
-                  else if (NOTION_KEY_FILE in cur) {
-                    acc.push( cur[NOTION_KEY_FILE][NOTION_KEY_URL] );
-                  }
-                  return acc;
-                 }, [] );
-                propdata[propertyKey] = {
-                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_FILE_EXTERNAL,
-                  [DGMD_VALUE]: files.length > 0 ? files : null
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_NUMBER) {
-                propdata[propertyKey] = {
-                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_NUMBER,
-                  [DGMD_VALUE]: propertyVal
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_CHECKBOX) {
-                propdata[propertyKey] = {
-                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_CHECKBOX,
-                  [DGMD_VALUE]: propertyVal
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_URL) {
-                propdata[propertyKey] = {
-                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_URL,
-                  [DGMD_VALUE]: propertyVal
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_EMAIL) {
-                propdata[propertyKey] = {
-                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_EMAIL,
-                  [DGMD_VALUE]: propertyVal
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_PHONE_NUMBER) {
-                propdata[propertyKey] = {
-                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_PHONE_NUMBER,
-                  [DGMD_VALUE]: propertyVal
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_STATUS) {
-                propdata[propertyKey] = {
-                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_STATUS,
-                  [DGMD_VALUE]: propertyVal[NOTION_KEY_NAME]
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_TITLE || propertyType == NOTION_DATA_TYPE_RICH_TEXT) {
-                const titles = propertyVal.map( m => m[NOTION_KEY_PLAIN_TEXT] );
-                const val = titles.length > 0 ? titles.join('') : null;
-                const type = propertyType == NOTION_DATA_TYPE_TITLE ? 
-                  DGMD_BLOCK_TYPE_TITLE : DGMD_BLOCK_TYPE_RICH_TEXT;
-
-                propdata[propertyKey] = {
-                  [DGMD_TYPE]: type,
-                  [DGMD_VALUE]: val
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_RELATION) {
-                const notionPropertyId = propertyObj[NOTION_KEY_ID];
-                const dbId = relMap.get( notionPropertyId );
-                const val = propertyVal.map( m => {
-                  return {
-                    [DGMD_RELATION_DATABASE_ID]: dbId,
-                    [DGMD_RELATION_PAGE_ID]: removeHyphens( m[NOTION_KEY_ID] )
-                  } }
-                );
-                propdata[propertyKey] = {
-                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_RELATION,
-                  [DGMD_VALUE]: val
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_DATE) {
-                const dateVal = convertDateFromNotionToDGMD( propertyVal );
-                propdata[propertyKey] = {
-                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_DATE,
-                  [DGMD_VALUE]: dateVal
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_LAST_EDITED_TIME) {
-                propdata[propertyKey] = {
-                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_LAST_EDITED_TIME,
-                  [DGMD_VALUE]: propertyVal
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_CREATED_TIME) {
-                propdata[propertyKey] = {
-                  [DGMD_TYPE]: DGMD_BLOCK_TYPE_CREATED_TIME,
-                  [DGMD_VALUE]: propertyVal
-                };
-              }
-              else if (propertyType == NOTION_DATA_TYPE_FORMULA) {
-                const formulaType = propertyVal[NOTION_KEY_TYPE];
-                if (formulaType === NOTION_FORMULA_RESULT_DATE) {
-                  const dgmdDateVal = convertDateFromNotionToDGMD( propertyVal[formulaType] );
-                  propdata[propertyKey] = {
-                    [DGMD_TYPE]: DGMD_BLOCK_TYPE_FORMULA_DATE,
-                    [DGMD_VALUE]: dgmdDateVal
-                  };
-                }
-                else {
-                  const dgmdFormulaType = {
-                    [NOTION_FORMULA_RESULT_STRING]: DGMD_BLOCK_TYPE_FORMULA_STRING,
-                    [NOTION_FORMULA_RESULT_BOOLEAN]: DGMD_BLOCK_TYPE_FORMULA_BOOLEAN,
-                  }[formulaType];
-                  propdata[propertyKey] = {
-                    [DGMD_TYPE]: dgmdFormulaType,
-                    [DGMD_VALUE]: propertyVal[formulaType]
-                  };
-                }
-              }
-              else {
-                // todo... handle other types
-                // console.log(
-                //   '***',
-                //   'propertyType', propertyType,
-                //   'prototypeKey', propertyKey
-                // ); yaya
-              }
-            }
-            else {
-              if ([
-                NOTION_DATA_TYPE_SELECT,
-                NOTION_DATA_TYPE_MULTI_SELECT,
-                NOTION_DATA_TYPE_FILES,
-                NOTION_DATA_TYPE_NUMBER,
-                NOTION_DATA_TYPE_TITLE,
-                NOTION_DATA_TYPE_CHECKBOX,
-                NOTION_DATA_TYPE_RICH_TEXT,
-                NOTION_DATA_TYPE_RELATION,
-                NOTION_DATA_TYPE_DATE,
-                NOTION_DATA_TYPE_EMAIL,
-                NOTION_DATA_TYPE_PHONE_NUMBER,
-                NOTION_DATA_TYPE_STATUS,
-                NOTION_DATA_TYPE_URL,
-                NOTION_DATA_TYPE_LAST_EDITED_TIME,
-                NOTION_DATA_TYPE_CREATED_TIME
-              ].includes( propertyType )) {
-
-                propdata[propertyKey] = {
-                  [DGMD_TYPE]: propertyType,
-                  [DGMD_VALUE]: null
-                };
-
-              };
-            }
-          }
-        }
-      }
-      return somedata;
-    } );
+    const data = notionDatas[NOTION_RESULTS].map( r => mapNotionResults(r, relMap) );
     return data;
   }
   return {};
@@ -895,4 +722,219 @@ const convertDateFromNotionToDGMD =
     [DGMD_END_DATE]: endDate,
     [DGMD_TIME_ZONE]: timeZone
   };
+};
+
+const mapNotionResults = (resultData, relMap) => {
+  const metadata = {};
+  const propdata = {};
+  const somedata = {
+    [DGMD_METADATA]: metadata,
+    [DGMD_PROPERTIES]: propdata
+  };
+  const keys = Object.keys( resultData );
+  for (const key of keys) {
+    if (key === NOTION_KEY_ID) {
+
+      const id = resultData[key];
+      const idSansHyphens = removeHyphens( id );
+
+      metadata[DGMD_BLOCK_TYPE_ID] = {
+        [DGMD_TYPE]: DGMD_BLOCK_TYPE_ID,
+        [DGMD_VALUE]: idSansHyphens
+      };
+    }
+    else if (key === NOTION_DATA_TYPE_ICON) {
+      //todo: handle type here correctly
+      const iconObj = getIcon( resultData[key] );
+      metadata[DGMD_BLOCK_TYPE_ICON] = {
+        [DGMD_TYPE]: iconObj[NOTION_KEY_TYPE],
+        [DGMD_VALUE]: iconObj[NOTION_KEY_VALUE]
+      };
+    }
+    else if (key === NOTION_DATA_TYPE_COVER) {
+      //todo: handle type here correctly
+      const coverObj = getCover( resultData[key] );
+      metadata[DGMD_BLOCK_TYPE_COVER] = {
+        [DGMD_TYPE]: coverObj[NOTION_KEY_TYPE],
+        [DGMD_VALUE]: coverObj[NOTION_KEY_VALUE]
+      };
+    }
+    else if (key === NOTION_PROPERTIES) {
+      const properties = resultData[key];
+      const propertyKeys = Object.keys( properties );
+      for (const propertyKey of propertyKeys) {
+
+        const propertyObj = properties[propertyKey];
+        const propertyType = propertyObj[NOTION_KEY_TYPE];
+        const propertyVal = propertyObj[propertyType];
+        const gotPropertyVal = propertyVal !== null && propertyVal !== undefined;
+
+        if (gotPropertyVal) {
+          if (propertyType === NOTION_DATA_TYPE_SELECT) {
+            propdata[propertyKey] = {
+              [DGMD_TYPE]: DGMD_BLOCK_TYPE_SELECT,
+              [DGMD_VALUE]: propertyVal[NOTION_KEY_NAME]
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_MULTI_SELECT) {
+            const multis = propertyVal.map( m => m[NOTION_KEY_NAME] );
+            propdata[propertyKey] = {
+              [DGMD_TYPE]: DGMD_BLOCK_TYPE_MULTI_SELECT,
+              [DGMD_VALUE]: multis
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_FILES) {
+            const files = propertyVal.reduce( (acc, cur) => {
+              if (NOTION_KEY_EXTERNAL in cur) {
+                acc.push( cur[NOTION_KEY_EXTERNAL][NOTION_KEY_URL] );
+              }
+              else if (NOTION_KEY_FILE in cur) {
+                acc.push( cur[NOTION_KEY_FILE][NOTION_KEY_URL] );
+              }
+              return acc;
+             }, [] );
+            propdata[propertyKey] = {
+              [DGMD_TYPE]: DGMD_BLOCK_TYPE_FILE_EXTERNAL,
+              [DGMD_VALUE]: files.length > 0 ? files : null
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_NUMBER) {
+            propdata[propertyKey] = {
+              [DGMD_TYPE]: DGMD_BLOCK_TYPE_NUMBER,
+              [DGMD_VALUE]: propertyVal
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_CHECKBOX) {
+            propdata[propertyKey] = {
+              [DGMD_TYPE]: DGMD_BLOCK_TYPE_CHECKBOX,
+              [DGMD_VALUE]: propertyVal
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_URL) {
+            propdata[propertyKey] = {
+              [DGMD_TYPE]: DGMD_BLOCK_TYPE_URL,
+              [DGMD_VALUE]: propertyVal
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_EMAIL) {
+            propdata[propertyKey] = {
+              [DGMD_TYPE]: DGMD_BLOCK_TYPE_EMAIL,
+              [DGMD_VALUE]: propertyVal
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_PHONE_NUMBER) {
+            propdata[propertyKey] = {
+              [DGMD_TYPE]: DGMD_BLOCK_TYPE_PHONE_NUMBER,
+              [DGMD_VALUE]: propertyVal
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_STATUS) {
+            propdata[propertyKey] = {
+              [DGMD_TYPE]: DGMD_BLOCK_TYPE_STATUS,
+              [DGMD_VALUE]: propertyVal[NOTION_KEY_NAME]
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_TITLE || propertyType == NOTION_DATA_TYPE_RICH_TEXT) {
+            const titles = propertyVal.map( m => m[NOTION_KEY_PLAIN_TEXT] );
+            const val = titles.length > 0 ? titles.join('') : null;
+            const type = propertyType == NOTION_DATA_TYPE_TITLE ? 
+              DGMD_BLOCK_TYPE_TITLE : DGMD_BLOCK_TYPE_RICH_TEXT;
+
+            propdata[propertyKey] = {
+              [DGMD_TYPE]: type,
+              [DGMD_VALUE]: val
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_RELATION) {
+            const notionPropertyId = propertyObj[NOTION_KEY_ID];
+            const dbId = relMap.get( notionPropertyId );
+            const val = propertyVal.map( m => {
+              return {
+                [DGMD_RELATION_DATABASE_ID]: dbId,
+                [DGMD_RELATION_PAGE_ID]: removeHyphens( m[NOTION_KEY_ID] )
+              } }
+            );
+            propdata[propertyKey] = {
+              [DGMD_TYPE]: DGMD_BLOCK_TYPE_RELATION,
+              [DGMD_VALUE]: val
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_DATE) {
+            const dateVal = convertDateFromNotionToDGMD( propertyVal );
+            propdata[propertyKey] = {
+              [DGMD_TYPE]: DGMD_BLOCK_TYPE_DATE,
+              [DGMD_VALUE]: dateVal
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_LAST_EDITED_TIME) {
+            propdata[propertyKey] = {
+              [DGMD_TYPE]: DGMD_BLOCK_TYPE_LAST_EDITED_TIME,
+              [DGMD_VALUE]: propertyVal
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_CREATED_TIME) {
+            propdata[propertyKey] = {
+              [DGMD_TYPE]: DGMD_BLOCK_TYPE_CREATED_TIME,
+              [DGMD_VALUE]: propertyVal
+            };
+          }
+          else if (propertyType == NOTION_DATA_TYPE_FORMULA) {
+            const formulaType = propertyVal[NOTION_KEY_TYPE];
+            if (formulaType === NOTION_FORMULA_RESULT_DATE) {
+              const dgmdDateVal = convertDateFromNotionToDGMD( propertyVal[formulaType] );
+              propdata[propertyKey] = {
+                [DGMD_TYPE]: DGMD_BLOCK_TYPE_FORMULA_DATE,
+                [DGMD_VALUE]: dgmdDateVal
+              };
+            }
+            else {
+              const dgmdFormulaType = {
+                [NOTION_FORMULA_RESULT_STRING]: DGMD_BLOCK_TYPE_FORMULA_STRING,
+                [NOTION_FORMULA_RESULT_BOOLEAN]: DGMD_BLOCK_TYPE_FORMULA_BOOLEAN,
+              }[formulaType];
+              propdata[propertyKey] = {
+                [DGMD_TYPE]: dgmdFormulaType,
+                [DGMD_VALUE]: propertyVal[formulaType]
+              };
+            }
+          }
+          else {
+            // todo... handle other types
+            // console.log(
+            //   '***',
+            //   'propertyType', propertyType,
+            //   'prototypeKey', propertyKey
+            // ); yaya
+          }
+        }
+        else {
+          if ([
+            NOTION_DATA_TYPE_SELECT,
+            NOTION_DATA_TYPE_MULTI_SELECT,
+            NOTION_DATA_TYPE_FILES,
+            NOTION_DATA_TYPE_NUMBER,
+            NOTION_DATA_TYPE_TITLE,
+            NOTION_DATA_TYPE_CHECKBOX,
+            NOTION_DATA_TYPE_RICH_TEXT,
+            NOTION_DATA_TYPE_RELATION,
+            NOTION_DATA_TYPE_DATE,
+            NOTION_DATA_TYPE_EMAIL,
+            NOTION_DATA_TYPE_PHONE_NUMBER,
+            NOTION_DATA_TYPE_STATUS,
+            NOTION_DATA_TYPE_URL,
+            NOTION_DATA_TYPE_LAST_EDITED_TIME,
+            NOTION_DATA_TYPE_CREATED_TIME
+          ].includes( propertyType )) {
+
+            propdata[propertyKey] = {
+              [DGMD_TYPE]: propertyType,
+              [DGMD_VALUE]: null
+            };
+
+          };
+        }
+      }
+    }
+  }
+  return somedata;
 };

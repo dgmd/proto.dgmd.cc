@@ -1,3 +1,5 @@
+export const maxDuration = 300;
+
 import {
   createCorsHeadedResponse
 } from '@/utils/coriHeaders.js';

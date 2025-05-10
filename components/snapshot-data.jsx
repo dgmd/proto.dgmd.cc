@@ -21,7 +21,6 @@ import {
   debounce,
   isNil
 } from 'lodash-es';
-import dynamic from 'next/dynamic';
 import {
   useCallback,
   useEffect,

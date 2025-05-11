@@ -74,6 +74,7 @@ import {
   DGMD_BLOCK_TYPE_TITLE,
   DGMD_BLOCK_TYPE_URL,
   DGMD_END_DATE,
+  DGMD_RELATION_PAGE_ID,
   DGMD_START_DATE,
   DGMD_TYPE,
   DGMD_VALUE
@@ -400,6 +401,25 @@ const mmPropToNotionBlock = ( block ) => {
           [type]: value.map( v => {
             return {
               "id": v
+            };
+          } )
+        };
+      }
+      if (value.every( v => {
+        const isObj = typeof v === 'object';
+        if (!isObj) {
+          return false;
+        }
+        const hasPageId = v.hasOwnProperty( DGMD_RELATION_PAGE_ID );
+        if (!hasPageId) {
+          return false;
+        }
+        return true;
+      })) {
+        return {
+          [type]: value.map( v => {
+            return {
+              "id": v[DGMD_RELATION_PAGE_ID]
             };
           } )
         };

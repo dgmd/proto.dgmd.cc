@@ -89,8 +89,6 @@ export const ProjectLinkTable =
 
     const snaps = await fetchAllSnapshots( url, projectId );
     const isnaps = snaps.length > 1 ? combineSnaps(snaps) : snaps[0];
-    console.log( 'snaps', snaps );
-    console.log( 'isnaps', isnaps );
 
     //create the snapshot
     await fetch( '/api/project/', {

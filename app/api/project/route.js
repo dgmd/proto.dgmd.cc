@@ -4,6 +4,9 @@ import {
   createClient
 } from '@/utils/supabase/server.js';
 import {
+  PROTO_RESPONSE_KEY_SNAPSHOT_TIMESTAMP
+} from 'constants.dgmd.cc';
+import {
   isNil
 } from 'lodash-es';
 import {
@@ -81,6 +84,7 @@ export async function POST( request ) {
     catch (e) {
       throw new Error( 'invalid project json' );
     }
+    pjJson[PROTO_RESPONSE_KEY_SNAPSHOT_TIMESTAMP] = new Date().toISOString();
 
     const cookieStore = await cookies();
     const supabase = await createClient( cookieStore );

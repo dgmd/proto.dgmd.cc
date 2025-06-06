@@ -22,6 +22,7 @@
     "constants.dgmd.cc": "https://github.com/dgmd/constants.dgmd.cc.git",
     "eslint": "^9.23.0",
     "eslint-config-next": "^15.2.4",
+    "file-type": "^21.0.0",
     "lodash-es": "^4.17.21",
     "next": "^15.2.4",
     "postcss": "^8.5.3",
@@ -42,7 +43,7 @@
     "import-sort-style-module": "^6.0.0",
     "typescript": "^5.8.2"
   },
-  "packageManager": "yarn@4.9.1",
+  "packageManager": "yarn@4.9.2",
   "importSort": {
     ".js, .jsx, .es6, .es": {
       "style": "module"

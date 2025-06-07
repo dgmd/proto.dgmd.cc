@@ -114,8 +114,19 @@ export async function OPTIONS(request) {
   }, request);
 };
 
-async function getNotionFileUploadUrl() {
+async function getNotionFileUploadUrl(isMultiPart = false, numberOfParts = null, filename = null) {
   try {
+    let requestBody = {};
+    
+    // If multipart, add the appropriate parameters
+    if (isMultiPart && numberOfParts && filename) {
+      requestBody = {
+        "mode": "multi_part",
+        "number_of_parts": numberOfParts,
+        "filename": filename
+      };
+    }
+    
     const response = await fetch('https://api.notion.com/v1/file_uploads', {
       method: 'POST',
       headers: {
@@ -123,7 +134,7 @@ async function getNotionFileUploadUrl() {
         'Content-Type': 'application/json',
         'Notion-Version': '2022-06-28'
       },
-      body: '{}'
+      body: JSON.stringify(requestBody)
     });
     
     if (!response.ok) {
@@ -165,11 +176,11 @@ const extractDataFromRequest = async ( request ) => {
         uploadedFiles.push(filePath);
         
       
-        // Check file size (example: 5MB limit)
-        const maxSize = 5 * 1024 * 1024; // 5MB
-        if (value.size > maxSize) {
-          console.warn(`File ${value.name} exceeds size limit`);
-        }
+        // // Check file size (example: 5MB limit)
+        // const maxSize = 5 * 1024 * 1024; // 5MB
+        // if (value.size > maxSize) {
+        //   console.warn(`File ${value.name} exceeds size limit`);
+        // }
         
         // Store file info (you might want to add this to your response)
         if (!data.files) {
@@ -203,8 +214,6 @@ const extractDataFromRequest = async ( request ) => {
   }
 };
 
-
-
 async function detectMimeType(fileBuffer, fileName) {
   let mimeType = 'application/octet-stream'; // Default MIME type
   
@@ -221,59 +230,222 @@ async function detectMimeType(fileBuffer, fileName) {
   return mimeType;
 };
 
-async function uploadFileToNotion(filePath, fileUploadId) {
+const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB threshold for splitting
+const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunk size for actual splitting
+
+// Utility function to calculate number of chunks needed for a file
+function calculateChunksNeeded(fileSize) {
+  return Math.ceil(fileSize / CHUNK_SIZE);
+}
+
+async function uploadPartToNotion(fileBuffer, fileName, fileUploadId, partNumber = null) {
+  const mimeType = await detectMimeType(fileBuffer, fileName);
+  const fileBlob = new Blob([fileBuffer], { type: mimeType });
+  const form = new FormData();
+  form.append('file', fileBlob, fileName);
+  
+  // Add part_number if provided
+  if (partNumber !== null) {
+    form.append('part_number', partNumber.toString());
+  }
+  
+  // Send the file to Notion
+  const response = await fetch(
+    `https://api.notion.com/v1/file_uploads/${fileUploadId}/send`,
+    {
+      method: 'POST',
+      body: form,
+      headers: {
+        'Authorization': `Bearer ${process.env.NOTION_SECRET}`,
+        'Notion-Version': '2022-06-28',
+      }
+    }
+  );
+  
+  // Handle errors
+  if (!response.ok) {
+    const errorBody = await response.text();
+    logger.error('Error uploading file to Notion:', errorBody);
+    throw new Error(`HTTP error with status: ${response.status}`);
+  }
+  
+  const data = await response.json();
+  logger.debug('File part uploaded to Notion successfully:', data);
+  return data;
+}
+
+async function uploadFileToNotion(filePath, fileUploadId, numberOfParts = null) {
   try {
     // Read file as buffer instead of stream
     const fileBuffer = await fs.promises.readFile(filePath);
     const fileName = path.basename(filePath);
     
-    // Determine the file's mime type using the dedicated function
-    const mimeType = await detectMimeType(fileBuffer, fileName);
-    
-    // Create a blob from the file buffer
-    const fileBlob = new Blob([fileBuffer], { type: mimeType });
-    
-    // Create form data with the file
-    const form = new FormData();
-    form.append('file', fileBlob, fileName);
-    
-    // Send the file to Notion
-    const response = await fetch(
-      `https://api.notion.com/v1/file_uploads/${fileUploadId}/send`,
-      {
-        method: 'POST',
-        body: form,
-        headers: {
-          'Authorization': `Bearer ${process.env.NOTION_SECRET}`,
-          'Notion-Version': '2022-06-28',
-        }
-      }
-    );
-    
-    // Handle errors
-    if (!response.ok) {
-      const errorBody = await response.text();
-      logger.error('Error uploading file to Notion:', errorBody);
-      throw new Error(`HTTP error with status: ${response.status}`);
+    // Check if file needs splitting based on numberOfParts
+    if (numberOfParts !== null && numberOfParts > 1) {
+      logger.debug(`File ${fileName} is large (${fileBuffer.length} bytes), splitting into ${numberOfParts} parts...`);
+      return await handleLargeFileUpload(fileBuffer, fileName, fileUploadId, numberOfParts);
     }
     
-    const data = await response.json();
-    logger.debug('File uploaded to Notion successfully:', data);
-    return data;
+    // For normal sized files, use the uploadPartToNotion function
+    return await uploadPartToNotion(fileBuffer, fileName, fileUploadId);
   } 
   catch (error) {
     logger.error('Failed to upload file to Notion:', error);
     throw error;
   }
+}
+
+async function handleLargeFileUpload(fileBuffer, originalFileName, fileUploadId, numChunks = null) {
+  const splitFiles = [];
+  const tempDir = path.join(UPLOAD_DIR, 'temp-split');
+  
+  try {
+    // Create temp directory for split files
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    
+    // Split file into chunks
+    logger.info(`Splitting ${originalFileName} into ${numChunks} chunks`);
+    
+    // Create chunk files
+    for (let i = 0; i < numChunks; i++) {
+      const start = i * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, fileBuffer.length);
+      const chunkBuffer = fileBuffer.subarray(start, end);
+      const chunkFileName = `${originalFileName}.part${i+1}`;
+      const chunkPath = path.join(tempDir, chunkFileName);
+      
+      await fs.promises.writeFile(chunkPath, chunkBuffer);
+      splitFiles.push({
+        path: chunkPath,
+        buffer: chunkBuffer,
+        partNumber: i + 1
+      });
+    }
+    
+    // Upload all chunks in parallel but collect the promises
+    const uploadPromises = splitFiles.map((file, index) => {
+      // Use the same fileUploadId for all parts
+      return uploadPartToNotion(
+        file.buffer, 
+        path.basename(file.path), 
+        fileUploadId, 
+        file.partNumber
+      );
+    });
+    
+    // Wait for all uploads to complete
+    const uploadResults = await Promise.all(uploadPromises);
+    
+    logger.info(`Successfully uploaded ${splitFiles.length} parts of ${originalFileName}`);
+    
+    // Finalize the multi-part upload
+    logger.info(`Finalizing multi-part upload for ${originalFileName}`);
+    const finalizeResponse = await fetch(`https://api.notion.com/v1/file_uploads/${fileUploadId}/complete`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.NOTION_SECRET}`,
+        'Content-Type': 'application/json',
+        'Notion-Version': '2022-06-28',
+        'accept': 'application/json'
+      }
+    });
+    
+    if (!finalizeResponse.ok) {
+      const errorText = await finalizeResponse.text();
+      throw new Error(`Failed to finalize multi-part upload: ${finalizeResponse.status} ${errorText}`);
+    }
+    
+    const finalizeResult = await finalizeResponse.json();
+    logger.info(`Multi-part upload finalized successfully for ${originalFileName}`);
+    
+    // Return the finalize result instead of the first upload result
+    return finalizeResult;
+  }
+  catch (error) {
+    logger.error(`Error in split file upload: ${error.message}`);
+    throw error;
+  }
+  finally {
+    // Clean up split files
+    for (const file of splitFiles) {
+      try {
+        await fs.promises.unlink(file.path);
+      }
+      catch (e) {
+        logger.error(`Failed to delete split file ${file.path}: ${e.message}`);
+      }
+    }
+    
+    // Try to remove the temp directory if it's empty
+    await cleanupDirectory(tempDir);
+  }
 };
+
+// Utility function to safely remove a directory if it's empty
+async function cleanupDirectory(dirPath) {
+  try {
+    // Check if directory exists first
+    const exists = fs.existsSync(dirPath);
+    if (exists) {
+      // Check if directory is empty
+      const files = fs.readdirSync(dirPath);
+      if (files.length === 0) {
+        // Remove empty directory
+        fs.rmdirSync(dirPath);
+        logger.debug(`Cleaned up empty directory: ${dirPath}`);
+      } else {
+        logger.debug(`Directory not empty, skipping cleanup: ${dirPath}`);
+      }
+    }
+  } catch (e) {
+    // Ignore errors when removing directory
+    logger.debug(`Error cleaning up directory ${dirPath}: ${e.message}`);
+  }
+}
+
+// Helper to clean up uploaded files
+async function cleanupFiles(filePaths) {
+  for (const filePath of filePaths) {
+    try {
+      await fs.promises.unlink(filePath);
+    } 
+    catch (error) {
+      logger.error(`Failed to delete file ${filePath}:`, error);
+    }
+  }
+  
+  // Try to clean up the main uploads directory if it's empty
+  await cleanupDirectory(UPLOAD_DIR);
+}
 
 async function processAndUploadFiles(files) {
   const notionUploads = [];
   
   for (const file of files) {
     try {
-      const notionUploadData = await getNotionFileUploadUrl();
-      const uploadResult = await uploadFileToNotion(file.path, notionUploadData.id);
+      // Read file stats to check size without loading the entire file
+      const stats = await fs.promises.stat(file.path);
+      const fileSize = stats.size;
+      const isLargeFile = fileSize > MAX_FILE_SIZE;
+      const fileName = path.basename(file.path);
+      
+      // Calculate number of parts if it's a large file
+      let numberOfParts = null;
+      if (isLargeFile) {
+        numberOfParts = calculateChunksNeeded(fileSize);
+        logger.debug(`Large file detected: ${fileName} (${fileSize} bytes, will split into ${numberOfParts} parts)`);
+      }
+      
+      // Get upload URL with appropriate parameters based on file size
+      const notionUploadData = await getNotionFileUploadUrl(
+        isLargeFile,
+        numberOfParts,
+        isLargeFile ? fileName : null
+      );
+      
+      const uploadResult = await uploadFileToNotion(file.path, notionUploadData.id, numberOfParts);
       logger.debug(`File ${file.originalName} uploaded to Notion with ID: ${notionUploadData.id}`);
 
       notionUploads.push({
@@ -289,18 +461,6 @@ async function processAndUploadFiles(files) {
   }
   
   return notionUploads;
-}
-
-// Helper to clean up uploaded files
-async function cleanupFiles(filePaths) {
-  for (const filePath of filePaths) {
-    try {
-      await fs.promises.unlink(filePath);
-    } 
-    catch (error) {
-      logger.error(`Failed to delete file ${filePath}:`, error);
-    }
-  }
 }
 
 // Common function to process properties and convert them to Notion format
@@ -467,6 +627,7 @@ export async function POST( request ) {
     rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_CREATE_METAS] = rMetas;
   }
   catch (error) {
+    console.error('Error in POST /update:', error);
     rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_ERROR] = error.message;
   }
   finally {
@@ -571,7 +732,6 @@ const updateMeta = async (nClient, pageId, metaKey, metaValue, responseMetas) =>
 //
 //  BLOCK UPDATE CONVERTERS
 
-//todo: DGMD type to Notion type
 const mmPropToNotionBlock = (block, notionUploads = []) => {
   const type = block[DGMD_TYPE];
   const value = block[DGMD_VALUE];
@@ -705,6 +865,10 @@ const mmPropToNotionBlock = (block, notionUploads = []) => {
       };
     }
   }
+
+  // if (type === DGMD_BLOCK_TYPE_EXTERNAL_URL) {
+
+  // }
   
   // Handle file uploads - map field names to Notion file IDs
   if (type === DGMD_BLOCK_TYPE_FILE_UPLOAD) {

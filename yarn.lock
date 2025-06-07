@@ -2381,11 +2381,11 @@ __metadata:
 
 "constants.dgmd.cc@https://github.com/dgmd/constants.dgmd.cc.git":
   version: 0.1.0
-  resolution: "constants.dgmd.cc@https://github.com/dgmd/constants.dgmd.cc.git#commit=6249fd67d39d017c7ed3ebd701865ceb8b34de39"
+  resolution: "constants.dgmd.cc@https://github.com/dgmd/constants.dgmd.cc.git#commit=195b14bf59cc03efc9fb7f9a9474a8ac27e07e7f"
   dependencies:
     react: "npm:^19.0.0"
     react-dom: "npm:^19.0.0"
-  checksum: 10c0/490173b95bf72eca39b8bfec7c666cef2082dc4911e2b935387060e00d497e1a5a77a3998a7249d6a05f52d53d330fcc34a86a6a75c84b07fc43c6c9c180e659
+  checksum: 10c0/bdf571d3a0087abcf017955c659e9bc430375f9895266538e12da7ffd05557e8b7c1e12db858e0f259169c05ed8fe01523804e4db5d82bc0be5cf4db133115d1
   languageName: node
   linkType: hard
 

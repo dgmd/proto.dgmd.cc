@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import {
@@ -13,7 +14,7 @@ import {
   writeFile
 } from 'fs/promises';
 
-const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
+const UPLOAD_DIR = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'uploads');
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB threshold for splitting
 const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunk size for actual splitting
 
@@ -24,8 +25,8 @@ export const extractDataFromRequest = async ( request ) => {
   const contentType = request.headers.get("content-type");
   if (contentType && contentType.includes("multipart/form-data")) {
     
-    // Create the uploads directory if it doesn't exist
-    if (!fs.existsSync(UPLOAD_DIR)) {
+    // Create the uploads directory if it doesn't exist (only needed locally)
+    if (!process.env.VERCEL && !fs.existsSync(UPLOAD_DIR)) {
       fs.mkdirSync(UPLOAD_DIR, { recursive: true });
     }
     
@@ -257,12 +258,18 @@ async function uploadFileToNotion(filePath, fileUploadId, numberOfParts = null) 
 
 async function handleLargeFileUpload(fileBuffer, originalFileName, fileUploadId, numChunks = null) {
   const splitFiles = [];
-  const tempDir = path.join(UPLOAD_DIR, 'temp-split');
+  let TMP_DIR = process.env.VERCEL ? path.join('/tmp', 'temp-split') : path.join(os.tmpdir(), 'temp-split');
   
   try {
-    // Create temp directory for split files
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
+    // Create temp directory for split files - more defensive
+    try {
+      if (!fs.existsSync(TMP_DIR)) {
+        fs.mkdirSync(TMP_DIR, { recursive: true });
+      }
+    } catch (dirError) {
+      console.warn(`Could not create temp directory ${TMP_DIR}:`, dirError.message);
+      // Fallback to using UPLOAD_DIR for temp files
+      TMP_DIR = UPLOAD_DIR;
     }
     
     // Split file into chunks
@@ -274,7 +281,7 @@ async function handleLargeFileUpload(fileBuffer, originalFileName, fileUploadId,
       const end = Math.min(start + CHUNK_SIZE, fileBuffer.length);
       const chunkBuffer = fileBuffer.subarray(start, end);
       const chunkFileName = `${originalFileName}.part${i+1}`;
-      const chunkPath = path.join(tempDir, chunkFileName);
+      const chunkPath = path.join(TMP_DIR, chunkFileName);
       
       await fs.promises.writeFile(chunkPath, chunkBuffer);
       splitFiles.push({
@@ -339,12 +346,19 @@ async function handleLargeFileUpload(fileBuffer, originalFileName, fileUploadId,
     }
     
     // Try to remove the temp directory if it's empty
-    await cleanupDirectory(tempDir);
+    if (!process.env.VERCEL) {
+      await cleanupDirectory(TMP_DIR);
+    }
   }
 };
 
 // Utility function to safely remove a directory if it's empty
 async function cleanupDirectory(dirPath) {
+  // Skip cleanup operations on Vercel
+  if (process.env.VERCEL) {
+    return;
+  }
+  
   try {
     // Check if directory exists first
     const exists = fs.existsSync(dirPath);
@@ -378,8 +392,10 @@ export async function cleanupFiles(filePaths) {
     }
   }
   
-  // Try to clean up the main uploads directory if it's empty
-  await cleanupDirectory(UPLOAD_DIR);
+  // Skip cleanup of uploads directory on Vercel (read-only filesystem)
+  if (!process.env.VERCEL) {
+    await cleanupDirectory(UPLOAD_DIR);
+  }
 };
 
 export async function processAndUploadFiles(files) {

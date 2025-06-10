@@ -396,19 +396,35 @@ const mmPropToNotionBlock = (block, notionUploads = [], urlUploads = []) => {
   }
 
   if (DGMD_BLOCK_TYPE_DATE === type) {
-    const startDateValue = new Date( value[DGMD_START_DATE] );
-    if (isFinite(startDateValue)) {
-      const dateObj = {
-        [DGMD_START_DATE]: startDateValue.toISOString()
-      };
-      const endDateValue = new Date( value[DGMD_END_DATE] );
-      if (isFinite(endDateValue)) {
-        dateObj[DGMD_END_DATE] = endDateValue.toISOString();
+    if (typeof value === 'object') {
+      const startDateValue = new Date( value[DGMD_START_DATE] );
+      if (isFinite(startDateValue)) {
+        const dateObj = {
+          'start': startDateValue.toISOString()
+        };
+        const endDateValue = new Date( value[DGMD_END_DATE] );
+        if (isFinite(endDateValue)) {
+          dateObj['end'] = endDateValue.toISOString();
+        }
+        const rObj = { [type]: dateObj };
+        return rObj;
       }
-      return {
-        [type]: dateObj
-      };
+      return null;
     }
+    try {
+      const dateValue = new Date( value );
+      if (isFinite(dateValue)) {
+        const dateObj = {
+          'start': dateValue.toISOString()
+        };
+        const rObj = { [type]: dateObj };
+        return rObj;
+      }
+    }
+    catch (e) {
+      console.error( 'Error parsing date:', e );
+    }
+    return null;
   }
 
   if ([DGMD_BLOCK_TYPE_TITLE, DGMD_BLOCK_TYPE_RICH_TEXT].includes( type )) {

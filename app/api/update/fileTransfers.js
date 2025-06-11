@@ -412,6 +412,7 @@ export async function processAndUploadFiles(files) {
       
       // Calculate number of parts if it's a large file
       let numberOfParts = null;
+      console.log( 'isLargeFile', isLargeFile, 'fileSize', fileSize, 'MAX_FILE_SIZE', MAX_FILE_SIZE );
       if (isLargeFile) {
         numberOfParts = calculateChunksNeeded(fileSize);
         DEBUG && console.log(`Large file detected: ${fileName} (${fileSize} bytes, will split into ${numberOfParts} parts)`);

@@ -72,7 +72,8 @@ export const extractDataFromRequest = async ( request ) => {
       
       // Iterate through all properties in the object
       Object.values(obj).forEach(prop => {
-        console.log('Checking property:', prop);
+        console.log('Checking property:', prop, typeof prop === 'object', prop[DGMD_TYPE], DGMD_BLOCK_TYPE_FILE_UPLOAD, 
+          prop[DGMD_VALUE], Array.isArray(prop[DGMD_VALUE]));
         if (prop && typeof prop === 'object' && 
             prop[DGMD_TYPE] === DGMD_BLOCK_TYPE_FILE_UPLOAD && 
             Array.isArray(prop[DGMD_VALUE])) {

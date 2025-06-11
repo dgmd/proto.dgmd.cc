@@ -65,6 +65,7 @@ export const extractDataFromRequest = async ( request ) => {
     
     // Helper function to scan for FILE_UPLOAD references
     const findFileReferences = (obj) => {
+      console.log('Finding file references in object:', obj);
       if (!obj || typeof obj !== 'object'){
         return;
       }
@@ -77,6 +78,7 @@ export const extractDataFromRequest = async ( request ) => {
           // Add all file references to the set
           prop[DGMD_VALUE].forEach(fieldName => {
             if (typeof fieldName === 'string') {
+              console.log('Found file reference:', fieldName);
               referencedFieldNames.add(fieldName);
             }
           });
@@ -91,6 +93,7 @@ export const extractDataFromRequest = async ( request ) => {
     data.files = [];
     
     for (const { fieldName, file } of pendingFiles) {
+
       // Only process files that are referenced in the data
       if (referencedFieldNames.has(fieldName)) {
         const fileName = `${Date.now()}-${file.name}`;

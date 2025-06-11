@@ -29,6 +29,10 @@ export const extractDataFromRequest = async ( request ) => {
     if (!process.env.VERCEL && !fs.existsSync(UPLOAD_DIR)) {
       fs.mkdirSync(UPLOAD_DIR, { recursive: true });
     }
+
+    const constants = await import('constants.dgmd.cc');
+    console.log('Constants imported successfully:', constants);
+  
     
     // Clone the request to get its body as a ReadableStream
     const formDataResponse = await request.formData();

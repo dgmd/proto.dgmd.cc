@@ -19,7 +19,7 @@ const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB threshold for splitting
 const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunk size for actual splitting
 
 // Get DEBUG from environment
-const DEBUG = process.env.DEBUG === 'true';
+const DEBUG = true; //process.env.DEBUG === 'true';
 
 export const extractDataFromRequest = async ( request ) => {
   const contentType = request.headers.get("content-type");

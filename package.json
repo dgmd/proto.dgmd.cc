@@ -6,8 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "postinstall": "yarn install --check-files"
+    "lint": "next lint"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",
@@ -20,7 +19,7 @@
     "@supabase/supabase-js": "^2.49.3",
     "@tailwindcss/postcss": "^4.0.17",
     "autoprefixer": "^10.4.21",
-    "constants.dgmd.cc": "https://github.com/dgmd/constants.dgmd.cc.git",
+    "constants.dgmd.cc": "https://github.com/dgmd/constants.dgmd.cc.git#195b14bf59cc03efc9fb7f9a9474a8ac27e07e7f",
     "eslint": "^9.23.0",
     "eslint-config-next": "^15.2.4",
     "file-type": "^21.0.0",

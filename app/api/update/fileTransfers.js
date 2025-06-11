@@ -19,7 +19,7 @@ const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB threshold for splitting
 const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunk size for actual splitting
 
 // Get DEBUG from environment
-const DEBUG = true; //process.env.DEBUG === 'true';
+const DEBUG = process.env.DEBUG === 'true';
 
 export const extractDataFromRequest = async ( request ) => {
   const contentType = request.headers.get("content-type");
@@ -37,9 +37,7 @@ export const extractDataFromRequest = async ( request ) => {
     const pendingFiles = []; // Temporarily store files before deciding which to write
     
     // First pass: collect all form fields without writing files
-    console.log('Processing multipart form data...', DGMD_BLOCK_TYPE_FILE_UPLOAD, DGMD_TYPE, DGMD_VALUE);
     for (const [key, value] of formDataResponse.entries()) {
-      console.log('Processing form field:', key, value);
       if (value instanceof File) {
         // Store file info temporarily
         pendingFiles.push({
@@ -65,23 +63,18 @@ export const extractDataFromRequest = async ( request ) => {
     
     // Helper function to scan for FILE_UPLOAD references
     const findFileReferences = (obj) => {
-      console.log('Finding file references in object:', obj);
       if (!obj || typeof obj !== 'object'){
         return;
       }
       
       // Iterate through all properties in the object
       Object.values(obj).forEach(prop => {
-        console.log('Checking property:', prop, typeof prop === 'object', prop[DGMD_TYPE], DGMD_BLOCK_TYPE_FILE_UPLOAD, 
-          prop[DGMD_VALUE], Array.isArray(prop[DGMD_VALUE]));
         if (prop && typeof prop === 'object' && 
             prop[DGMD_TYPE] === DGMD_BLOCK_TYPE_FILE_UPLOAD && 
             Array.isArray(prop[DGMD_VALUE])) {
-          console.log('Found FILE_UPLOAD type with values:', prop[DGMD_VALUE]);
           // Add all file references to the set
           prop[DGMD_VALUE].forEach(fieldName => {
             if (typeof fieldName === 'string') {
-              console.log('Found file reference:', fieldName);
               referencedFieldNames.add(fieldName);
             }
           });
@@ -281,7 +274,7 @@ async function handleLargeFileUpload(fileBuffer, originalFileName, fileUploadId,
     }
     
     // Split file into chunks
-    console.log(`Splitting ${originalFileName} into ${numChunks} chunks`);
+    DEBUG && console.log(`Splitting ${originalFileName} into ${numChunks} chunks`);
     
     // Create chunk files
     for (let i = 0; i < numChunks; i++) {
@@ -313,10 +306,10 @@ async function handleLargeFileUpload(fileBuffer, originalFileName, fileUploadId,
     // Wait for all uploads to complete
     const uploadResults = await Promise.all(uploadPromises);
     
-    console.log(`Successfully uploaded ${splitFiles.length} parts of ${originalFileName}`);
+    DEBUG && console.log(`Successfully uploaded ${splitFiles.length} parts of ${originalFileName}`);
     
     // Finalize the multi-part upload
-    console.log(`Finalizing multi-part upload for ${originalFileName}`);
+    DEBUG && console.log(`Finalizing multi-part upload for ${originalFileName}`);
     const finalizeResponse = await fetch(`https://api.notion.com/v1/file_uploads/${fileUploadId}/complete`, {
       method: 'POST',
       headers: {
@@ -333,7 +326,7 @@ async function handleLargeFileUpload(fileBuffer, originalFileName, fileUploadId,
     }
     
     const finalizeResult = await finalizeResponse.json();
-    console.log(`Multi-part upload finalized successfully for ${originalFileName}`);
+    DEBUG && console.log(`Multi-part upload finalized successfully for ${originalFileName}`);
     
     // Return the finalize result instead of the first upload result
     return finalizeResult;

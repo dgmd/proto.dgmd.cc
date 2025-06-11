@@ -14,13 +14,10 @@ export const processAndUploadURLs = async (data) => {
     }
     
     Object.values(obj).forEach(prop => {
-      console.log( 'prop !!>', prop );
       if (prop && typeof prop === 'object' && 
           prop[DGMD_TYPE] === DGMD_BLOCK_TYPE_EXTERNAL_URL && 
           Array.isArray(prop[DGMD_VALUE])) {
-        console.log( 'prop[DGMD_VALUE]', prop[DGMD_VALUE] );
         prop[DGMD_VALUE].forEach(fieldName => {
-          console.log( 'fieldName:', fieldName );
           if (typeof fieldName === 'string') {
             referencedURLs.add(fieldName);
           }
@@ -29,11 +26,7 @@ export const processAndUploadURLs = async (data) => {
     });
   };
 
-  console.log('Finding URL references in data:', data);
-
   Object.values(data).forEach(val => findURLReferences(val));
-
-  console.log('Referenced URLs found:', referencedURLs.size );
 
   // If no URL references were found, bail out early
   if (referencedURLs.size === 0) {
@@ -75,8 +68,6 @@ export const processAndUploadURLs = async (data) => {
     })
   );
 
-  console.log('Upload results:', uploadResults);
-
   //poll every 5 seconds to check if all uploads are complete
   const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
   const MAX_POLLING_ATTEMPTS = 20; // Maximum 100 seconds of waiting
@@ -104,7 +95,6 @@ export const processAndUploadURLs = async (data) => {
           .map(async (upload) => {
             try {
               const kk = `https://api.notion.com/v1/file_uploads/${upload.id}`;
-              console.log( 'kk', kk );
               const response = await fetch(`https://api.notion.com/v1/file_uploads/${upload.id}`, {
                 method: 'GET',
                 headers: {
@@ -113,12 +103,9 @@ export const processAndUploadURLs = async (data) => {
                   'Notion-Version': '2022-06-28'
                 }
               });
-
-              console.log( 'response', response );
               
               if (response.ok) {
                 const status = await response.json();
-                console.log( 'status', status );
                 if (status.status === 'uploaded') {
                   upload.complete = true;
                   console.log(`Upload for ${upload.url} is complete`);

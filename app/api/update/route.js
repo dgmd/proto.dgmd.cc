@@ -1,5 +1,5 @@
 export const maxDuration = 300;
-export const dynamic = 'force-dynamic';
+// export const dynamic = 'force-dynamic';
 
 import {
   createCorsHeadedResponse
@@ -281,6 +281,7 @@ export async function POST( request ) {
     rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_CREATE_METAS] = rMetas;
   }
   catch (error) {
+    console.trace('Error in POST /update:', error);
     console.log('Error in POST /update:', error);
     console.error('Error in POST /update:', error);
     rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_ERROR] = error.message;

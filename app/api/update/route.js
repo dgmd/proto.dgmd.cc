@@ -225,7 +225,7 @@ export async function POST( request ) {
   let uploadedFiles = [];
   
   try {
-    console.log( '1POST /update request:', request );
+    console.warn( '1POST /update request:', request );
     const { data, uploadedFiles: files } = await extractDataFromRequest( request );
     uploadedFiles = files;
     

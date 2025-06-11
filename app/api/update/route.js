@@ -229,7 +229,10 @@ export async function POST( request ) {
     uploadedFiles = files;
     
     // Process files and upload to Notion
-    console.log('Processing files and URLs for upload ...', data.files);
+    console.trace('tPOST /update data:', data);
+    console.error('ePOST /update data:', data);
+    console.warn('pPOST /update data:', data);
+    console.log('lProcessing files and URLs for upload ...', data.files);
     const notionUploads = await processAndUploadFiles( data.files || [] );
     const notionXfers = await processAndUploadURLs( data );
     await Promise.all([notionUploads, notionXfers]);

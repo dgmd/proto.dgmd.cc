@@ -37,7 +37,9 @@ export const extractDataFromRequest = async ( request ) => {
     const pendingFiles = []; // Temporarily store files before deciding which to write
     
     // First pass: collect all form fields without writing files
+    console.log('Processing multipart form data...');
     for (const [key, value] of formDataResponse.entries()) {
+      console.log('Processing form field:', key, value);
       if (value instanceof File) {
         // Store file info temporarily
         pendingFiles.push({

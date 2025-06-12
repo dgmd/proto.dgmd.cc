@@ -1,4 +1,7 @@
 import {
+  createCorsHeadedResponse
+} from '@/utils/coriHeaders.js';
+import {
   put
 } from '@vercel/blob';
 
@@ -13,19 +16,25 @@ export async function POST(request) {
       contentType: contentType || 'application/octet-stream'
     });
     
-    return Response.json({
+    return createCorsHeadedResponse({
       success: true,
       url: blob.url,
       fieldName: fieldName,
       filename: filename,
       uploadType: 'vercel-blob'
-    });
+    }, request);
   } 
   catch (error) {
     console.error('Blob upload error:', error);
-    return Response.json({
+    return createCorsHeadedResponse({
       success: false,
       error: error.message
-    }, { status: 500 });
+    }, request, { status: 500 });
   }
+}
+
+export async function OPTIONS(request) {
+  return createCorsHeadedResponse({
+    result: 'options'
+  }, request);
 }

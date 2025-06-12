@@ -1,5 +1,4 @@
 export const maxDuration = 300;
-// export const dynamic = 'force-dynamic';
 
 import {
   createCorsHeadedResponse
@@ -109,11 +108,11 @@ export async function OPTIONS(request) {
 };
 
 // Common function to process properties and convert them to Notion format
-function processPropsToNotionFormat(propsObj, notionFileUploads, notionURLUploads) {
+function processPropsToNotionFormat(propsObj, notionFileUploads, notionURLUploads, blobUploads = []) {
   const notionPropsObj = {};
   for (const [key, userBlock] of Object.entries(propsObj)) {
     const mmBlock = mmPropToNotionBlock(
-      userBlock, notionFileUploads, notionURLUploads);
+      userBlock, notionFileUploads, notionURLUploads, blobUploads);
     if (!isNil(mmBlock)) {
       notionPropsObj[key] = mmBlock;
     }
@@ -169,10 +168,13 @@ export async function PUT( request ) {
     const notionXfers = await processAndUploadURLs( data );
     await Promise.all([notionUploads, notionXfers]);
     
+    // Get blob uploads from client-side processing
+    const blobUploads = data.blobUploads || [];
+    
     // Process properties and meta data
     const updatePageId = removeHyphens(data[CRUD_PARAM_UPDATE_BLOCK_ID]);
     const updatePropObj = processPropsToNotionFormat( 
-      data[CRUD_PARAM_UPDATE_BLOCK], notionUploads, notionXfers );
+      data[CRUD_PARAM_UPDATE_BLOCK], notionUploads, notionXfers, blobUploads );
     const updateMetaObj = processMetasToNotionFormat( 
       data[CRUD_PARAM_UPDATE_META] || {} );
 
@@ -238,10 +240,13 @@ export async function POST( request ) {
     const notionXfers = await processAndUploadURLs( data );
     await Promise.all([notionUploads, notionXfers]);
     
+    // Get blob uploads from client-side processing
+    const blobUploads = data.blobUploads || [];
+    
     // Process properties and meta data
     const appendDbId = removeHyphens(data[CRUD_PARAM_CREATE_BLOCK_ID]);
     const appendNotionPropsObj = processPropsToNotionFormat( 
-      data[CRUD_PARAM_CREATE_CHILDREN], notionUploads, notionXfers );
+      data[CRUD_PARAM_CREATE_CHILDREN], notionUploads, notionXfers, blobUploads );
     const appendNotionMetaObj = processMetasToNotionFormat( data[CRUD_PARAM_CREATE_META] || {} );
     
     const nClient = new Client({ 
@@ -390,7 +395,7 @@ const updateMeta = async (nClient, pageId, metaKey, metaValue, responseMetas) =>
 //
 //  BLOCK UPDATE CONVERTERS
 
-const mmPropToNotionBlock = (block, notionUploads = [], urlUploads = []) => {
+const mmPropToNotionBlock = (block, notionUploads = [], urlUploads = [], blobUploads = []) => {
   const type = block[DGMD_TYPE];
   const value = block[DGMD_VALUE];
 
@@ -560,22 +565,42 @@ const mmPropToNotionBlock = (block, notionUploads = [], urlUploads = []) => {
     }
   }
   
-  // Handle file uploads - map field names to Notion file IDs
+  // Handle file uploads - now supports both Notion and Blob uploads
   if (type === DGMD_BLOCK_TYPE_FILE_UPLOAD) {
-    if (Array.isArray(value) && value.length > 0 && notionUploads.length > 0) {
-      // Filter uploads to only those with matching fieldNames
-      const matchingUploads = notionUploads.filter(upload => 
-        value.includes(upload.fieldName)
+    if (Array.isArray(value) && value.length > 0) {
+      const files = [];
+      
+      // Check Notion uploads (small files)
+      const matchingNotionUploads = notionUploads.filter(upload => 
+        value.includes(upload.fieldName) && upload.success === true
       );
       
-      if (matchingUploads.length > 0) {
+      matchingNotionUploads.forEach(upload => {
+        files.push({
+          "type": DGMD_BLOCK_TYPE_FILE_UPLOAD,
+          [DGMD_BLOCK_TYPE_FILE_UPLOAD]: {
+            [DGMD_BLOCK_TYPE_ID]: upload.notionFileId
+          }
+        });
+      });
+      
+      // Check blob uploads (large files)
+      const matchingBlobUploads = blobUploads.filter(upload => 
+        value.includes(upload.fieldName) && upload.success === true
+      );
+      
+      matchingBlobUploads.forEach(upload => {
+        files.push({
+          "type": DGMD_BLOCK_TYPE_FILE_EXTERNAL,
+          [DGMD_BLOCK_TYPE_FILE_EXTERNAL]: {
+            "url": upload.url
+          }
+        });
+      });
+      
+      if (files.length > 0) {
         return {
-          [DGMD_BLOCK_TYPE_FILES]: matchingUploads.map(upload => ({
-            "type": DGMD_BLOCK_TYPE_FILE_UPLOAD,
-            [DGMD_BLOCK_TYPE_FILE_UPLOAD]: {
-              [DGMD_BLOCK_TYPE_ID]: upload.notionFileId
-            }
-          }))
+          [DGMD_BLOCK_TYPE_FILES]: files
         };
       }
     }

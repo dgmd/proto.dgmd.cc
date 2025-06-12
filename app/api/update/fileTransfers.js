@@ -24,6 +24,7 @@ const DEBUG = true; //process.env.DEBUG === 'true';
 export const extractDataFromRequest = async ( request ) => {
   console.log('extractDataFromRequest called');
   const contentType = request.headers.get("content-type");
+  
   if (contentType && contentType.includes("multipart/form-data")) {
     
     // Create the uploads directory if it doesn't exist (only needed locally)
@@ -37,7 +38,7 @@ export const extractDataFromRequest = async ( request ) => {
     const uploadedFiles = []; // Track uploaded files for later cleanup
     const pendingFiles = []; // Temporarily store files before deciding which to write
     
-    // First pass: collect all form fields without writing files
+    // Process form data
     for (const [key, value] of formDataResponse.entries()) {
       if (value instanceof File) {
         // Store file info temporarily
@@ -58,7 +59,17 @@ export const extractDataFromRequest = async ( request ) => {
         }
       }
     }
-
+    
+    // Handle blob URLs from client-side uploads
+    if (data.blobUploads) {
+      const blobUploads = Array.isArray(data.blobUploads) ? data.blobUploads : JSON.parse(data.blobUploads);
+      data.blobUploads = blobUploads.map(upload => ({
+        ...upload,
+        uploadType: 'vercel-blob',
+        success: true
+      }));
+    }
+    
     // Find all referenced file fieldNames in the data (used in FILE_UPLOAD types)
     const referencedFieldNames = new Set();
     
@@ -405,39 +416,26 @@ export async function processAndUploadFiles(files) {
   
   for (const file of files) {
     try {
-      // Read file stats to check size without loading the entire file
-      const stats = await fs.promises.stat(file.path);
-      const fileSize = stats.size;
-      const isLargeFile = fileSize > MAX_FILE_SIZE;
-      const fileName = path.basename(file.path);
+      const notionUploadData = await getNotionFileUploadUrl();
+      const uploadResult = await uploadFileToNotion(file.path, notionUploadData.id);
       
-      // Calculate number of parts if it's a large file
-      let numberOfParts = null;
-      console.log( 'isLargeFile', isLargeFile, 'fileSize', fileSize, 'MAX_FILE_SIZE', MAX_FILE_SIZE );
-      if (isLargeFile) {
-        numberOfParts = calculateChunksNeeded(fileSize);
-        DEBUG && console.log(`Large file detected: ${fileName} (${fileSize} bytes, will split into ${numberOfParts} parts)`);
-      }
-      
-      // Get upload URL with appropriate parameters based on file size
-      const notionUploadData = await getNotionFileUploadUrl(
-        isLargeFile,
-        numberOfParts,
-        isLargeFile ? fileName : null
-      );
-      
-      const uploadResult = await uploadFileToNotion(file.path, notionUploadData.id, numberOfParts);
-      DEBUG && console.log(`File ${file.originalName} uploaded to Notion with ID: ${notionUploadData.id}`);
-
       notionUploads.push({
         originalName: file.originalName,
         fieldName: file.fieldName,
         notionFileId: notionUploadData.id,
-        fileData: uploadResult
+        fileData: uploadResult,
+        uploadType: 'notion',
+        success: true
       });
-    }
-    catch (error) {
+    } catch (error) {
       console.error(`Failed to process file ${file.originalName}:`, error);
+      notionUploads.push({
+        originalName: file.originalName,
+        fieldName: file.fieldName,
+        uploadType: 'notion',
+        success: false,
+        error: error.message
+      });
     }
   }
   

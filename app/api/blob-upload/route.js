@@ -7,7 +7,11 @@ import {
 
 export async function POST(request) {
   try {
+    console.log( 'here we go' );
+    const body = await request.json();
+    console.log( 'got body', body );
     const jsonResponse = await handleUpload({
+      body,
       request,
       onBeforeGenerateToken: async (pathname, clientPayload) => {
         console.log('Pathname:', pathname);

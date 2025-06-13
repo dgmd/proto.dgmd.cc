@@ -88,11 +88,6 @@ import {
 import yn from 'yn';
 
 import {
-  cleanupFiles,
-  extractDataFromRequest,
-  processAndUploadFiles
-} from './fileTransfers.js';
-import {
   processAndUploadURLs
 } from './urlTransfers.js';
 
@@ -108,17 +103,16 @@ export async function OPTIONS(request) {
 };
 
 // Common function to process properties and convert them to Notion format
-function processPropsToNotionFormat(propsObj, notionFileUploads, notionURLUploads, blobUploads = []) {
+function processPropsToNotionFormat(propsObj, urlUploads = []) {
   const notionPropsObj = {};
   for (const [key, userBlock] of Object.entries(propsObj)) {
-    const mmBlock = mmPropToNotionBlock(
-      userBlock, notionFileUploads, notionURLUploads, blobUploads);
+    const mmBlock = mmPropToNotionBlock(userBlock, urlUploads);
     if (!isNil(mmBlock)) {
       notionPropsObj[key] = mmBlock;
     }
   }
   return notionPropsObj;
-}
+};
 
 // Common function to process meta properties
 function processMetasToNotionFormat(metasObj) {
@@ -130,7 +124,7 @@ function processMetasToNotionFormat(metasObj) {
     }
   }
   return notionMetaObj;
-}
+};
 
 // Helper to retrieve and format page data
 async function retrieveAndFormatPage(nClient, pageId, parentDbId = null) {
@@ -147,7 +141,7 @@ async function retrieveAndFormatPage(nClient, pageId, parentDbId = null) {
     page: getNotionDbaseProperties({ [NOTION_RESULTS]: [page] }, relMap)[0],
     parentDbId
   };
-}
+};
 
 export async function PUT( request ) {
   const rObj = {
@@ -157,24 +151,16 @@ export async function PUT( request ) {
     }
   };
   
-  let uploadedFiles = [];
-  
   try {
-    const { data, uploadedFiles: files } = await extractDataFromRequest( request );
-    uploadedFiles = files;
+    const data = await request.json();
     
-    // Process files and upload to Notion
-    const notionUploads = await processAndUploadFiles( data.files || [] );
+    // Process URLs
     const notionXfers = await processAndUploadURLs( data );
-    await Promise.all([notionUploads, notionXfers]);
-    
-    // Get blob uploads from client-side processing
-    const blobUploads = data.blobUploads || [];
     
     // Process properties and meta data
     const updatePageId = removeHyphens(data[CRUD_PARAM_UPDATE_BLOCK_ID]);
     const updatePropObj = processPropsToNotionFormat( 
-      data[CRUD_PARAM_UPDATE_BLOCK], notionUploads, notionXfers, blobUploads );
+      data[CRUD_PARAM_UPDATE_BLOCK], notionXfers );
     const updateMetaObj = processMetasToNotionFormat( 
       data[CRUD_PARAM_UPDATE_META] || {} );
 
@@ -210,9 +196,7 @@ export async function PUT( request ) {
   catch (error) {
     rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_ERROR] = error.message;
   }
-  finally {
-    await cleanupFiles(uploadedFiles);
-  }
+  
   return createCorsHeadedResponse( rObj, request );
 };
 
@@ -224,29 +208,16 @@ export async function POST( request ) {
     }
   };
   
-  let uploadedFiles = [];
-  
   try {
-    console.warn( '1POST /update request:', request );
-    const { data, uploadedFiles: files } = await extractDataFromRequest( request );
-    uploadedFiles = files;
+    const data = await request.json();
     
-    // Process files and upload to Notion
-    console.trace('tPOST /update data:', data);
-    console.error('ePOST /update data:', data);
-    console.warn('pPOST /update data:', data);
-    console.log('lProcessing files and URLs for upload ...', data.files);
-    const notionUploads = await processAndUploadFiles( data.files || [] );
+    // Process URLs
     const notionXfers = await processAndUploadURLs( data );
-    await Promise.all([notionUploads, notionXfers]);
-    
-    // Get blob uploads from client-side processing
-    const blobUploads = data.blobUploads || [];
     
     // Process properties and meta data
     const appendDbId = removeHyphens(data[CRUD_PARAM_CREATE_BLOCK_ID]);
     const appendNotionPropsObj = processPropsToNotionFormat( 
-      data[CRUD_PARAM_CREATE_CHILDREN], notionUploads, notionXfers, blobUploads );
+      data[CRUD_PARAM_CREATE_CHILDREN], notionXfers );
     const appendNotionMetaObj = processMetasToNotionFormat( data[CRUD_PARAM_CREATE_META] || {} );
     
     const nClient = new Client({ 
@@ -293,9 +264,7 @@ export async function POST( request ) {
     console.error('Error in POST /update:', error);
     rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_ERROR] = error.message;
   }
-  finally {
-    await cleanupFiles(uploadedFiles);
-  }
+  
   return createCorsHeadedResponse( rObj, request );
 };
 
@@ -306,13 +275,8 @@ export async function DELETE( request ) {
       [CRUD_RESPONSE_DELETE]: false
     }
   };
-
-  let uploadedFiles = [];
   
   try {
-    const { data, uploadedFiles: files } = await extractDataFromRequest( request );
-    uploadedFiles = files;
-    
     const nClient = new Client({ 
       auth: process.env.NOTION_SECRET
     });
@@ -325,9 +289,6 @@ export async function DELETE( request ) {
   }
   catch (error) {
     rObj[CRUD_RESPONSE_RESULT][CRUD_RESPONSE_ERROR] = error.message;
-  }
-  finally {
-    await cleanupFiles(uploadedFiles);
   }
 
   return createCorsHeadedResponse( rObj, request );
@@ -395,7 +356,7 @@ const updateMeta = async (nClient, pageId, metaKey, metaValue, responseMetas) =>
 //
 //  BLOCK UPDATE CONVERTERS
 
-const mmPropToNotionBlock = (block, notionUploads = [], urlUploads = [], blobUploads = []) => {
+const mmPropToNotionBlock = (block, urlUploads = []) => {
   const type = block[DGMD_TYPE];
   const value = block[DGMD_VALUE];
 
@@ -533,18 +494,18 @@ const mmPropToNotionBlock = (block, notionUploads = [], urlUploads = [], blobUpl
     }
   }
   
-  if (type === DGMD_BLOCK_TYPE_FILES) {
-    if (Array.isArray(value)) {
-      const rvalue = value.reduce( (acc, cur) => {
-        acc.push( genBlockTypeFileExternal( cur ) );
-        return acc;
-      }, [] );
-      return {
-        [type]: rvalue
-      };
-    }
-  }
-
+  // if (type === DGMD_BLOCK_TYPE_FILES) {
+  //   if (Array.isArray(value)) {
+  //     const rvalue = value.reduce( (acc, cur) => {
+  //       acc.push( genBlockTypeFileExternal( cur ) );
+  //       return acc;
+  //     }, [] );
+  //     return {
+  //       [type]: rvalue
+  //     };
+  //   }
+  // }
+  
   if (type === DGMD_BLOCK_TYPE_EXTERNAL_URL) {
     if (Array.isArray(value) && value.length > 0) {
       
@@ -560,47 +521,6 @@ const mmPropToNotionBlock = (block, notionUploads = [], urlUploads = [], blobUpl
               [DGMD_BLOCK_TYPE_ID]: upload.data.id,
             }
           }))
-        };
-      }
-    }
-  }
-  
-  // Handle file uploads - now supports both Notion and Blob uploads
-  if (type === DGMD_BLOCK_TYPE_FILE_UPLOAD) {
-    if (Array.isArray(value) && value.length > 0) {
-      const files = [];
-      
-      // Check Notion uploads (small files)
-      const matchingNotionUploads = notionUploads.filter(upload => 
-        value.includes(upload.fieldName) && upload.success === true
-      );
-      
-      matchingNotionUploads.forEach(upload => {
-        files.push({
-          "type": DGMD_BLOCK_TYPE_FILE_UPLOAD,
-          [DGMD_BLOCK_TYPE_FILE_UPLOAD]: {
-            [DGMD_BLOCK_TYPE_ID]: upload.notionFileId
-          }
-        });
-      });
-      
-      // Check blob uploads (large files)
-      const matchingBlobUploads = blobUploads.filter(upload => 
-        value.includes(upload.fieldName) && upload.success === true
-      );
-      
-      matchingBlobUploads.forEach(upload => {
-        files.push({
-          "type": DGMD_BLOCK_TYPE_FILE_EXTERNAL,
-          [DGMD_BLOCK_TYPE_FILE_EXTERNAL]: {
-            "url": upload.url
-          }
-        });
-      });
-      
-      if (files.length > 0) {
-        return {
-          [DGMD_BLOCK_TYPE_FILES]: files
         };
       }
     }

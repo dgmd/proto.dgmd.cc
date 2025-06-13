@@ -1,11 +1,64 @@
+import { del } from '@vercel/blob';
 import {
   DGMD_BLOCK_TYPE_EXTERNAL_URL,
+  DGMD_BLOCK_TYPE_FILE_UPLOAD,
   DGMD_TYPE,
   DGMD_VALUE
 } from 'constants.dgmd.cc';
 
-export const processAndUploadURLs = async (data) => {
+export const processBlobUploads = (data) => {
+  const blobUploads = data.blobUploads || [];
+  
+  if (blobUploads.length === 0) {
+    return data;
+  }
+  
+  // Create a map from fieldName to URL for quick lookup
+  const fieldNameToUrlMap = new Map();
+  blobUploads.forEach(blob => {
+    if (blob.success && blob.fieldName && blob.url) {
+      fieldNameToUrlMap.set(blob.fieldName, blob.url);
+    }
+  });
+  
+  // Deep clone the data to avoid mutations
+  const processedData = JSON.parse(JSON.stringify(data));
+  
+  // Function to recursively process objects
+  const processObject = (obj) => {
+    if (!obj || typeof obj !== 'object') {
+      return;
+    }
+    
+    Object.values(obj).forEach(prop => {
+      if (prop && typeof prop === 'object' && 
+          prop[DGMD_TYPE] === DGMD_BLOCK_TYPE_FILE_UPLOAD && 
+          Array.isArray(prop[DGMD_VALUE])) {
+        
+        // Map fieldNames to URLs
+        const mappedUrls = prop[DGMD_VALUE]
+          .map(fieldName => fieldNameToUrlMap.get(fieldName))
+          .filter(url => url !== undefined);
+        
+        if (mappedUrls.length > 0) {
+          // Convert to external URL type
+          prop[DGMD_TYPE] = DGMD_BLOCK_TYPE_EXTERNAL_URL;
+          prop[DGMD_VALUE] = mappedUrls;
+        }
+      }
+    });
+  };
+  
+  // Process all top-level objects in data
+  Object.values(processedData).forEach(val => processObject(val));
+  
+  return processedData;
+};
 
+export const processAndUploadURLs = async (data) => {
+  // First process blob uploads to convert file uploads to external URLs
+  const processedData = processBlobUploads(data);
+  
   const referencedURLs = new Set();
 
   const findURLReferences = (obj) => {
@@ -17,16 +70,16 @@ export const processAndUploadURLs = async (data) => {
       if (prop && typeof prop === 'object' && 
           prop[DGMD_TYPE] === DGMD_BLOCK_TYPE_EXTERNAL_URL && 
           Array.isArray(prop[DGMD_VALUE])) {
-        prop[DGMD_VALUE].forEach(fieldName => {
-          if (typeof fieldName === 'string') {
-            referencedURLs.add(fieldName);
+        prop[DGMD_VALUE].forEach(url => {
+          if (typeof url === 'string') {
+            referencedURLs.add(url);
           }
         });
       }
     });
   };
 
-  Object.values(data).forEach(val => findURLReferences(val));
+  Object.values(processedData).forEach(val => findURLReferences(val));
 
   // If no URL references were found, bail out early
   if (referencedURLs.size === 0) {
@@ -131,5 +184,29 @@ export const processAndUploadURLs = async (data) => {
     }
   }
   
+  // Delete Vercel blobs after successful transfers
+  const blobUploads = data.blobUploads || [];
+  const successfulUploads = uploadResults.filter(result => result.success);
+  
+  for (const blobUpload of blobUploads) {
+    if (blobUpload.success && blobUpload.uploadType === 'vercel-blob') {
+      // Check if this blob's URL was successfully uploaded to Notion
+      const wasUploaded = successfulUploads.some(upload => upload.url === blobUpload.url);
+      if (wasUploaded) {
+        await deleteFile(blobUpload.url);
+      }
+    }
+  }
+  
   return uploadResults;
 };
+
+// Delete single file
+async function deleteFile(url) {
+  try {
+    await del(url);
+    console.log('File deleted:', url);
+  } catch (error) {
+    console.error('Delete failed:', error);
+  }
+}

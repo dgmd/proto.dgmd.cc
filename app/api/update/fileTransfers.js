@@ -22,7 +22,6 @@ const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunk size for actual splitting
 const DEBUG = true; //process.env.DEBUG === 'true';
 
 export const extractDataFromRequest = async ( request ) => {
-  console.log('extractDataFromRequest called');
   const contentType = request.headers.get("content-type");
   
   if (contentType && contentType.includes("multipart/form-data")) {

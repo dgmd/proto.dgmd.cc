@@ -1,4 +1,6 @@
-import { del } from '@vercel/blob';
+import {
+  del
+} from '@vercel/blob';
 import {
   DGMD_BLOCK_TYPE_EXTERNAL_URL,
   DGMD_BLOCK_TYPE_FILE_UPLOAD,
@@ -17,9 +19,11 @@ export const processBlobUploads = (data) => {
   const fieldNameToUrlMap = new Map();
   blobUploads.forEach(blob => {
     if (blob.success && blob.fieldName && blob.url) {
+      console.log( 'map', blob.fieldName, blob.url );
       fieldNameToUrlMap.set(blob.fieldName, blob.url);
     }
   });
+  console.log( 'fieldNameToUrlMap', fieldNameToUrlMap );
   
   // Deep clone the data to avoid mutations
   const processedData = JSON.parse(JSON.stringify(data));
@@ -39,6 +43,7 @@ export const processBlobUploads = (data) => {
         const mappedUrls = prop[DGMD_VALUE]
           .map(fieldName => fieldNameToUrlMap.get(fieldName))
           .filter(url => url !== undefined);
+        console.log( 'mappedUrls', mappedUrls );
         
         if (mappedUrls.length > 0) {
           // Convert to external URL type

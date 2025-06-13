@@ -1,31 +1,31 @@
-import { createCorsHeadedResponse } from '@/utils/coriHeaders.js'; // Keep if you use it for other responses
+import { createCorsHeadedResponse } from '@/utils/coriHeaders.js';
 import { handleUpload } from '@vercel/blob/client';
-import { NextResponse } from 'next/server'; // Crucial for App Router responses
+import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   console.log('--- API Route /api/blob-upload POST called ---');
   console.log('BLOB_READ_WRITE_TOKEN (from process.env):', process.env.BLOB_READ_WRITE_TOKEN ? '***TOKEN_FOUND***' : 'TOKEN_NOT_FOUND');
   console.log('Request Headers:', Array.from(request.headers.entries()));
-  // We know `Content-Type` is 'application/json' from previous logs
-  // No need to manually parse `request.json()` here, let `handleUpload` do its job.
   console.log('------------------------------------------------');
 
   try {
-    // THIS IS THE CRUCIAL PART: Pass the entire raw Request object directly to handleUpload.
-    // handleUpload is designed to internally consume the body stream and extract necessary info.
+    // Reverting to the pattern where `handleUpload` gets the raw `Request` object
+    // as it's designed to process the stream and headers internally.
+    // The "TypeError: r is not a function" is very deep in Vercel's minified code,
+    // indicating an issue with how *it* processes the Request.
     const jsonResponse = await handleUpload({
-      request, // Pass the full Next.js App Router Request object
-      // Do not provide `body` or `query` properties separately here,
-      // as `handleUpload` will derive them from the `request` object.
+      // Provide the entire Request object directly.
+      // handleUpload is expected to internally handle `request.json()` or `request.formData()`
+      // based on the incoming Content-Type and its internal logic.
+      request: request, // Explicitly pass the Request object
     });
 
     console.log('handleUpload successful. Response:', jsonResponse);
 
-    // Standard CORS headers for Next.js App Router
     const response = NextResponse.json(jsonResponse);
-    response.headers.set('Access-Control-Allow-Origin', '*'); // Or your specific client origin
+    response.headers.set('Access-Control-Allow-Origin', '*');
     response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Filename, X-Field-Name'); // Ensure all headers sent by client are allowed
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Filename, X-Field-Name');
 
     return response;
 

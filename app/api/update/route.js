@@ -213,6 +213,7 @@ export async function POST( request ) {
     
     // Process URLs
     const notionXfers = await processAndUploadURLs( data );
+    console.log( 'notionXfers', notionXfers );
     
     // Process properties and meta data
     const appendDbId = removeHyphens(data[CRUD_PARAM_CREATE_BLOCK_ID]);

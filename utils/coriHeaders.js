@@ -72,11 +72,11 @@ const allowedOrigins =
   // }
   
 
-  export const createCorsHeadedResponse = (json, request) => {
-    const resJson = NextResponse.json( json );
-    const headersList = getApiCorsHeaders( request );
-    for (const header of headersList) {
-      resJson.headers.set( header[0], header[1] );
-    }
-    return resJson;
-  };
+export const createCorsHeadedResponse = (json, request, status = 200) => {
+  const resJson = NextResponse.json(json, { status });
+  const headersList = getApiCorsHeaders(request);
+  for (const header of headersList) {
+    resJson.headers.set(header[0], header[1]);
+  }
+  return resJson;
+};

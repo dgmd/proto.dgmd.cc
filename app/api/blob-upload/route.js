@@ -1,4 +1,7 @@
 import {
+  createCorsHeadedResponse
+} from '@/utils/coriHeaders.js';
+import {
   handleUpload
 } from '@vercel/blob/client';
 
@@ -7,7 +10,8 @@ export async function POST(request) {
     const jsonResponse = await handleUpload({
       request,
       onBeforeGenerateToken: async (pathname, clientPayload) => {
-        // Add any validation here
+        console.log('Pathname:', pathname);
+        console.log('Client payload:', clientPayload);
         return {};
       },
       onUploadCompleted: async ({ blob, tokenPayload }) => {
@@ -15,10 +19,15 @@ export async function POST(request) {
       },
     });
 
-    return Response.json(jsonResponse);
+    return createCorsHeadedResponse(jsonResponse, request);
   }
   catch (error) {
     console.error('Upload error:', error);
-    return Response.json({ error: 'Upload failed' }, { status: 500 });
+    return createCorsHeadedResponse({ error: 'Upload failed', details: error.message }, request, 500);
   }
+}
+
+// Handle preflight OPTIONS requests
+export async function OPTIONS(request) {
+  return createCorsHeadedResponse({}, request, 200);
 }

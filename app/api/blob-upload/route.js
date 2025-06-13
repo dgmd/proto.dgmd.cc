@@ -13,11 +13,12 @@ export async function POST(request) {
     const jsonResponse = await handleUpload({
       body,
       request,
-      addRandomSuffix: true,
       onBeforeGenerateToken: async (pathname, clientPayload) => {
         console.log('Pathname:', pathname);
         console.log('Client payload:', clientPayload);
-        return {};
+        return {
+          addRandomSuffix: true,
+        };
       },
       onUploadCompleted: async ({ blob, tokenPayload }) => {
         console.log('Upload completed:', blob);

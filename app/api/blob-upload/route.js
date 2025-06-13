@@ -1,35 +1,31 @@
-import { createCorsHeadedResponse } from '@/utils/coriHeaders.js';
+import { createCorsHeadedResponse } from '@/utils/coriHeaders.js'; // Keep if you use it for other responses
 import { handleUpload } from '@vercel/blob/client';
-import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server'; // Crucial for App Router responses
 
 export async function POST(request) {
   console.log('--- API Route /api/blob-upload POST called ---');
   console.log('BLOB_READ_WRITE_TOKEN (from process.env):', process.env.BLOB_READ_WRITE_TOKEN ? '***TOKEN_FOUND***' : 'TOKEN_NOT_FOUND');
   console.log('Request Headers:', Array.from(request.headers.entries()));
+  // We know `Content-Type` is 'application/json' from previous logs
+  // No need to manually parse `request.json()` here, let `handleUpload` do its job.
   console.log('------------------------------------------------');
 
   try {
-    // Crucial change: Parse the incoming request body as JSON.
-    // The client-side `upload` helper sends an initial JSON payload to get the pre-signed URL.
-    const jsonBody = await request.json(); // This will parse the JSON stream from request.body
-
-    console.log('Parsed JSON Body from client:', jsonBody); // Log to see what the client sent
-
-    // Now, pass the parsed JSON body to handleUpload.
-    // handleUpload expects this JSON structure from the client's initial request.
+    // THIS IS THE CRUCIAL PART: Pass the entire raw Request object directly to handleUpload.
+    // handleUpload is designed to internally consume the body stream and extract necessary info.
     const jsonResponse = await handleUpload({
-      body: jsonBody, // Pass the parsed JSON object
-      query: request.nextUrl.searchParams, // Still pass query params
-      // Do NOT pass the full `request` object as `handleUpload` will attempt to consume the body again.
-      // We already consumed it with request.json()
+      request, // Pass the full Next.js App Router Request object
+      // Do not provide `body` or `query` properties separately here,
+      // as `handleUpload` will derive them from the `request` object.
     });
 
     console.log('handleUpload successful. Response:', jsonResponse);
 
+    // Standard CORS headers for Next.js App Router
     const response = NextResponse.json(jsonResponse);
-    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Origin', '*'); // Or your specific client origin
     response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Filename, X-Field-Name');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Filename, X-Field-Name'); // Ensure all headers sent by client are allowed
 
     return response;
 

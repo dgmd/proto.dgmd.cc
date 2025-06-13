@@ -9,24 +9,28 @@ export async function POST(request) {
   console.log('------------------------------------------------');
 
   try {
-    // The handleUpload function needs access to the raw request stream.
-    // In App Router, `request.body` is a ReadableStream.
-    // We explicitly pass the stream and query parameters from the request.
+    // Crucial change: Parse the incoming request body as JSON.
+    // The client-side `upload` helper sends an initial JSON payload to get the pre-signed URL.
+    const jsonBody = await request.json(); // This will parse the JSON stream from request.body
+
+    console.log('Parsed JSON Body from client:', jsonBody); // Log to see what the client sent
+
+    // Now, pass the parsed JSON body to handleUpload.
+    // handleUpload expects this JSON structure from the client's initial request.
     const jsonResponse = await handleUpload({
-      body: request.body, // Pass the raw ReadableStream from the Request object
-      query: request.nextUrl.searchParams, // Access query parameters correctly for App Router
-      // Do NOT pass the full `request` object again if you're explicitly passing `body` and `query`
-      // as `handleUpload` might internally try to read `body` from `request` again.
+      body: jsonBody, // Pass the parsed JSON object
+      query: request.nextUrl.searchParams, // Still pass query params
+      // Do NOT pass the full `request` object as `handleUpload` will attempt to consume the body again.
+      // We already consumed it with request.json()
     });
 
     console.log('handleUpload successful. Response:', jsonResponse);
-    
-    // Standard CORS response for App Router
+
     const response = NextResponse.json(jsonResponse);
     response.headers.set('Access-Control-Allow-Origin', '*');
     response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Filename, X-Field-Name');
-    
+
     return response;
 
   } catch (error) {

@@ -8,7 +8,7 @@ import {
   DGMD_VALUE
 } from 'constants.dgmd.cc';
 
-export const processBlobUploads = (data) => {
+const processBlobUploads = (data) => {
   const blobUploads = data.blobUploads || [];
   
   if (blobUploads.length === 0) {
@@ -23,8 +23,7 @@ export const processBlobUploads = (data) => {
       fieldNameToUrlMap.set(blob.fieldName, blob.url);
     }
   });
-  console.log( 'fieldNameToUrlMap', fieldNameToUrlMap );
-  
+
   // Deep clone the data to avoid mutations
   const processedData = JSON.parse(JSON.stringify(data));
   
@@ -43,7 +42,6 @@ export const processBlobUploads = (data) => {
         const mappedUrls = prop[DGMD_VALUE]
           .map(fieldName => fieldNameToUrlMap.get(fieldName))
           .filter(url => url !== undefined);
-        console.log( 'mappedUrls', mappedUrls );
         
         if (mappedUrls.length > 0) {
           // Convert to external URL type
@@ -114,7 +112,20 @@ export const processAndUploadURLs = async (data) => {
         });
         
         if (!response.ok) {
-          throw new Error(`Failed to upload URL: ${await response.text()}`);
+          let errorDetail = `HTTP status ${response.status}`;
+          try {
+            // Notion often returns JSON errors, try to parse it
+            const errorJson = await response.json();
+            errorDetail = errorJson.message || JSON.stringify(errorJson);
+          } 
+          catch (e_json) {
+            // If JSON parsing fails, try to get raw text
+            try {
+              errorDetail = await response.text();
+            }
+            catch (e_text) { /* Keep HTTP status as detail if text fails */ }
+          }
+          throw new Error(`Failed to initiate upload URL to Notion: ${errorDetail}`);
         }
         
         return { url, success: true, data: await response.json() };
@@ -135,12 +146,14 @@ export const processAndUploadURLs = async (data) => {
     .map(result => ({
       id: result.data.id,
       url: result.url,
-      complete: false
+      complete: false,
+      notionStatus: result.data.status || 'pending', // Initialize with status from Notion response
+      notionError: null, // Field for Notion-specific error message
     }));
   
   if (uploadIdsToCheck.length > 0) {
     let attempts = 0;
-    console.log(`Polling for upload completion of ${uploadIdsToCheck.length} uploads... ${attempts} attempts so far`);
+    console.log(`Polling for upload completion of ${uploadIdsToCheck.length} uploads...`);
     
     while (uploadIdsToCheck.some(upload => !upload.complete) && attempts < MAX_POLLING_ATTEMPTS) {
       await sleep(5000); // Wait 5 seconds between checks
@@ -152,7 +165,6 @@ export const processAndUploadURLs = async (data) => {
           .filter(upload => !upload.complete)
           .map(async (upload) => {
             try {
-              const kk = `https://api.notion.com/v1/file_uploads/${upload.id}`;
               const response = await fetch(`https://api.notion.com/v1/file_uploads/${upload.id}`, {
                 method: 'GET',
                 headers: {
@@ -163,31 +175,72 @@ export const processAndUploadURLs = async (data) => {
               });
               
               if (response.ok) {
-                const status = await response.json();
-                if (status.status === 'uploaded') {
+                const statusData = await response.json();
+                upload.notionStatus = statusData.status; // Update with the latest status
+
+                if (statusData.status === 'uploaded') {
                   upload.complete = true;
-                  console.log(`Upload for ${upload.url} is complete`);
+                  console.log(`Upload for ${upload.url} completed successfully. Status: uploaded`);
                 }
-                else if (status.status === 'failed') {
-                  console.error(`Upload for ${upload.url} failed: ${status.error}`);
+                else if (statusData.status === 'failed') {
+                  upload.notionError = statusData.error || 'Unknown Notion error during processing.';
+                  console.error(`Upload for ${upload.url} failed by Notion. Status: failed, Error: ${upload.notionError}`);
                   upload.complete = true; // Mark as complete to stop polling
                 }
+                // If status is still 'pending' or other, it remains incomplete for this polling iteration
               }
               else {
-                console.error(`Failed to check upload status: ${await response.text()}`);
+                console.error(`Failed to check upload status for ${upload.url}: ${await response.text()}`);
+                // Optionally, consider this a failure or allow retries in next poll attempt
               }
             }
             catch (error) {
-              console.error(`Error checking upload status for ${upload.id}:`, error);
+              console.error(`Error checking upload status for ${upload.id} (${upload.url}):`, error);
+              // Optionally, consider this a failure or allow retries
             }
           })
       );
     }
     
     if (attempts >= MAX_POLLING_ATTEMPTS) {
-      console.warn('Reached maximum polling attempts, some uploads may not be complete');
+      console.warn('Reached maximum polling attempts. Some uploads may not be complete.');
+      // For any uploads still not complete, mark them as timed out
+      uploadIdsToCheck.forEach(upload => {
+        if (!upload.complete) {
+          upload.complete = true; // Stop considering it for further processing
+          upload.notionStatus = 'timed_out_polling'; // Custom status
+          upload.notionError = 'Polling timed out after maximum attempts.';
+          console.warn(`Polling timed out for ${upload.url}. Last known status: ${upload.notionStatus === 'timed_out_polling' ? 'pending' : upload.notionStatus}`);
+        }
+      });
     }
   }
+  
+  // Update uploadResults based on the final polling outcome
+  uploadResults.forEach(result => {
+    // Only update those that were initially successful and thus part of polling
+    if (result.success && result.data && result.data.id) {
+      const polledUpload = uploadIdsToCheck.find(p => p.id === result.data.id);
+      if (polledUpload) {
+        if (polledUpload.notionStatus === 'uploaded') {
+          result.success = true; // Confirmed final success
+        } else {
+          // Any other status ('failed', 'timed_out_polling', or 'pending' if timeout occurred before first status check)
+          // means the upload was not successfully completed.
+          result.success = false;
+          result.error = polledUpload.notionError || `Notion upload for ${result.url} did not complete successfully. Final status: ${polledUpload.notionStatus}.`;
+        }
+      } else {
+        // This case implies an item was in uploadResults with success:true and data.id,
+        // but not found in uploadIdsToCheck. This shouldn't happen if logic is correct.
+        // As a safeguard, mark as failed.
+        result.success = false;
+        result.error = `Internal error: Polling information missing for ${result.url}. Initial Notion data: ${JSON.stringify(result.data)}`;
+        console.error(result.error);
+      }
+    }
+    // If result.success was initially false (due to initial POST failure), it remains false.
+  });
   
   // Delete Vercel blobs after successful transfers
   const blobUploads = data.blobUploads || [];
@@ -211,7 +264,8 @@ async function deleteFile(url) {
   try {
     await del(url);
     console.log('File deleted:', url);
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Delete failed:', error);
   }
 }

@@ -261,7 +261,8 @@ export const processAndUploadURLs = async (data) => {
     }
   }
   
-  return uploadResults;
+  delete processBlobUploads.blobUploads;
+  return [processBlobUploads, uploadResults];
 };
 
 // Delete single file

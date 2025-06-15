@@ -152,10 +152,8 @@ export async function PUT( request ) {
   };
   
   try {
-    const data = await request.json();
-    
-    // Process URLs
-    const notionXfers = await processAndUploadURLs( data );
+    const ogData = await request.json();
+    const [data, notionXfers] = await processAndUploadURLs( ogData );
     
     // Process properties and meta data
     const updatePageId = removeHyphens(data[CRUD_PARAM_UPDATE_BLOCK_ID]);
@@ -209,12 +207,10 @@ export async function POST( request ) {
   };
   
   try {
-    const data = await request.json();
-    
-    // Process URLs
-    const notionXfers = await processAndUploadURLs( data );
+    const ogData = await request.json();
+    const [data, notionXfers] = await processAndUploadURLs( ogData );
     console.log( 'notionXfers', notionXfers );
-    console.log( 'data', JSON.parse( JSON.stringify(data, null, 2) ) );
+    console.log( 'data', JSON.parse( JSON.stringify(data, null, 2) ) ); 
 
     
     // Process properties and meta data

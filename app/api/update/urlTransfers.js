@@ -152,7 +152,6 @@ export const processAndUploadURLs = async (data) => {
   
   if (uploadIdsToCheck.length > 0) {
     let attempts = 0;
-    console.log(`Polling for upload completion of ${uploadIdsToCheck.length} uploads...`);
     
     while (uploadIdsToCheck.some(upload => !upload.complete) && attempts < MAX_POLLING_ATTEMPTS) {
       await sleep(5000); // Wait 5 seconds between checks
@@ -176,12 +175,9 @@ export const processAndUploadURLs = async (data) => {
               if (response.ok) {
                 const statusData = await response.json();
                 upload.notionStatus = statusData.status; // Update with the latest status
-                console.log(`Checked status for ${upload.url}: ${upload.notionStatus}`);
 
                 if (statusData.status === 'uploaded') {
                   upload.complete = true;
-                  console.log(`Upload for ${upload.url} completed successfully. Status: uploaded`);
-                  console.log( JSON.parse(JSON.stringify(statusData)) );
                 }
                 else if (statusData.status === 'failed') {
                   upload.notionError = statusData.error || 'Unknown Notion error during processing.';
@@ -222,7 +218,6 @@ export const processAndUploadURLs = async (data) => {
     // Only update those that were initially successful and thus part of polling
     if (result.success && result.data && result.data.id) {
       const polledUpload = uploadIdsToCheck.find(p => p.id === result.data.id);
-      console.log( 'polledUpload', polledUpload );
       if (polledUpload) {
         if (polledUpload.notionStatus === 'uploaded') {
           result.success = true; // Confirmed final succes
@@ -269,7 +264,6 @@ export const processAndUploadURLs = async (data) => {
 async function deleteFile(url) {
   try {
     await del(url);
-    console.log('File deleted:', url);
   }
   catch (error) {
     console.error('Delete failed:', error);

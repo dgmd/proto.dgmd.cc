@@ -209,10 +209,7 @@ export async function POST( request ) {
   try {
     const ogData = await request.json();
     const [data, notionXfers] = await processAndUploadURLs( ogData );
-    console.log( 'notionXfers', notionXfers );
-    console.log( 'data', JSON.parse( JSON.stringify(data, null, 2) ) ); 
 
-    
     // Process properties and meta data
     const appendDbId = removeHyphens(data[CRUD_PARAM_CREATE_BLOCK_ID]);
     const appendNotionPropsObj = processPropsToNotionFormat( 
@@ -511,8 +508,6 @@ const mmPropToNotionBlock = (block, urlUploads = []) => {
       const matchingUploads = urlUploads.filter(upload => 
         value.includes(upload.url) && upload.success === true
       );
-
-      console.log( 'matchingUploads', matchingUploads );
 
       if (matchingUploads.length > 0) {
         return {

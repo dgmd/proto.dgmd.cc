@@ -19,7 +19,6 @@ const processBlobUploads = (data) => {
   const fieldNameToUrlMap = new Map();
   blobUploads.forEach(blob => {
     if (blob.success && blob.fieldName && blob.url) {
-      console.log( 'map', blob.fieldName, blob.url );
       fieldNameToUrlMap.set(blob.fieldName, blob.url);
     }
   });

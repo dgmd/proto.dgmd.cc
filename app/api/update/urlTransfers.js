@@ -176,10 +176,12 @@ export const processAndUploadURLs = async (data) => {
               if (response.ok) {
                 const statusData = await response.json();
                 upload.notionStatus = statusData.status; // Update with the latest status
+                console.log(`Checked status for ${upload.url}: ${upload.notionStatus}`);
 
                 if (statusData.status === 'uploaded') {
                   upload.complete = true;
                   console.log(`Upload for ${upload.url} completed successfully. Status: uploaded`);
+                  console.log( JSON.parse(JSON.stringify(statusData)) );
                 }
                 else if (statusData.status === 'failed') {
                   upload.notionError = statusData.error || 'Unknown Notion error during processing.';
@@ -220,10 +222,12 @@ export const processAndUploadURLs = async (data) => {
     // Only update those that were initially successful and thus part of polling
     if (result.success && result.data && result.data.id) {
       const polledUpload = uploadIdsToCheck.find(p => p.id === result.data.id);
+      console.log( 'polledUpload', polledUpload );
       if (polledUpload) {
         if (polledUpload.notionStatus === 'uploaded') {
-          result.success = true; // Confirmed final success
-        } else {
+          result.success = true; // Confirmed final succes
+        }
+        else {
           // Any other status ('failed', 'timed_out_polling', or 'pending' if timeout occurred before first status check)
           // means the upload was not successfully completed.
           result.success = false;

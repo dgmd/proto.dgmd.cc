@@ -226,6 +226,7 @@ export const processAndUploadURLs = async (data) => {
       if (polledUpload) {
         if (polledUpload.notionStatus === 'uploaded') {
           result.success = true; // Confirmed final succes
+          result.data.status = 'uploaded'; // Update status to reflect final state
         }
         else {
           // Any other status ('failed', 'timed_out_polling', or 'pending' if timeout occurred before first status check)
@@ -233,7 +234,8 @@ export const processAndUploadURLs = async (data) => {
           result.success = false;
           result.error = polledUpload.notionError || `Notion upload for ${result.url} did not complete successfully. Final status: ${polledUpload.notionStatus}.`;
         }
-      } else {
+      } 
+      else {
         // This case implies an item was in uploadResults with success:true and data.id,
         // but not found in uploadIdsToCheck. This shouldn't happen if logic is correct.
         // As a safeguard, mark as failed.

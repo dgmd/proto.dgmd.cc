@@ -514,6 +514,8 @@ const mmPropToNotionBlock = (block, urlUploads = []) => {
         value.includes(upload.url) && upload.success === true
       );
 
+      console.log( 'matchingUploads', matchingUploads );
+
       if (matchingUploads.length > 0) {
         return {
           [DGMD_BLOCK_TYPE_FILES]: matchingUploads.map(upload => ({

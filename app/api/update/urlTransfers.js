@@ -85,7 +85,7 @@ export const processAndUploadURLs = async (data) => {
 
   // If no URL references were found, bail out early
   if (referencedURLs.size === 0) {
-    return;
+    return [processedData, []];
   }
 
   // Upload each referenced URL to Notion

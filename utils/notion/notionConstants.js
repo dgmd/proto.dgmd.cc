@@ -33,6 +33,7 @@ export const NOTION_DATA_TYPE_EXTERNAL = 'external';
 export const NOTION_FORMULA_RESULT_STRING = 'string';
 export const NOTION_FORMULA_RESULT_BOOLEAN = 'boolean';
 export const NOTION_FORMULA_RESULT_DATE = 'date';
+export const NOTION_FORMULA_RESULT_NUMBER = 'number';
 
 export const NOTION_KEY_TYPE = 'type';
 export const NOTION_KEY_VALUE = 'value';

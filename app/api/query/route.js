@@ -117,10 +117,26 @@ export async function GET( request ) {
   
   }
   catch ( e ) {
+    const errorString = parseNotionError( e ) || 'An unknown error occurred.';
     return createCorsHeadedResponse( {
       [QUERY_RESPONSE_KEY_SUCCESS]: false,
-      [QUERY_RESPONSE_KEY_ERROR]: 'invalid credentials'
+      [QUERY_RESPONSE_KEY_ERROR]: errorString
     }, request );
   }
 };
 
+const parseNotionError =
+  ( error ) => {
+    if ( error?.body ) {
+      try {
+        const bodyObj = JSON.parse( error.body );
+        if ( bodyObj?.message ) {
+          return bodyObj.message;
+        }
+      }
+      catch ( e ) {
+        return String( error );
+      }
+    }
+    return String( error );
+  };

@@ -42,7 +42,7 @@
     "import-sort-style-module": "^6.0.0",
     "typescript": "5.2.2"
   },
-  "packageManager": "yarn@4.1.0",
+  "packageManager": "yarn@4.10.3",
   "importSort": {
     ".js, .jsx, .es6, .es": {
       "style": "module"

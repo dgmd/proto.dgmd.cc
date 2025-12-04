@@ -38,7 +38,7 @@ export async function GET( request ) {
       throw new Error( 'missing project id' );
     }
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient( cookieStore );
     const snapsQuery = await supabase
       .from( 'project_snapshots' )
@@ -90,8 +90,8 @@ export async function POST( request ) {
     if (!liveQueryJson[QUERY_RESPONSE_KEY_SUCCESS]) {
       throw new Error( 'query failed' );
     }
-    
-    const cookieStore = cookies();
+
+    const cookieStore = await cookies();
     const supabase = await createClient( cookieStore );
     const insertResult = await supabase
       .from('project_snapshots')

@@ -16,7 +16,7 @@ import Link from 'next/link';
 
 export default async function Hero() {
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const auth = await getAuthServerCache( cookieStore );
 
   return (

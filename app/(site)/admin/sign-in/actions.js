@@ -19,7 +19,7 @@ import {
 } from './keys.js';
 
 export async function signInAction( formData ) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = await createClient(cookieStore);
 
   const data = {

@@ -26,7 +26,7 @@ export async function GET( request ) {
       throw new Error( 'missing snapshot id' );
     }
     const id = params.get(SNAPSHOT_PARAM_ID);
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient( cookieStore );
     const snapsQuery = await supabase
       .from( 'project_snapshots' )

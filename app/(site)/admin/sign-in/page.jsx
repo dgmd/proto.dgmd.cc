@@ -26,7 +26,7 @@ import {
 
 export default async function UserSignInPage() {
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const user = await getAuthServerCache( cookieStore );
   if (isAuthUser(user)) {
     redirect('/admin');

@@ -24,7 +24,7 @@ import {
 } from 'next/navigation';
 
 export default async function Roster( {params} ) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const auth = await getAuthServerCache(cookieStore);
   if (!isAuthUser(auth)) {
     redirect('/');
@@ -37,7 +37,7 @@ export default async function Roster( {params} ) {
   const rosterData = await fetch(rostersUrl.href, {
     method: 'GET',
     headers: {
-      Cookie: cookies().toString()
+      Cookie: cookieStore.toString()
     },
     next: { revalidate: 60 }
   });

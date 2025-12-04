@@ -19,7 +19,7 @@ export async function generateMetadata({ params }, parent) {
 };
 
 export default async function Page({ children }) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const auth = await getAuthServerCache( cookieStore );
 
   return (

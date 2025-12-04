@@ -9,7 +9,7 @@ import {
 } from 'next/server';
 
 export async function POST() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = await createClient( cookieStore );
   await supabase.auth.signOut();
   return NextResponse.json( {message: 'success' } );

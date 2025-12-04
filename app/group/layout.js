@@ -13,8 +13,8 @@ export default function Layout({ children }) {
         showUser={ true }
         showAdmin={ true }
       />
-        <div 
-          className="flex-grow w-100 h-100 flex items-stretch justify-center items-center">
+        <div
+          className="flex-grow w-full h-full flex items-center justify-center">
           { children }
         </div>
     </div>

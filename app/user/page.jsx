@@ -71,7 +71,7 @@ import {
 import {
   addListItem,
   removeListItem
-} from '/utils/lists.js';
+} from '@/utils/lists.js';
 
 const User = ( ) => {
 

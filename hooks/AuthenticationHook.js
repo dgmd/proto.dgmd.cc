@@ -6,7 +6,7 @@ import {
 
 import {
   supabase
-} from 'utils/supa.js';
+} from '@/utils/supa.js';
 
 export const AUTH_EVENT_USER_UPDATED = 'USER_UPDATED';
 export const AUTH_EVENT_INITIAL_SESSION = 'INITIAL_SESSION';

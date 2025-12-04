@@ -1,6 +1,6 @@
 "use client"
 
-import 'app/globals.css';
+import '@/app/globals.css';
 
 import {
   useEffect,
@@ -14,13 +14,13 @@ import {
 
 import {
   Title
-} from 'components/title';
+} from '@/components/title';
 
 import {
   TABLE_HEADER_HIDE,
   TABLE_HEADER_NAME,
   Table
-} from 'components/table.jsx';
+} from '@/components/table.jsx';
 
 import {
   EXPORT_DATA_KEY,
@@ -34,25 +34,25 @@ import {
   NOTION_RESULT_PRIMARY_DATABASE,
 
   NOTION_RESULT
-} from 'app/api/query/keys.js';
+} from '@/app/api/query/keys.js';
 
 
 import {
   URL_PROTOTYPE_PARAM_ID
-} from 'app/api/prototype/keys.js';
+} from '@/app/api/prototype/keys.js';
 
 import {
   getTextFromReadableStream
-} from 'utils/network.js';
+} from '@/utils/network.js';
 
 import {
   useAuthentication
-} from 'hooks/AuthenticationHook.js';
+} from '@/hooks/AuthenticationHook.js';
 
 import {
   buttonClassNames,
   cellClassNames
-} from '/components/look.js';
+} from '@/components/look.js';
 
 import {
   ArrowPathIcon
@@ -60,12 +60,12 @@ import {
 
 import {
   ClipboardButton
-} from 'components/clipboard-button.jsx';
+} from '@/components/clipboard-button.jsx';
 
 import {
   LinkButton
-} from 'components/link-button.jsx';
-import { EXPORT_DATA_METADATA, EXPORT_DATA_PROPERTIES } from '../../../../api/query/keys';
+} from '@/components/link-button.jsx';
+import { EXPORT_DATA_METADATA, EXPORT_DATA_PROPERTIES } from '@/app/api/query/keys';
 
 const PROTO_TYPE = 'PROTO_TYPE';
 const PROTO_VAL = 'PROTO_VAL';

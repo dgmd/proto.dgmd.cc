@@ -1,10 +1,10 @@
 "use client"
 
-import 'app/globals.css';
+import '@/app/globals.css';
 
 import {
   buttonClassNames
-} from 'components/look.js';
+} from '@/components/look.js';
 
 import {
   useRouter

@@ -1,6 +1,6 @@
 "use client"
 
-import 'app/globals.css';
+import '@/app/globals.css';
 
 import {
   usePathname
@@ -8,7 +8,7 @@ import {
 
 import {
   Header
-} from "components/header.jsx";
+} from "@/components/header.jsx";
 
 export default function Layout({ 
   children,

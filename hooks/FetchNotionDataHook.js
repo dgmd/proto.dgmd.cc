@@ -6,13 +6,13 @@ import {
 
 import {
   getTextFromReadableStream
-} from '../utils/network.js';
+} from '@/utils/network.js';
 
 import {
   URL_SEARCH_PARAM_BLOCKS_REQUEST,
   URL_SEARCH_PARAM_DATABASE,
   URL_SEARCH_PARAM_RELATIONS_REQUEST
-} from 'app/api/query/keys.js';
+} from '@/app/api/query/keys.js';
 
 export const FETCH_NOTION_CALLBACK = 'FETCH_NOTION_CALLBACK';
 export const FETCH_NOTION_FETCHING = 'FETCH_NOTION_FETCHING';

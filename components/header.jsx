@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 import {
   buttonClassNames
-} from 'components/look.js';
+} from '@/components/look.js';
 
 import {
   UserCircleIcon
@@ -11,7 +11,7 @@ import {
 
 import {
   NotionToFramerLogo
-} from '/components/logo.jsx';
+} from '@/components/logo.jsx';
 
 import {
   Fragment
@@ -27,11 +27,11 @@ import {
   AUTH_STATE_SIGNED_OUT,
   getUserEmail,
   useAuthentication
-} from 'hooks/AuthenticationHook.js';
+} from '@/hooks/AuthenticationHook.js';
 
 import {
   classNames
-} from 'utils/jsx.js';
+} from '@/utils/jsx.js';
 
 export const Header = (props) => {
 

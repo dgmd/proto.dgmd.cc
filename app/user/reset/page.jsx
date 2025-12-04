@@ -15,7 +15,7 @@ import {
 import {
   useAuthentication,
   AUTH_EVENT_PASSWORD_RECOVERY
-} from 'hooks/AuthenticationHook.js';
+} from '@/hooks/AuthenticationHook.js';
 
 function Reset( ) {
 

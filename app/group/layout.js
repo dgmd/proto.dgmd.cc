@@ -2,7 +2,7 @@
 
 import {
   Header
-} from "components/header.jsx";
+} from "@/components/header.jsx";
 
 export default function Layout({ children }) {
   return (

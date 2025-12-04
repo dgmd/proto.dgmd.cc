@@ -17,7 +17,7 @@ import {
   AUTH_STATE_SIGNED_IN,
   AUTH_STATE_SIGNED_OUT,
   useAuthentication
-} from 'hooks/AuthenticationHook.js';
+} from '@/hooks/AuthenticationHook.js';
 
 import {
   ArrowPathIcon,
@@ -26,23 +26,23 @@ import {
 
 import {
   queryApiForRoom
-} from 'hooks/FetchNotionDataHook.js';
+} from '@/hooks/FetchNotionDataHook.js';
 
 import {
   buttonClassNames,
   cellClassNames,
   getRoundButtonClasses,
   getRoundButtonIconClasses
-} from '/components/look.js';
+} from '@/components/look.js';
 
 import {
   NOTION_RESULT,
   NOTION_RESULT_SUCCESS
-} from 'app/api/query/keys.js';
+} from '@/app/api/query/keys.js';
 
 import {
   getUserId
-} from 'hooks/AuthenticationHook.js';
+} from '@/hooks/AuthenticationHook.js';
 
 import {
   TABLE_COL_HIDE_MD,
@@ -50,23 +50,23 @@ import {
   TABLE_HEADER_HIDE,
   TABLE_HEADER_NAME,
   Table
-} from 'components/table.jsx';
+} from '@/components/table.jsx';
 
 import {
   ClipboardButton
-} from 'components/clipboard-button.jsx';
+} from '@/components/clipboard-button.jsx';
 
 import {
   LinkButton
-} from 'components/link-button.jsx';
+} from '@/components/link-button.jsx';
 
 import {
   Title
-} from '/components/title.jsx';
+} from '@/components/title.jsx';
 
 import {
   SidePanel
-} from '/components/side-panel.jsx';
+} from '@/components/side-panel.jsx';
 
 import {
   addListItem,

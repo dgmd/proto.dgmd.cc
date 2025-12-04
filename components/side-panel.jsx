@@ -17,7 +17,7 @@ import {
 import {
   buttonCancelClassNames,
   buttonClassNames
-} from '/components/look.js';
+} from '@/components/look.js';
 
 export const SidePanel = props => {
 

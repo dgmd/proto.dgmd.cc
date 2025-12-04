@@ -1,6 +1,6 @@
 "use client"
 
-import 'app/globals.css';
+import '@/app/globals.css';
 
 import {
   useCallback,
@@ -15,22 +15,22 @@ import {
 
 import {
   Title
-} from 'components/title';
+} from '@/components/title';
 
 import {
   TABLE_HEADER_HIDE,
   TABLE_HEADER_NAME,
   Table
-} from 'components/table.jsx';
+} from '@/components/table.jsx';
 
 import {
   useAuthentication
-} from 'hooks/AuthenticationHook.js';
+} from '@/hooks/AuthenticationHook.js';
 
 import {
   buttonClassNames,
   cellClassNames
-} from '/components/look.js';
+} from '@/components/look.js';
 
 import {
   ArrowPathIcon
@@ -48,19 +48,19 @@ import {
 
   NOTION_RESULT,
   NOTION_RESULT_SUCCESS
-} from 'app/api/query/keys.js';
+} from '@/app/api/query/keys.js';
 
 import {
   ClipboardButton
-} from 'components/clipboard-button.jsx';
+} from '@/components/clipboard-button.jsx';
 
 import {
   LinkButton
-} from 'components/link-button.jsx';
+} from '@/components/link-button.jsx';
 
 import {
   queryApiForRoom
-} from 'hooks/FetchNotionDataHook.js';
+} from '@/hooks/FetchNotionDataHook.js';
 
 
 const PROJECT_TYPE = 'PROJECT_TYPE';

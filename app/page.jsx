@@ -1,11 +1,11 @@
 
-import 'app/globals.css';
+import '@/app/globals.css';
 
 import Link from 'next/link';
 
 import {
   NotionToFramerLogo
-} from '/components/logo.jsx'
+} from '@/components/logo.jsx'
 
 export default function Hero() {
 

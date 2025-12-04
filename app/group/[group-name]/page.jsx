@@ -1,6 +1,6 @@
 "use client"
 
-import 'app/globals.css';
+import '@/app/globals.css';
 
 import {
   useParams
@@ -19,37 +19,37 @@ import {
   TABLE_HEADER_HIDE,
   TABLE_HEADER_NAME,
   Table
-} from 'components/table.jsx';
+} from '@/components/table.jsx';
 
 import {
   AUTH_STATE_SIGNED_IN,
   AUTH_STATE_SIGNED_OUT,
   useAuthentication
-} from 'hooks/AuthenticationHook.js';
+} from '@/hooks/AuthenticationHook.js';
 
 import {
   Title
-} from '/components/title.jsx';
+} from '@/components/title.jsx';
 
 import {
   cellClassNames
-} from '/components/look.js';
+} from '@/components/look.js';
 
 import {
   EXPORT_DATA_VALUE,
   NOTION_RESULT_BLOCKS,
   NOTION_RESULT_BLOCK_KEY,
   NOTION_RESULT_PRIMARY_DATABASE
-} from 'app/api/query/keys.js';
+} from '@/app/api/query/keys.js';
 
 import {
   ClipboardButton
-} from 'components/clipboard-button.jsx';
+} from '@/components/clipboard-button.jsx';
 
 import {
   LinkButton
-} from 'components/link-button.jsx';
-import { EXPORT_DATA_METADATA, EXPORT_DATA_PROPERTIES } from '../../api/query/keys';
+} from '@/components/link-button.jsx';
+import { EXPORT_DATA_METADATA, EXPORT_DATA_PROPERTIES } from '@/app/api/query/keys';
 
 const USER_ID = 'USER_ID';
 const USER_NAME = 'USER_NAME';

@@ -2,13 +2,13 @@
 
 import {
   buttonClassNames
-} from 'components/look.js';
+} from '@/components/look.js';
 
 import {
   AUTH_STATE_SIGNED_IN,
   AUTH_STATE_SIGNED_OUT,
   useAuthentication
-} from 'hooks/AuthenticationHook.js';
+} from '@/hooks/AuthenticationHook.js';
 
 import {
   useRouter
